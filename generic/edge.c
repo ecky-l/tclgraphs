@@ -1,5 +1,6 @@
 
 #include "graph.h"
+#include <string.h>
 
 /*
  * Edge API
@@ -27,7 +28,7 @@ EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
         }
         switch (optIdx) {
         case NameIx: {
-            edgePtr->name = Tcl_GetString(objv[i+1]);
+            sprintf(edgePtr->name, "%s", Tcl_GetString(objv[i+1]));
             break;
         }
         case FromIx:
@@ -90,6 +91,20 @@ EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
 static void
 EdgeDeleteCmd(ClientData clientData)
 {
+    Edge* edgePtr = (Edge*)clientData;
+    Tcl_HashEntry* entry;
+
+    entry = Tcl_FindHashEntry(&edgePtr->fromNode->edges, edgePtr);
+    if (entry != NULL) {
+        Tcl_DeleteHashEntry(entry);
+    }
+    entry = Tcl_FindHashEntry(&edgePtr->toNode->edges, edgePtr);
+    if (entry != NULL) {
+        Tcl_DeleteHashEntry(entry);
+    }
+
+    ckfree(edgePtr->name);
+    Tcl_Free((char*)edgePtr);
 
 }
 
@@ -115,7 +130,12 @@ Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
         sprintf(edgePtr->cmdName, Tcl_GetString(objv[1]));
     }
 
-    edgePtr->name = NULL;
+    if (Graphs_CheckCommandExists(interp, edgePtr->cmdName)) {
+        Tcl_Free((char*)edgePtr);
+        return TCL_ERROR;
+    }
+
+    sprintf(edgePtr->name, "%s", "");
     edgePtr->fromNode = edgePtr->toNode = NULL;
     if (EdgeCmdConfigure(edgePtr, interp, objc-2, objv+2) != TCL_OK) {
         Tcl_Free((void*)edgePtr);

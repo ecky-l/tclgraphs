@@ -31,6 +31,7 @@ Tclgraphs_Init(Tcl_Interp *interp)
 #endif //USE_TCL_STUBS
 
     gState = (GraphState*)Tcl_Alloc(sizeof(GraphState));
+    gState->interp = interp;
     Tcl_InitHashTable(&gState->graphs, TCL_STRING_KEYS);
     Tcl_InitHashTable(&gState->nodes, TCL_STRING_KEYS);
     Tcl_InitHashTable(&gState->edges, TCL_STRING_KEYS);

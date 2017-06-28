@@ -5287,7 +5287,7 @@ done
 #-----------------------------------------------------------------------
 
 
-    vars="tclgraphs.c edge.c graph.c node.c"
+    vars="tclgraphs.c common.c edge.c graph.c node.c"
     for i in $vars; do
 	case $i in
 	    \$*)
