@@ -39,6 +39,7 @@ typedef struct _edge {
     Node* fromNode;
     Node* toNode;
     double weight;
+    int directed;
 } Edge;
 
 int Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
@@ -49,6 +50,7 @@ void Node_CleanupCmd(ClientData data);
 
 int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 void Edge_CleanupCmd(ClientData data);
+int Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
 
 /*
  * Checks whether a command already exists and sets an appropriate error message.
@@ -77,6 +79,7 @@ Edge* Graphs_ValidateEdgeCommand(GraphState* statePtr, Tcl_Interp* interp, const
  * Add a node to a graph
  */
 void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr);
+
 
 /*
  * Delete and free an edge.

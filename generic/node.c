@@ -249,6 +249,7 @@ Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
 
     if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
         sprintf(nodePtr->cmdName, "::tclgraphs::Node%d", gState->nodeUid);
+        gState->nodeUid++;
     } else {
         sprintf(nodePtr->cmdName, Tcl_GetString(objv[1]));
     }
@@ -262,7 +263,6 @@ Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
         Tcl_Free((char*)nodePtr);
         return TCL_ERROR;
     }
-    gState->nodeUid++;
 
     Tcl_InitHashTable(&nodePtr->edges, TCL_ONE_WORD_KEYS);
     Tcl_InitHashTable(&nodePtr->graphs, TCL_STRING_KEYS);

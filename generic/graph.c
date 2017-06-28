@@ -289,6 +289,7 @@ Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *co
 
     if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
         sprintf(graphPtr->cmdName, "::tclgraphs::Graph%d", gState->graphUid);
+        gState->graphUid++;
     } else {
         sprintf(graphPtr->cmdName, Tcl_GetString(objv[1]));
     }
@@ -303,12 +304,10 @@ Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *co
         return TCL_ERROR;
     }
 
-    gState->graphUid++;
 
     Tcl_InitHashTable(&graphPtr->nodes, TCL_STRING_KEYS);
 
     graphPtr->commandTkn = Tcl_CreateObjCommand(interp, graphPtr->cmdName, GraphCmd, graphPtr, GraphDeleteCmd);
-
     entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, (ClientData)graphPtr);
     Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->cmdName, -1));
