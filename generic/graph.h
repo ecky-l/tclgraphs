@@ -26,7 +26,7 @@ typedef struct _node {
     char name[30];
     GraphState* statePtr;
     Tcl_Command commandTkn;
-    Tcl_HashTable edges;
+    Tcl_HashTable neighbors;
     Tcl_HashTable tags;
     Tcl_HashTable graphs;
 } Node;
@@ -39,7 +39,6 @@ typedef struct _edge {
     Node* fromNode;
     Node* toNode;
     double weight;
-    int directed;
 } Edge;
 
 int Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
@@ -50,7 +49,7 @@ void Node_CleanupCmd(ClientData data);
 
 int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 void Edge_CleanupCmd(ClientData data);
-int Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
+Edge* Edge_CreateEdge(GraphState*, Node*, Node*, Tcl_Interp*, const char*, int, Tcl_Obj* const[]);
 
 /*
  * Checks whether a command already exists and sets an appropriate error message.

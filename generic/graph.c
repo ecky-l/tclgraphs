@@ -222,7 +222,7 @@ GraphCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
         AddNodesIx, RmNodesIx, NodesIx, ConfigureIx, CgetIx, DeleteIx
     };
 
-    if (objc == 1) {
+    if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }

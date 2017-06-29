@@ -20,7 +20,7 @@ if {$tcl_platform(platform) eq "windows"} {
 }
 
 package require tclgraphs
-
+namespace import tclgraphs::*
 
 test graph-1.1 "create and delete a graph" -setup {} -body {
     tclgraphs::graph g
@@ -144,6 +144,31 @@ test graph-addnode-and-delete-1.4 "delete node from graph" -setup {
     g delete -nodes
     n1 delete
 } -result {3 n1 2}
+
+tcltest::test edge-create-1.1 "create edge via edge command" -setup {
+    tclgraphs::node n1
+    tclgraphs::node n2
+} -body {
+    tclgraphs::edge e -from n1 -to n2
+} -cleanup {
+    e delete
+    n1 delete
+    n2 delete
+} -result {e}
+
+tcltest::test edge-create-1.2 "create edge through node interface" -setup {
+    node n1
+    node n2
+} -body {
+    set e [n1 -> n2 new]
+    llength [info command $e] 
+} -cleanup {
+    $e delete
+    n1 delete
+    n2 delete
+} -result {1}
+
+
 # cleanup
 ::tcltest::cleanupTests
 return

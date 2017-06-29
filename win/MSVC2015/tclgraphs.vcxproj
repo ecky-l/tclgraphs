@@ -159,6 +159,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\generic\common.c" />
     <ClCompile Include="..\..\generic\tclgraphs.c" />
     <ClCompile Include="..\..\generic\edge.c" />
     <ClCompile Include="..\..\generic\graph.c" />
