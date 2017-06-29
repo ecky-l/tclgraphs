@@ -49,7 +49,9 @@ void Node_CleanupCmd(ClientData data);
 
 int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 void Edge_CleanupCmd(ClientData data);
-Edge* Edge_CreateEdge(GraphState*, Node*, Node*, Tcl_Interp*, const char*, int, Tcl_Obj* const[]);
+Edge* Edge_CreateEdge(GraphState*, Node*, Node*, int, Tcl_Interp*, const char*, int, Tcl_Obj* const[]);
+Edge* Edge_GetEdge(GraphState*, Node*, Node*, int, Tcl_Interp*);
+int Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
 
 /*
  * Checks whether a command already exists and sets an appropriate error message.

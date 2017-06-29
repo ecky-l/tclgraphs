@@ -136,7 +136,8 @@ GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const 
             break;
         }
         default: {
-            break;
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong options in graph configure", -1));
+            return TCL_ERROR;
         }
         }
     }

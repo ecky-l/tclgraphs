@@ -1,4 +1,3 @@
-
 #include "graph.h"
 #include <string.h>
 
@@ -6,14 +5,14 @@
  * Node API
  */
 
-typedef enum _EdgeDirection {
+typedef enum _EdgeDirection
+{
     EDGE_DIRECTION_NONE,
     EDGE_DIRECTION_OUT,
     EDGE_DIRECTION_IN
 } EdgeDirection;
 
-static int
-NodeCmdDelFromGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdDelFromGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     for (int i = 0; i < objc; i++) {
         Graph* graphPtr = Graphs_ValidateGraphCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[i]));
@@ -36,8 +35,7 @@ NodeCmdDelFromGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const
     return TCL_OK;
 }
 
-static int
-NodeCmdAddToGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdAddToGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     for (int i = 0; i < objc; i++) {
         Graph* graphPtr = Graphs_ValidateGraphCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[i]));
@@ -52,26 +50,22 @@ NodeCmdAddToGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const o
     return TCL_OK;
 }
 
-static int
-NodeCmdLabel(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdLabel(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     return TCL_OK;
 }
 
-static int
-NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     return TCL_OK;
 }
 
-static int
-NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int i, optIdx;
-    char* opts[] = {
-        "-name", NULL
-    };
-    enum OptsIx {
+    char* opts[] = { "-name", NULL };
+    enum OptsIx
+    {
         NameIx
     };
 
@@ -86,20 +80,20 @@ NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const obj
         }
         switch (optIdx) {
         case NameIx: {
-            sprintf(nodePtr->name, "%s", Tcl_GetString(objv[i+1]));
-            return TCL_OK;
+            sprintf(nodePtr->name, "%s", Tcl_GetString(objv[i + 1]));
+            break;
         }
         default: {
-            break;
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong options in node configure", -1));
+            return TCL_ERROR;
         }
         }
     }
 
-    return TCL_ERROR;
+    return TCL_OK;
 }
 
-static int
-NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     Tcl_SetObjResult(interp, Tcl_NewStringObj(nodePtr->name, -1));
     return TCL_OK;
@@ -108,46 +102,26 @@ NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 /*
  * The delete subcommand, calls the command delete procedure.
  */
-static int
-NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     Tcl_DeleteCommandFromToken(interp, nodePtr->commandTkn);
     return TCL_OK;
 }
 
-#define ADDNODE_COMMON \
-        if (objc < 4) {\
-            Tcl_WrongNumArgs(interp, 2, objv, "otherNode cmd ?arg ...?");\
-            return TCL_ERROR;\
-        }\
-        Node* otherPtr = Graphs_ValidateNodeCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[2]));\
-        if (otherPtr == NULL) {\
-            return TCL_ERROR;\
-        }\
-
-static int
-NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+static int NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
 
     Node* nodePtr = (Node*) clientData;
     static char *subCmds[] = {
-        "addtographs",
-        "delfromgraphs",
-        "->",
-        "-",
-        "neighbors",
-        "label",
-        "configure",
-        "cget",
-        "delete",
-        NULL
-    };
-    enum BlobIx {
+        "addtographs", "delfromgraphs", "->", "-", "neighbors", "label", "configure", "cget", "delete",
+        NULL };
+    enum BlobIx
+    {
         AddToGraphIx,
         DelFromGraphIx,
-        AddOutNeighbourIx,
-        AddUndirNeighbourIx,
+        NeighbourIx,
+        UndirNeighbourIx,
         NeighboursIx,
         LabelIx,
         ConfigureIx,
@@ -165,52 +139,63 @@ NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 
     switch (cmdIdx) {
     case AddToGraphIx: {
-        return NodeCmdAddToGraphs(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdAddToGraphs(nodePtr, interp, objc - 2, objv + 2);
     }
     case DelFromGraphIx: {
-        return NodeCmdDelFromGraphs(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdDelFromGraphs(nodePtr, interp, objc - 2, objv + 2);
     }
-    case AddOutNeighbourIx: {
+    case NeighbourIx:
+    case UndirNeighbourIx: {
         Edge* edgePtr;
-        Tcl_HashEntry* entry;
-        int new;
-        ADDNODE_COMMON;
+        const char* cmdName;
+        int unDirected;
 
-        if (Tcl_StringMatch(Tcl_GetString(objv[3]), "new")) {
-            entry = Tcl_CreateHashEntry(&nodePtr->neighbors, otherPtr, &new);
-            if (!new) {
-                Tcl_Obj* result = Tcl_NewObj();
-                Tcl_AppendStringsToObj(result, "Edge from ", nodePtr->cmdName, " to ", otherPtr->cmdName, " already exists!", NULL);
-                return TCL_ERROR;
+        if (objc < 4) {
+            Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | cmd] ?arg ...?");
+            return TCL_ERROR;
+        }
+        Node* otherPtr = Graphs_ValidateNodeCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[2]));
+        if (otherPtr == NULL) {
+            return TCL_ERROR;
+        }
+
+        unDirected = (cmdIdx == UndirNeighbourIx) ? 1 : 0;
+        cmdName = Tcl_GetString(objv[3]);
+        if (Tcl_StringMatch(cmdName, "new") || Tcl_StringMatch(cmdName, "create")) {
+            int offs = 4;
+            if (Tcl_StringMatch(cmdName, "create")) {
+                cmdName = Tcl_GetString(objv[4]);
+                offs++;
             }
-            edgePtr = Edge_CreateEdge(nodePtr->statePtr, nodePtr, otherPtr, interp, "new", objc - 4, objv + 4);
+            edgePtr = Edge_CreateEdge(nodePtr->statePtr, nodePtr, otherPtr, unDirected, interp, cmdName, objc - offs,
+                objv + offs);
             if (edgePtr == NULL) {
-                Tcl_DeleteHashEntry(entry);
                 return TCL_ERROR;
             }
-            Tcl_SetHashValue(entry, edgePtr);
+            Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
             return TCL_OK;
         }
 
-    }
-    case AddUndirNeighbourIx: {
-        //ADDNODE_COMMON;
-        //return Edge_CreateEdge(nodePtr->statePtr, nodePtr, otherPtr, "new", 0, interp, objc-3, objv+3);
+        edgePtr = Edge_GetEdge(nodePtr->statePtr, nodePtr, otherPtr, unDirected, interp);
+        if (edgePtr == NULL) {
+            return TCL_ERROR;
+        }
+        return Edge_EdgeCmd((ClientData)edgePtr, interp, objc-3, objv+3);
     }
     case NeighboursIx: {
-        return NodeCmdGetNeighbours(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdGetNeighbours(nodePtr, interp, objc - 2, objv + 2);
     }
     case LabelIx: {
-        return NodeCmdLabel(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdLabel(nodePtr, interp, objc - 2, objv + 2);
     }
     case ConfigureIx: {
-        return NodeCmdConfigure(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdConfigure(nodePtr, interp, objc - 2, objv + 2);
     }
     case CgetIx: {
-        return NodeCmdCget(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdCget(nodePtr, interp, objc - 2, objv + 2);
     }
     case DeleteIx: {
-        return NodeCmdDelete(nodePtr, interp, objc-2, objv+2);
+        return NodeCmdDelete(nodePtr, interp, objc - 2, objv + 2);
     }
     default: {
         break;
@@ -223,16 +208,15 @@ NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv
 /*
  * Command Delete callback
  */
-static void
-NodeDeleteCmd(ClientData clientData)
+static void NodeDeleteCmd(ClientData clientData)
 {
-    Node* nodePtr = (Node*)clientData;
+    Node* nodePtr = (Node*) clientData;
     Tcl_HashEntry* entry;
     Tcl_HashSearch search;
 
     entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
     while (entry != NULL) {
-        Edge* edgePtr = (Edge*)Tcl_GetHashValue(entry);
+        Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
         Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
         entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
     }
@@ -241,7 +225,7 @@ NodeDeleteCmd(ClientData clientData)
     entry = Tcl_FirstHashEntry(&nodePtr->graphs, &search);
     while (entry != NULL) {
         Tcl_HashEntry* gEntry;
-        Graph* graphPtr = (Graph*)Tcl_GetHashValue(entry);
+        Graph* graphPtr = (Graph*) Tcl_GetHashValue(entry);
         gEntry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr->cmdName);
         if (gEntry != NULL) {
             Tcl_DeleteHashEntry(gEntry);
@@ -256,13 +240,12 @@ NodeDeleteCmd(ClientData clientData)
     entry = Tcl_FindHashEntry(&nodePtr->statePtr->nodes, nodePtr->cmdName);
     Tcl_DeleteHashEntry(entry);
 
-    Tcl_Free((char*)nodePtr);
+    Tcl_Free((char*) nodePtr);
 }
 
-int
-Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+int Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
-    GraphState* gState = (GraphState*)clientData;
+    GraphState* gState = (GraphState*) clientData;
     int new;
     Node* nodePtr;
     Tcl_HashEntry* entryPtr;
@@ -272,24 +255,25 @@ Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
         return TCL_ERROR;
     }
 
-    nodePtr = (Node*)Tcl_Alloc(sizeof(Node));
+    nodePtr = (Node*) Tcl_Alloc(sizeof(Node));
     nodePtr->statePtr = gState;
     sprintf(nodePtr->name, "%s", "");
 
     if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
         sprintf(nodePtr->cmdName, "::tclgraphs::Node%d", gState->nodeUid);
         gState->nodeUid++;
-    } else {
+    }
+    else {
         sprintf(nodePtr->cmdName, Tcl_GetString(objv[1]));
     }
 
     if (Graphs_CheckCommandExists(interp, nodePtr->cmdName)) {
-        Tcl_Free((char*)nodePtr);
+        Tcl_Free((char*) nodePtr);
         return TCL_ERROR;
     }
 
-    if ((objc > 2) && NodeCmdConfigure(nodePtr, interp, objc-2, objv+2) != TCL_OK) {
-        Tcl_Free((char*)nodePtr);
+    if ((objc > 2) && NodeCmdConfigure(nodePtr, interp, objc - 2, objv + 2) != TCL_OK) {
+        Tcl_Free((char*) nodePtr);
         return TCL_ERROR;
     }
 
@@ -304,7 +288,6 @@ Node_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
     return TCL_OK;
 }
 
-void
-Node_CleanupCmd(ClientData data)
+void Node_CleanupCmd(ClientData data)
 {
 }

@@ -50,16 +50,13 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
     return TCL_OK;
 }
 
-int
-EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    char* opts[] = { "-name", "-from", "-to", "-weight", NULL };
+    char* opts[] = { "-name", "-weight", NULL };
     enum OptsIx
     {
         NameIx,
-        FromIx,
-        ToIx,
         WeightIx
     };
 
@@ -75,52 +72,33 @@ EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
         switch (optIdx) {
         case NameIx: {
             sprintf(edgePtr->name, "%s", Tcl_GetString(objv[i + 1]));
-            return TCL_OK;
-        }
-        case FromIx: {
-            Node* nodePtr = Graphs_ValidateNodeCommand(edgePtr->statePtr, interp, Tcl_GetString(objv[i + 1]));
-            if (nodePtr == NULL) {
-                return TCL_ERROR;
-            }
-            if (edgePtr->fromNode != nodePtr) {
-                edgePtr->fromNode = nodePtr;
-            }
-            return TCL_OK;
-        }
-        case ToIx: {
-            Node* nodePtr = Graphs_ValidateNodeCommand(edgePtr->statePtr, interp, Tcl_GetString(objv[i + 1]));
-            if (nodePtr == NULL) {
-                return TCL_ERROR;
-            }
-            if (edgePtr->toNode != nodePtr) {
-                edgePtr->toNode = nodePtr;
-            }
-            return TCL_OK;
+            break;
         }
         case WeightIx: {
             if (Tcl_GetDoubleFromObj(interp, objv[i + 1], &edgePtr->weight) != TCL_OK) {
                 return TCL_ERROR;
             }
-            return TCL_OK;
+            break;
         }
         default: {
-            break;
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong options in edge configure", -1));
+            return TCL_ERROR;
         }
 
         }
     }
 
-    return TCL_ERROR;
+    return TCL_OK;
 }
 
-int
-EdgeCmdDelete(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int EdgeCmdDelete(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     Tcl_DeleteCommandFromToken(interp, edgePtr->commandTkn);
     return TCL_OK;
 }
 
-int EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int
+Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
 
@@ -149,7 +127,7 @@ int EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const 
         return EdgeCmdCget(edgePtr, interp, objc - 2, objv + 2);
     }
     case DeleteIx: {
-        return EdgeCmdDelete(edgePtr, interp, objc-2, objv+2);
+        return EdgeCmdDelete(edgePtr, interp, objc - 2, objv + 2);
     }
     default: {
         break;
@@ -180,64 +158,96 @@ static void EdgeDeleteCmd(ClientData clientData)
 int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     GraphState* gState = (GraphState*) clientData;
+    Edge* edgePtr;
     Node* fromNodePtr = NULL;
     Node* toNodePtr = NULL;
-    Edge* edgePtr;
-    Tcl_HashEntry* entryPtr;
-    int new;
+    const char* dir;
+    int cmdIdx, pOffset;
+    int unDirected = 0;
 
-    if (objc < 6) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj("-from and -to parameters are required to be valid nodes", -1));
+    static char* subCmds[] = { "new", "create", "get", NULL };
+    enum sumCmdIx
+    {
+        NewIx,
+        CreateIx,
+        GetIx
+    };
+
+    if (objc < 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | -] <node> ?arg ...?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[1], subCmds, "method", 0, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
-    for (int i = 2; i < objc; i++) {
-        if (Tcl_StringMatch(Tcl_GetString(objv[i]), "-from")) {
-            if ((i + 1) >= objc) {
-                Tcl_SetObjResult(interp, Tcl_NewStringObj("-from parameter not followed by a value", -1));
-                return TCL_ERROR;
-            }
-            fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[i + 1]));
-            if (fromNodePtr == NULL) {
-                return TCL_ERROR;
-            }
-        }
-        if (Tcl_StringMatch(Tcl_GetString(objv[i]), "-to")) {
-            if ((i + 1) >= objc) {
-                Tcl_SetObjResult(interp, Tcl_NewStringObj("-to parameter not followed by a value", -1));
-                return TCL_ERROR;
-            }
-            toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[i + 1]));
-            if (toNodePtr == NULL) {
-                return TCL_ERROR;
-            }
-        }
+    pOffset = (cmdIdx == CreateIx) ? 1 : 0;
+    if (objc < (4 + pOffset)) {
+        Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | -] <node> ?arg...?");
+        return TCL_ERROR;
     }
 
-    /* -from and -to must be given */
+    dir = Tcl_GetString(objv[3 + pOffset]);
+    if (Tcl_StringMatch(dir, "->")) {
+        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+    }
+    else if (Tcl_StringMatch(dir, "<-")) {
+        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+    }
+    else if (Tcl_StringMatch(dir, "-")) {
+        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+        unDirected = 1;
+    }
+    else {
+        Tcl_Obj* res = Tcl_NewObj();
+        Tcl_AppendStringsToObj(res, "Not a valid direction: ", dir, "! Must be ->, <- or -", NULL);
+        Tcl_SetObjResult(interp, res);
+        return TCL_ERROR;
+    }
+
     if ((fromNodePtr == NULL) || (toNodePtr == NULL)) {
         Tcl_SetObjResult(interp,
-            Tcl_NewStringObj("-from and -to parameters are required to be valid nodes", -1));
+            Tcl_NewStringObj("from and to parameters are required to be valid nodes", -1));
         return TCL_ERROR;
     }
 
-    entryPtr =  Tcl_CreateHashEntry(&fromNodePtr->neighbors, toNodePtr, &new);
-    if (new) {
-        edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, interp, Tcl_GetString(objv[1]), objc-2, objv+2);
+    switch (cmdIdx) {
+    case NewIx:
+    case CreateIx: {
+        edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
+            Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
         if (edgePtr == NULL) {
-            Tcl_DeleteHashEntry(entryPtr);
             return TCL_ERROR;
         }
-        Tcl_SetHashValue(entryPtr,edgePtr);
-        return TCL_OK;
+        break;
+    }
+    case GetIx: {
+        if (objc != 4) {
+            Tcl_WrongNumArgs(interp, 1, objv, "get <fromNode> <toNode>");
+            return TCL_ERROR;
+        }
+        edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
+        if (edgePtr == NULL) {
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("", -1));
+            return TCL_OK;
+        }
+        break;
+    }
+    default: {
+        break;
+    }
     }
 
-    edgePtr = Tcl_GetHashValue(entryPtr);
     Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
     return TCL_OK;
 }
 
-Edge* Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, Tcl_Interp* interp, const char* cmdName, int objc, Tcl_Obj* const objv[])
+Edge*
+Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp,
+    const char* cmdName, int objc, Tcl_Obj* const objv[])
 {
     Tcl_HashEntry* entryPtr;
     int new;
@@ -261,19 +271,83 @@ Edge* Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, Tc
 
     sprintf(edgePtr->name, "%s", "");
     edgePtr->weight = 0.;
-    if (objc > 0 && EdgeCmdConfigure(edgePtr, interp, objc, objv) != TCL_OK) {
-        Tcl_Free((void*) edgePtr);
-        return NULL;
-    }
     edgePtr->fromNode = fromNodePtr;
     edgePtr->toNode = toNodePtr;
 
-    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, EdgeCmd, edgePtr, EdgeDeleteCmd);
+    if (objc > 0 && EdgeCmdConfigure(edgePtr, interp, objc, objv) != TCL_OK) {
+        Tcl_Free((char*) edgePtr);
+        return NULL;
+    }
+
+    /* create neighbor and check if exists */
+    {
+        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->neighbors, toNodePtr, &new);
+        if (!new) {
+            Tcl_Obj* result = Tcl_NewObj();
+            Tcl_AppendStringsToObj(result, toNodePtr->cmdName, " is already neighbor of ",
+                fromNodePtr->cmdName, NULL);
+            Tcl_SetObjResult(interp, result);
+            Tcl_Free((char*) edgePtr);
+            return NULL;
+        }
+        Tcl_SetHashValue(entry1, edgePtr);
+
+        if (unDirected) {
+            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->neighbors, fromNodePtr, &new);
+            if (!new) {
+                Tcl_Obj* result = Tcl_NewObj();
+                Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ",
+                    toNodePtr->cmdName, NULL);
+                Tcl_SetObjResult(interp, result);
+                Tcl_DeleteHashEntry(entry1);
+                Tcl_Free((char*) edgePtr);
+                return NULL;
+            }
+            Tcl_SetHashValue(entry2, edgePtr);
+        }
+    }
+
+    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeCmd, edgePtr, EdgeDeleteCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
-
     return edgePtr;
+}
+
+Edge*
+Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp)
+{
+    Edge *edgePtr1, *edgePtr2;
+
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->neighbors, toNodePtr);
+    if (entry == NULL) {
+        Tcl_Obj* res = Tcl_NewObj();
+        Tcl_AppendStringsToObj(res, fromNodePtr->cmdName, " is not a neighbor of ", toNodePtr->cmdName, NULL);
+        Tcl_SetObjResult(interp, res);
+        return NULL;
+    }
+    edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
+
+    if (unDirected) {
+        entry = Tcl_FindHashEntry(&toNodePtr->neighbors, fromNodePtr);
+        if (entry == NULL) {
+            Tcl_Obj* res = Tcl_NewObj();
+            Tcl_AppendStringsToObj(res, toNodePtr->cmdName, " is not a neighbor of ", fromNodePtr->cmdName,
+                NULL);
+            Tcl_SetObjResult(interp, res);
+            return NULL;
+        }
+
+        edgePtr2 = (Edge*) Tcl_GetHashValue(entry);
+        if (edgePtr1 != edgePtr2) {
+            Tcl_Obj* res = Tcl_NewObj();
+            Tcl_AppendStringsToObj(res, fromNodePtr->cmdName, " is not connected to ", toNodePtr->cmdName,
+                " by an undirected edge", NULL);
+            Tcl_SetObjResult(interp, res);
+            return NULL;
+        }
+    }
+
+    return edgePtr1;
 }
 
 void Edge_CleanupCmd(ClientData data)
