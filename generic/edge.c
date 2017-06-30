@@ -5,15 +5,8 @@
  * Edge API
  */
 
-static char* edgeSubCmds[] = {
-    "new",
-    "create",
-    "get",
-    "configure",
-    "cget",
-    "delete",
-    NULL
-};
+static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "delete",
+NULL };
 enum edgeSubCmdIndices
 {
     NewIx,
@@ -23,7 +16,6 @@ enum edgeSubCmdIndices
     CgetIx,
     DeleteIx
 };
-
 
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
@@ -117,8 +109,8 @@ int EdgeCmdDelete(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const ob
     return TCL_OK;
 }
 
-static int
-EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* interp, int objc,
+    Tcl_Obj* const objv[])
 {
     switch (cmdIdx) {
     case ConfigureIx: {
@@ -135,15 +127,15 @@ EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* interp, int ob
     case GetIx:
     default: {
         Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx], " should be configure cget or delete", NULL);
+        Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx],
+            " should be configure cget or delete", NULL);
         Tcl_SetObjResult(interp, res);
         return TCL_ERROR;
     }
     }
 }
 
-int
-Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
 
@@ -157,7 +149,7 @@ Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const
         return TCL_ERROR;
     }
 
-    return EdgeCmd(edgePtr, cmdIdx, interp, objc-2, objv+2);
+    return EdgeCmd(edgePtr, cmdIdx, interp, objc - 2, objv + 2);
 }
 
 static void EdgeDeleteCmd(ClientData clientData)
@@ -184,11 +176,19 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     Edge* edgePtr = NULL;
     Node* fromNodePtr = NULL;
     Node* toNodePtr = NULL;
-    int cmdIdx;
+    int cmdIdx, directionIdx;
     int unDirected = 0;
 
+    static char* directChars[] = { "->", "<-", "<->" };
+    enum directIdx
+    {
+        OutIx,
+        InIx,
+        UndirIx
+    };
+
     if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | -] <node> ?arg ...?");
+        Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | <->] <node> ?arg ...?");
         return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[1], edgeSubCmds, "method", 0, &cmdIdx) != TCL_OK) {
@@ -196,73 +196,90 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     }
 
     int pOffset = (cmdIdx == CreateIx) ? 1 : 0;
-    if (objc < (4 + pOffset)) {
-        Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | -] <node> ?arg...?");
-        return TCL_ERROR;
+
+    if (objc < 4 || Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", 0, &directionIdx) != TCL_OK) {
+        /* edge is given as an edge command */
+        Tcl_ResetResult(interp);
+        edgePtr = Graphs_ValidateEdgeCommand(gState, interp, Tcl_GetString(objv[2]));
     }
 
-    const char * dir = Tcl_GetString(objv[3 + pOffset]);
-    if (Tcl_StringMatch(dir, "->")) {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
-    }
-    else if (Tcl_StringMatch(dir, "<-")) {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
-    }
-    else if (Tcl_StringMatch(dir, "-")) {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
-        unDirected = 1;
-    }
-    else {
-        Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "Not a valid direction: ", dir, "! Must be ->, <- or -", NULL);
-        Tcl_SetObjResult(interp, res);
-        return TCL_ERROR;
-    }
+    if (edgePtr == NULL) {
+        /* edge command does not exist. It must be derived or created between two nodes */
+        switch (directionIdx) {
+        case OutIx: {
+            fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+            toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+            break;
+        }
+        case InIx: {
+            fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+            toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+            break;
+        }
+        case UndirIx: {
+            fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+            toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+            unDirected = 1;
+            break;
 
-    if ((fromNodePtr == NULL) || (toNodePtr == NULL)) {
-        Tcl_SetObjResult(interp,
-            Tcl_NewStringObj("from and to parameters are required to be valid nodes", -1));
-        return TCL_ERROR;
+        }
+        default: {
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("Not a valid direction in edge command", -1));
+            return TCL_ERROR;
+        }
+
+        }
+
+        if ((fromNodePtr == NULL) || (toNodePtr == NULL)) {
+            Tcl_SetObjResult(interp,
+                Tcl_NewStringObj("from and to parameters are required to be valid nodes", -1));
+            return TCL_ERROR;
+        }
+
+        switch (cmdIdx) {
+        case NewIx:
+        case CreateIx: {
+            edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
+                Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
+            if (edgePtr == NULL) {
+                return TCL_ERROR;
+            }
+            Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
+            return TCL_OK;
+        }
+        default: {
+            edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
+            if (edgePtr == NULL) {
+                return TCL_ERROR;
+            }
+            break;
+        }
+        }
     }
 
     switch (cmdIdx) {
-    case NewIx:
-    case CreateIx: {
-        edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
-            Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
-        if (edgePtr == NULL) {
-            return TCL_ERROR;
-        }
-        break;
-    }
     case GetIx: {
-        if (objc != 4) {
-            Tcl_WrongNumArgs(interp, 1, objv, "get <fromNode> <-> <toNode>");
-            return TCL_ERROR;
+        if (edgePtr == NULL) {
+            edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         }
-        edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         if (edgePtr == NULL) {
             Tcl_SetObjResult(interp, Tcl_NewStringObj("", -1));
             return TCL_OK;
         }
-        break;
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
+        return TCL_OK;
     }
 
     case ConfigureIx:
     case CgetIx:
     case DeleteIx: {
-        if (objc != 4) {
-            Tcl_WrongNumArgs(interp, 2, objv, "<fromNode> <-> <toNode>");
-            return TCL_ERROR;
+        if (edgePtr == NULL) {
+            edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         }
-        edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         if (edgePtr == NULL) {
             return TCL_ERROR;
         }
-        return EdgeCmd(edgePtr, cmdIdx, interp, objc-5, objv+5);
+        return EdgeCmd(edgePtr, cmdIdx, interp, objc - 5, objv + 5);
     }
 
     default: {
@@ -271,8 +288,6 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     }
     }
 
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
-    return TCL_OK;
 }
 
 Edge*
@@ -337,7 +352,8 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         }
     }
 
-    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeCmd, edgePtr, EdgeDeleteCmd);
+    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeCmd, edgePtr,
+        EdgeDeleteCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);
     return edgePtr;
@@ -360,7 +376,7 @@ Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirec
         if (entry == NULL) {
             Tcl_Obj* res = Tcl_NewObj();
             Tcl_AppendStringsToObj(res, toNodePtr->cmdName, " is not a neighbor of ", fromNodePtr->cmdName,
-                NULL);
+            NULL);
             Tcl_SetObjResult(interp, res);
             return NULL;
         }
