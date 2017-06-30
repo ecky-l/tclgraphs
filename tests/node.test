@@ -1,0 +1,36 @@
+## node.test (created by Tloona here)
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
+#tcltest::configure -verbose {pass}
+
+if {$tcl_platform(platform) eq "windows"} {
+    load tclgraphs.dll
+}
+
+package require tclgraphs
+namespace import tclgraphs::*
+
+###
+
+test node-1.1 "create and delete node" -setup {} -body {
+    tclgraphs::node n
+    info command n
+} -cleanup {
+    rename n {}
+} -result {n}
+
+###
+
+test node-1.2 "create node with name" -setup {} -body {
+    tclgraphs::node n -name "Note"
+    n cget -name
+} -cleanup {
+    rename n {}
+} -result {Note}
+
+# cleanup
+::tcltest::cleanupTests
+return

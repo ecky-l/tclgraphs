@@ -13,7 +13,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {body pass}
+#tcltest::configure -verbose {pass}
 
 if {$tcl_platform(platform) eq "windows"} {
     load tclgraphs.dll
@@ -39,24 +39,6 @@ test graph-1.2 "create graph with name" -setup {} -body {
 } -cleanup {
     rename g {}
 } -result {Graf}
-
-###
-
-test node-1.1 "create and delete node" -setup {} -body {
-    tclgraphs::node n
-    info command n
-} -cleanup {
-    rename n {}
-} -result {n}
-
-###
-
-test node-1.2 "create node with name" -setup {} -body {
-    tclgraphs::node n -name "Note"
-    n cget -name
-} -cleanup {
-    rename n {}
-} -result {Note}
 
 ###
 
@@ -168,112 +150,6 @@ test graph-addnode-and-delete-1.4 "delete node from graph" -setup {
 } -result {3 n1 2}
 
 ###
-
-test edge-create-1.1 "create edge via edge command" -setup {
-    node n1
-    node n2
-} -body {
-    edge create e n1 -> n2
-} -cleanup {
-    e delete
-    n1 delete
-    n2 delete
-} -result {e}
-
-###
-
-test edge-create-1.2 "create edge via node and new" -setup {
-    node n1
-    node n2
-} -body {
-    set e [n1 -> n2 new]
-    llength [info command $e] 
-} -cleanup {
-    $e delete
-    n1 delete
-    n2 delete
-} -result {1}
-
-###
-
-test edge-create-1.3 "create edge via node and create" -setup {
-    node n1
-    node n2
-} -body {
-    n1 -> n2 create e
-} -cleanup {
-    e delete
-    n1 delete
-    n2 delete
-} -result {e}
-
-###
-
-test edge-create-1.4 "create edge via node, new and arguments" -setup {
-    node n1
-    node n2
-} -body {
-    set e [n1 -> n2 new -weight 2]
-    list [llength [info command $e]] [$e cget -weight] 
-} -cleanup {
-    $e delete
-    n1 delete
-    n2 delete
-} -result {1 2.0}
-
-###
-
-test edge-create-1.5 "create edge via node, create and arguments" -setup {
-    node n1
-    node n2
-} -body {
-    n1 -> n2 create e -weight 2.5
-    list [info commands e] [e cget -weight]
-} -cleanup {
-    e delete
-    n1 delete
-    n2 delete
-} -result {e 2.5}
-
-###
-
-test edge-create-1.6 "create undirected edge via edge command" -setup {
-    node n1
-    node n2
-} -body {
-    edge create e n1 - n2
-} -cleanup {
-    e delete
-    n1 delete
-    n2 delete
-} -result {e}
-
-###
-
-test edge-create-1.7 "create undirected edge via edge command and arguments" -setup {
-    node n1
-    node n2
-} -body {
-    edge create e n1 - n2 -weight 2.5 -name Etch
-    list [info commands e] [e cget -weight] [e cget -name]
-} -cleanup {
-    e delete
-    n1 delete
-    n2 delete
-} -result {e 2.5 Etch}
-
-###
-
-test edge-delete-1.1 "edge is deleted when node 1 is deleted" -setup {
-    node n1
-    node n2
-    n1 -> n2 create e
-} -body {
-    n1 delete
-    info commands e
-} -cleanup {
-    n2 delete
-} -result {}
 
 
 # cleanup
