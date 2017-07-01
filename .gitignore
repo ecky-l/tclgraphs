@@ -55,3 +55,8 @@ Makefile
 config.*
 pkgIndex.tcl
 
+autom4te.cache
+.autotools
+.cproject
+.project
+.settings
