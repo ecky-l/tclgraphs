@@ -135,7 +135,7 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
     }
 }
 
-int Edge_EdgeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
 
@@ -170,7 +170,36 @@ static void EdgeDeleteCmd(ClientData clientData)
     Tcl_Free((char*) edgePtr);
 }
 
-int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+/*
+ * Implements the edge command.
+ *
+ * Used to create edges ([edge create <name> ...], [edge new ...]), to get edges ([edge get ...])
+ * and to call subcommands on edges. The edge can be given as its own command name, i.e. the
+ * name specified/returned during create/new, or the by the nodes that the edges connects. In the
+ * latter case, the call is i.e. [edge <cmd> n1 -> n2], where -> denotes the outgoing edge from
+ * n1 to n2. The three possibilities are "n1 -> n2" for outgoing edges from n1 to n2, "n1 <- n2"
+ * for incoming edges, resp. outgoing edge from n2 to n1 and n1 <-> n2 for undirected edges.
+ *
+ * Examples:
+ *
+ *  edge create e n1 -> n2
+ *  - creates an outgoing directed edge from n1 to n2, named e (n2 is a neighbor of n1 but n1 is
+ *    not a neighbor of n2)
+ *
+ *  edge new n1 <-> n2
+ *  - creates an undirected edge between n1 and n2 (both are neighbors of each other) with auto
+ *    choosen name. The name is returned
+ *
+ *  edge get n1 -> n2
+ *  - resolves and returns the edge handle/command for the directed edge from n1 to n2
+ *
+ *  edge configure n1 -> n2 -weight 42
+ *  - configures the directed edge from n1 to n2 with a weight of 42
+ *
+ *  edge delete e
+ *  - deletes the edge with token/command e
+ */
+int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     GraphState* gState = (GraphState*) clientData;
     Edge* edgePtr = NULL;
@@ -178,6 +207,7 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     Node* toNodePtr = NULL;
     int cmdIdx, directionIdx;
     int unDirected = 0;
+    int throughCommand = 0;
 
     static char* directChars[] = { "->", "<-", "<->" };
     enum directIdx
@@ -197,8 +227,10 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 
     int pOffset = (cmdIdx == CreateIx) ? 1 : 0;
 
-    if (objc < 4 || Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", 0, &directionIdx) != TCL_OK) {
+    if (objc
+        < 4|| Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", 0, &directionIdx) != TCL_OK) {
         /* edge is given as an edge command */
+        throughCommand = 1;
         Tcl_ResetResult(interp);
         edgePtr = Graphs_ValidateEdgeCommand(gState, interp, Tcl_GetString(objv[2]));
     }
@@ -273,13 +305,14 @@ int Edge_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     case ConfigureIx:
     case CgetIx:
     case DeleteIx: {
+        int argcOff = (throughCommand) ? 3 : 5;
         if (edgePtr == NULL) {
             edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         }
         if (edgePtr == NULL) {
             return TCL_ERROR;
         }
-        return EdgeCmd(edgePtr, cmdIdx, interp, objc - 5, objv + 5);
+        return EdgeCmd(edgePtr, cmdIdx, interp, objc - argcOff, objv + argcOff);
     }
 
     default: {
@@ -352,7 +385,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         }
     }
 
-    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeCmd, edgePtr,
+    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeSubCmd, edgePtr,
         EdgeDeleteCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);

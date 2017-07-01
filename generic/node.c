@@ -114,7 +114,7 @@ static int NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
 
     Node* nodePtr = (Node*) clientData;
     static char *subCmds[] = {
-        "addtographs", "delfromgraphs", "->", "-", "neighbors", "label", "configure", "cget", "delete",
+        "addtographs", "delfromgraphs", "->", "<->", "neighbors", "label", "configure", "cget", "delete",
         NULL };
     enum BlobIx
     {
@@ -180,7 +180,7 @@ static int NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         if (edgePtr == NULL) {
             return TCL_ERROR;
         }
-        return Edge_EdgeCmd((ClientData)edgePtr, interp, objc-3, objv+3);
+        return Edge_EdgeSubCmd((ClientData)edgePtr, interp, objc-3, objv+3);
     }
     case NeighboursIx: {
         return NodeCmdGetNeighbours(nodePtr, interp, objc - 2, objv + 2);
