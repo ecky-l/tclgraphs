@@ -35,7 +35,7 @@ GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
             int i;
             appendRes = 0;
             for (i = 0; i < tagLen; i++) {
-                Tcl_HashEntry* tagsEntry = Tcl_FindHashEntry(&np->tags, Tcl_GetString(tagsObj[i]));
+                Tcl_HashEntry* tagsEntry = Tcl_FindHashEntry(&np->labels, Tcl_GetString(tagsObj[i]));
                 if (tagsEntry != NULL) {
                     appendRes = 1;
                     break;

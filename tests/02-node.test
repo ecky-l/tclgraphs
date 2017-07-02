@@ -15,13 +15,17 @@ namespace import tclgraphs::*
 
 #### fixtures
 set createTwoNodes {
-    node n1
-    node n2
+    graph g
+    node create n1
+    node create n2
+    set result {}
 }
 
 set deleteTwoNodes {
     n1 delete
     n2 delete
+    g delete
+    unset -nocomplain result
 }
 #### fixtures
 
@@ -54,7 +58,20 @@ test node-cmd-2.2 "delete node via node cmd" -setup {} -body {
 
 ###
 
-test node-addtograph-2.1 "add node to graph via cmd" -setup {
+test node-addtograph-2.1.1 "add node to graph via cmd" -setup {
+    graph g
+    node create n
+} -body {
+    node graphs n + g
+    g nodes
+} -cleanup {
+    n delete
+    g delete
+} -result {n}
+
+###
+
+test node-addtograph-2.1.2 "add node to graph via node" -setup {
     graph g
     node create n
 } -body {
@@ -67,11 +84,34 @@ test node-addtograph-2.1 "add node to graph via cmd" -setup {
 
 ###
 
-test node-addtograph-and-delete-2.1 "add and delete node removes node from graph" -setup {
+test node-addtograph-2.1.3 "add node to graph via node, retrieval via cmd" -setup {
     graph g
-    node create n1
-    node create n2
+    node create n
 } -body {
+    node graphs n + g
+    node graphs n
+} -cleanup {
+    n delete
+    g delete
+} -result g
+
+###
+
+test node-addtograph-2.1.4 "add node to graph, retrieve via node" -setup {
+    graph g1
+    graph g2
+    node create n
+} -body {
+    n graphs + g1 g2
+    n graphs
+} -cleanup {
+    n delete
+    g1 delete
+    g2 delete
+} -result {g1 g2}
+###
+
+test node-addtograph-and-delete-2.2.1 "add and delete node removes node from graph" -setup $createTwoNodes -body {
     n1 graphs + g
     n2 graphs + g
     n1 delete
@@ -83,11 +123,7 @@ test node-addtograph-and-delete-2.1 "add and delete node removes node from graph
 
 ###
 
-test node-addtograph-and-delete-2.2 "add and delete node leaves empty graph" -setup {
-    graph g
-    node create n1
-    node create n2
-} -body {
+test node-addtograph-and-delete-2.2.2 "add and delete node leaves empty graph" -setup $createTwoNodes -body {
     n1 graphs + g
     n2 graphs + g
     lappend result [llength [g nodes]]
@@ -99,6 +135,44 @@ test node-addtograph-and-delete-2.2 "add and delete node leaves empty graph" -se
     unset result
 } -result {2 {}}
 
+###
+
+test node-label-2.3.1 "add label via cmd" -setup $createTwoNodes -body {
+    node labels n1 + mylab yourlab
+    node labels n1
+} -cleanup $deleteTwoNodes -result {mylab yourlab}
+
+###
+
+test node-label-2.3.2 "add label via node" -setup $createTwoNodes -body {
+    n1 labels + mylab yourlab
+    n1 labels
+} -cleanup $deleteTwoNodes -result {mylab yourlab}
+
+###
+
+test node-label-2.3.3 "remove label via cmd" -setup $createTwoNodes -body {
+    node labels n1 + mylab yourlab
+    set result [node labels n1]
+    node labels n1 - mylab
+    lappend result [node labels n1]
+} -cleanup $deleteTwoNodes -result {mylab yourlab yourlab}
+
+###
+
+test node-label-2.3.4 "remove label via node" -setup $createTwoNodes -body {
+    n1 labels + mylab yourlab
+    set result [n1 labels]
+    n1 labels - mylab
+    lappend result [n1 labels]
+} -cleanup $deleteTwoNodes -result {mylab yourlab yourlab}
+
+test node-label-2.3.5 "remove all label via cmd" -setup $createTwoNodes -body {
+    node labels n1 + mylab yourlab
+    set result [node labels n1]
+    node labels n1 - yourlab mylab
+    lappend result [node labels n1]
+} -cleanup $deleteTwoNodes -result {mylab yourlab {}}
 # cleanup
 
 ::tcltest::cleanupTests

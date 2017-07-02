@@ -27,7 +27,7 @@ typedef struct _node {
     GraphState* statePtr;
     Tcl_Command commandTkn;
     Tcl_HashTable neighbors;
-    Tcl_HashTable tags;
+    Tcl_HashTable labels;
     Tcl_HashTable graphs;
 } Node;
 
