@@ -1,0 +1,105 @@
+## node.test (created by Tloona here)
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
+tcltest::configure -verbose {pass}
+
+if {$tcl_platform(platform) eq "windows"} {
+    load tclgraphs.dll
+}
+
+package require tclgraphs
+namespace import tclgraphs::*
+
+#### fixtures
+set createTwoNodes {
+    node n1
+    node n2
+}
+
+set deleteTwoNodes {
+    n1 delete
+    n2 delete
+}
+#### fixtures
+
+###
+
+test node-cmd-2.1.1 "create node via create" -setup {} -body {
+    node create n
+    info command n
+} -cleanup {
+    rename n {}
+} -result n
+
+###
+
+test node-cmd-2.1.2 "create node via new" -setup {} -body {
+    set n [node new]
+    llength [info command $n]
+} -cleanup {
+    rename $n {}
+} -result 1
+
+###
+
+test node-cmd-2.2 "delete node via node cmd" -setup {} -body {
+    node create n -name "Note"
+    lappend result [info commands n]
+    node delete n
+    lappend result [info commands n]
+} -cleanup {unset result} -result {n {}}
+
+###
+
+test node-addtograph-2.1 "add node to graph via cmd" -setup {
+    graph g
+    node create n
+} -body {
+    n graphs + g
+    g nodes
+} -cleanup {
+    n delete
+    g delete
+} -result {n}
+
+###
+
+test node-addtograph-and-delete-2.1 "add and delete node removes node from graph" -setup {
+    graph g
+    node create n1
+    node create n2
+} -body {
+    n1 graphs + g
+    n2 graphs + g
+    n1 delete
+    g nodes
+} -cleanup {
+    n2 delete
+    g delete
+} -result {n2}
+
+###
+
+test node-addtograph-and-delete-2.2 "add and delete node leaves empty graph" -setup {
+    graph g
+    node create n1
+    node create n2
+} -body {
+    n1 graphs + g
+    n2 graphs + g
+    lappend result [llength [g nodes]]
+    n1 delete
+    n2 delete
+    lappend result [g nodes]
+} -cleanup {
+    g delete
+    unset result
+} -result {2 {}}
+
+# cleanup
+
+::tcltest::cleanupTests
+return

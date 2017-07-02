@@ -1,0 +1,137 @@
+## edge.test (created by Tloona here)
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
+tcltest::configure -verbose {pass}
+
+if {$tcl_platform(platform) eq "windows"} {
+    load tclgraphs.dll
+}
+
+package require tclgraphs
+namespace import tclgraphs::*
+
+#### fixtures
+set createTwoNodes {
+    node create n1
+    node create n2
+}
+
+set deleteTwoNodes {
+    n1 delete
+    n2 delete
+}
+
+#### fixtures
+###
+
+test edge-create-3.1.1 "create edge via edge command" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+} -cleanup {
+    e delete
+    n1 delete
+    n2 delete
+} -result {e}
+
+###
+
+test edge-create-3.1.2 "create undirected edge via edge command" -setup $createTwoNodes -body {
+    edge create e n1 - n2
+} -cleanup {
+    e delete
+    n1 delete
+    n2 delete
+} -result {e}
+
+###
+
+test edge-create-3.1.3 "create undirected edge via edge command and arguments" -setup $createTwoNodes -body {
+    edge create e n1 <-> n2 -weight 2.5 -name Etch
+    list [info commands e] [e cget -weight] [e cget -name]
+} -cleanup {
+    e delete
+    n1 delete
+    n2 delete
+} -result {e 2.5 Etch}
+
+###
+
+test edge-delete-3.2 "edge is deleted when node 1 is deleted" -setup {
+    node create n1
+    node create n2
+    edge create e n1 -> n2
+} -body {
+    n1 delete
+    info commands e
+} -cleanup {
+    n2 delete
+} -result {}
+
+###
+
+tcltest::test edge-cmd-3.3.1 "edge command create" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+} -cleanup $deleteTwoNodes -result {e}
+
+###
+
+tcltest::test edge-cmd-3.3.2 "edge command new" -setup $createTwoNodes -body {
+    set e [edge new n1 -> n2]
+    llength [info commands $e]
+} -cleanup $deleteTwoNodes -result 1
+
+###
+
+tcltest::test edge-cmd-3.4.1 "edge command configure through nodes" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge configure n1 -> n2 -weight 2.3 -name hello
+    list [e cget -weight] [e cget -name]
+} -cleanup $deleteTwoNodes -result {2.3 hello}
+
+###
+
+tcltest::test edge-cmd-3.4.2 "edge command configure through command" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge configure e -weight 2.3 -name hello
+    list [e cget -weight] [e cget -name]
+} -cleanup $deleteTwoNodes -result {2.3 hello}
+
+###
+
+tcltest::test edge-cmd-3.5.1 "edge command cget through nodes" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3 -name hello
+    list [e cget -weight] [e cget -name]
+} -cleanup $deleteTwoNodes -result {2.3 hello}
+
+###
+
+tcltest::test edge-cmd-3.5.2 "edge command cget through command" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3 -name hello
+    list [edge cget e -weight] [edge cget e -name]
+} -cleanup $deleteTwoNodes -result {2.3 hello}
+###
+
+tcltest::test edge-cmd-3.6.1 "edge command get through nodes" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3 -name hello
+    edge get n1 -> n2
+} -cleanup $deleteTwoNodes -result e
+
+###
+
+tcltest::test edge-cmd-3.6.2 "edge command get through cmd" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3 -name hello
+    edge get e
+} -cleanup $deleteTwoNodes -result e
+
+###
+
+tcltest::test edge-cmd-3.7.1 "edge command delete through cmd" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3 -name hello
+    edge delete e
+    info commands e
+} -cleanup $deleteTwoNodes -result {}
+# cleanup
+::tcltest::cleanupTests
+return

@@ -9,12 +9,12 @@ static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "del
 NULL };
 enum edgeSubCmdIndices
 {
-    NewIx,
-    CreateIx,
-    GetIx,
-    ConfigureIx,
-    CgetIx,
-    DeleteIx
+    EdgeNewIx,
+    EdgeCreateIx,
+    EdgeGetIx,
+    EdgeConfigureIx,
+    EdgeCgetIx,
+    EdgeDeleteIx
 };
 
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
@@ -113,18 +113,18 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
     Tcl_Obj* const objv[])
 {
     switch (cmdIdx) {
-    case ConfigureIx: {
+    case EdgeConfigureIx: {
         return EdgeCmdConfigure(edgePtr, interp, objc, objv);
     }
-    case CgetIx: {
+    case EdgeCgetIx: {
         return EdgeCmdCget(edgePtr, interp, objc, objv);
     }
-    case DeleteIx: {
+    case EdgeDeleteIx: {
         return EdgeCmdDelete(edgePtr, interp, objc, objv);
     }
-    case NewIx:
-    case CreateIx:
-    case GetIx:
+    case EdgeNewIx:
+    case EdgeCreateIx:
+    case EdgeGetIx:
     default: {
         Tcl_Obj* res = Tcl_NewObj();
         Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx],
@@ -225,7 +225,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         return TCL_ERROR;
     }
 
-    int pOffset = (cmdIdx == CreateIx) ? 1 : 0;
+    int pOffset = (cmdIdx == EdgeCreateIx) ? 1 : 0;
 
     if (objc
         < 4|| Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", 0, &directionIdx) != TCL_OK) {
@@ -269,8 +269,8 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         }
 
         switch (cmdIdx) {
-        case NewIx:
-        case CreateIx: {
+        case EdgeNewIx:
+        case EdgeCreateIx: {
             edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
                 Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
             if (edgePtr == NULL) {
@@ -290,7 +290,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     }
 
     switch (cmdIdx) {
-    case GetIx: {
+    case EdgeGetIx: {
         if (edgePtr == NULL) {
             edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
         }
@@ -302,9 +302,9 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         return TCL_OK;
     }
 
-    case ConfigureIx:
-    case CgetIx:
-    case DeleteIx: {
+    case EdgeConfigureIx:
+    case EdgeCgetIx:
+    case EdgeDeleteIx: {
         int argcOff = (throughCommand) ? 3 : 5;
         if (edgePtr == NULL) {
             edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);

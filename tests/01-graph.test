@@ -13,7 +13,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-#tcltest::configure -verbose {pass}
+tcltest::configure -verbose {pass}
 
 if {$tcl_platform(platform) eq "windows"} {
     load tclgraphs.dll
@@ -44,7 +44,7 @@ test graph-1.2 "create graph with name" -setup {} -body {
 
 test graph-addnode-1.1 "add node to graph via graph" -setup {
     tclgraphs::graph g
-    tclgraphs::node n
+    tclgraphs::node create n
 } -body {
     g addnode n
     g nodes
@@ -55,11 +55,11 @@ test graph-addnode-1.1 "add node to graph via graph" -setup {
 
 ###
 
-test graph-addnode-1.1 "add node to graph via graph" -setup {
+test graph-addnode-1.2 "add node to graph via graph" -setup {
     tclgraphs::graph g
-    tclgraphs::node n1
-    tclgraphs::node n2
-    tclgraphs::node n3
+    tclgraphs::node create n1
+    tclgraphs::node create n2
+    tclgraphs::node create n3
 } -body {
     g addnode n1 n2 n3
     llength [g nodes]
@@ -70,52 +70,6 @@ test graph-addnode-1.1 "add node to graph via graph" -setup {
     g delete
 } -result {3}
 
-###
-
-test graph-addnode-1.2 "add node to graph via node" -setup {
-    tclgraphs::graph g
-    tclgraphs::node n
-} -body {
-    n addtograph g
-    g nodes
-} -cleanup {
-    n delete
-    g delete
-} -result {n}
-
-###
-
-test graph-addnode-and-delete-1.1 "add and delete node removes node from graph" -setup {
-    tclgraphs::graph g
-    tclgraphs::node n1
-    tclgraphs::node n2
-} -body {
-    n1 addtograph g
-    n2 addtograph g
-    n1 delete
-    g nodes
-} -cleanup {
-    n2 delete
-    g delete
-} -result {n2}
-
-###
-
-test graph-addnode-and-delete-1.2 "add and delete node leaves empty graph" -setup {
-    tclgraphs::graph g
-    tclgraphs::node n1
-    tclgraphs::node n2
-} -body {
-    n1 addtograph g
-    n2 addtograph g
-    lappend result [llength [g nodes]]
-    n1 delete
-    n2 delete
-    lappend result [g nodes]
-} -cleanup {
-    g delete
-    unset result
-} -result {2 {}}
 
 ###
 
@@ -134,14 +88,14 @@ test graph-addnode-and-delete-1.3 "delete graph deletes nodes with -nodes flag" 
 ###
 
 test graph-addnode-and-delete-1.4 "delete node from graph" -setup {
-    tclgraphs::graph g
-    tclgraphs::node n1
-    tclgraphs::node n2
-    tclgraphs::node n3
+    graph g
+    node create n1
+    node create n2
+    node create n3
 } -body {
     g addnodes n1 n2 n3
     lappend result [llength [g nodes]]
-    n1 delfromgraph g
+    n1 graphs - g
     lappend result [info commands n1] [llength [g nodes]]
 } -cleanup {
     unset result

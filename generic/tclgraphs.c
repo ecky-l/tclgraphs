@@ -46,7 +46,7 @@ Tclgraphs_Init(Tcl_Interp *interp)
 
     Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_CreateCmd,
        (ClientData)gState, (Tcl_CmdDeleteProc *)Graph_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_CreateCmd,
+    Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd,
        (ClientData)gState, (Tcl_CmdDeleteProc *)Node_CleanupCmd);
     Tcl_CreateObjCommand(interp, "::tclgraphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd,
        (ClientData)gState, (Tcl_CmdDeleteProc *)Edge_CleanupCmd);
