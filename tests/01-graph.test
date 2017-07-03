@@ -25,7 +25,7 @@ namespace import tclgraphs::*
 ###
 
 test graph-1.1 "create and delete a graph" -setup {} -body {
-    tclgraphs::graph g
+    graph create g
     expr { [info command g] != {} }
 } -cleanup {
     rename g {}
@@ -34,7 +34,7 @@ test graph-1.1 "create and delete a graph" -setup {} -body {
 ###
 
 test graph-1.2 "create graph with name" -setup {} -body {
-    tclgraphs::graph g -name "Graf"
+    graph create g -name "Graf"
     g cget -name
 } -cleanup {
     rename g {}
@@ -43,11 +43,11 @@ test graph-1.2 "create graph with name" -setup {} -body {
 ###
 
 test graph-addnode-1.1 "add node to graph via graph" -setup {
-    tclgraphs::graph g
-    tclgraphs::node create n
+    graph create g
+    node create n
 } -body {
-    g addnode n
-    g nodes
+    g nodes + n
+    g nodes get
 } -cleanup {
     n delete
     g delete
@@ -56,13 +56,13 @@ test graph-addnode-1.1 "add node to graph via graph" -setup {
 ###
 
 test graph-addnode-1.2 "add node to graph via graph" -setup {
-    tclgraphs::graph g
-    tclgraphs::node create n1
-    tclgraphs::node create n2
-    tclgraphs::node create n3
+    graph create g
+    node create n1
+    node create n2
+    node create n3
 } -body {
-    g addnode n1 n2 n3
-    llength [g nodes]
+    g nodes + n1 n2 n3
+    llength [g nodes get]
 } -cleanup {
     n1 delete
     n2 delete
@@ -74,11 +74,10 @@ test graph-addnode-1.2 "add node to graph via graph" -setup {
 ###
 
 test graph-addnode-and-delete-1.3 "delete graph deletes nodes with -nodes flag" -setup {
-    tclgraphs::graph g
+    graph create g
 } -body {
-    namespace import ::tclgraphs::node
-    g addnodes [node new] [node new] [node new]
-    lappend result [llength [g nodes]]
+    g nodes + [node new] [node new] [node new]
+    lappend result [llength [g nodes get]]
     g delete -nodes
     lappend result [info commands ::tclgraph::Node*]
 } -cleanup {
@@ -88,15 +87,15 @@ test graph-addnode-and-delete-1.3 "delete graph deletes nodes with -nodes flag" 
 ###
 
 test graph-addnode-and-delete-1.4 "delete node from graph" -setup {
-    graph g
+    graph create g
     node create n1
     node create n2
     node create n3
 } -body {
-    g addnodes n1 n2 n3
-    lappend result [llength [g nodes]]
+    g nodes + n1 n2 n3
+    lappend result [llength [g nodes get]]
     n1 graphs - g
-    lappend result [info commands n1] [llength [g nodes]]
+    lappend result [info commands n1] [llength [g nodes get]]
 } -cleanup {
     unset result
     g delete -nodes

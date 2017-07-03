@@ -6,9 +6,32 @@
  * Graph API
  */
 
+static const char* graphSubCommands[] = {
+    "new",
+    "create",
+    "delete",
+    "configure",
+    "cget",
+    "nodes",
+    "edges",
+    "subgraphs",
+    NULL
+};
+
+enum graphCommandIndex {
+    GraphNewIx,
+    GraphCreateIx,
+    GraphDeleteIx,
+    GraphConfigureIx,
+    GraphCgetIx,
+    GraphNodesIx,
+    GraphEdgesIx,
+    GraphSubgraphsIx
+};
+
 
 static int
-GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+GraphNodesGetNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     Tcl_HashSearch search;
     Tcl_HashEntry* entry;
@@ -17,8 +40,8 @@ GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
     Tcl_Obj** tagsObj = NULL;
 
     if (objc > 0) {
-        if (objc != 2 || !Tcl_StringMatch(Tcl_GetString(objv[0]), "-tags")) {
-            Tcl_WrongNumArgs(interp, 0, objv, "?-tags ...?");
+        if (objc != 2 || !Tcl_StringMatch(Tcl_GetString(objv[0]), "-labels")) {
+            Tcl_WrongNumArgs(interp, 0, objv, "?-labels ...?");
             return TCL_ERROR;
         }
         if (Tcl_ListObjGetElements(interp, objv[1], &tagLen, &tagsObj)) {
@@ -55,7 +78,7 @@ GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
 }
 
 static int
-GraphCmdAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     /* Validation first. No node is added unless all nodes are valid */
     for (int j = 0; j < objc; j++) {
@@ -75,21 +98,57 @@ GraphCmdAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const o
 }
 
 static int
-GraphCmdRmNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+GraphNodesDeleteNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     return TCL_OK;
+}
+
+static int
+GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int cmdIdx;
+    static const char* subCmds[] = { "add", "+", "delete", "-", "get", NULL };
+    enum subCmdIdx {
+        GraphAddNodes1Ix,
+        GraphAddNodes2Ix,
+        GraphDeleteNodes1Ix,
+        GraphDeleteNodes2Ix,
+        GraphGetNodesIx
+    };
+
+    if (objc < 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "option ?arg ...?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", 0, &cmdIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (cmdIdx) {
+    case GraphAddNodes1Ix:
+    case GraphAddNodes2Ix: {
+        return GraphNodesAddNodes(graphPtr, interp, objc-1, objv+1);
+    }
+    case GraphDeleteNodes1Ix:
+    case GraphDeleteNodes2Ix: {
+        return GraphNodesDeleteNodes(graphPtr, interp, objc-1, objv+1);
+    }
+    case GraphGetNodesIx:
+    default: {
+        break;
+    }
+
+    }
+
+    return GraphNodesGetNodes(graphPtr, interp, objc-1, objv+1);
 }
 
 static int
 GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    char* opts[] = {
-        "-name", "-nodes", NULL
-    };
-    enum OptsIx {
-        NameIx, NodesIx
-    };
+    static const char* opts[] = { "-name", NULL };
+    enum OptsIx { NameIx };
 
     if (objc < 2 || objc > 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
@@ -103,36 +162,6 @@ GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const 
         switch (optIdx) {
         case NameIx: {
             sprintf(graphPtr->name, "%s", Tcl_GetString(objv[i+1]));
-            break;
-        }
-        case NodesIx: {
-            Tcl_HashEntry* entry;
-            Tcl_HashSearch search;
-            int j, loLen;
-            Tcl_Obj** nodesList;
-
-            /* check whether all given nodes are valid */
-            if (Tcl_ListObjGetElements(interp, objv[i+1], &loLen, &nodesList) != TCL_OK) {
-                return TCL_ERROR;
-            }
-
-            for (j = 0; j < loLen; j++) {
-                char* nName = Tcl_GetString(nodesList[j]);
-                if (Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName) != TCL_OK) {
-                    return TCL_ERROR;
-                }
-
-            }
-
-            /* remove existing nodes, to set new ones. Do not delete them. */
-            entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
-            while (entry != NULL) {
-                Tcl_DeleteHashEntry(entry);
-                entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
-            }
-
-            /* assign new nodes to the graph */
-            GraphCmdAddNodes(graphPtr, interp, loLen, nodesList);
             break;
         }
         default: {
@@ -149,12 +178,9 @@ static int
 GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = {
-        "-name", "-nodes", NULL
-    };
-    enum OptsIx {
-        NameIx, NodesIx
-    };
+    char* opts[] = { "-name", NULL };
+    enum OptsIx { NameIx };
+
     if (objc != 1) {
         Tcl_WrongNumArgs(interp, 0, objv, "option");
         return TCL_ERROR;
@@ -168,9 +194,6 @@ GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
         Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->name, -1));
         return TCL_OK;
     }
-    case NodesIx: {
-        return GraphCmdNodes(graphPtr, interp, objc-1, objv+1);
-    }
     default: {
         break;
     }
@@ -182,16 +205,15 @@ static int
 GraphCmdDelete(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     int optIdx;
-    const char *opts[] = {
-        "-nodes", NULL
-    };
-    enum OptsIx {
-        NodexIx
-    };
+    static const char *opts[] = { "-nodes", NULL };
+    enum OptsIx { NodexIx };
+
     if (objc > 1) {
         Tcl_WrongNumArgs(interp, 0, objv, "?-nodes?");
         return TCL_ERROR;
-    } else if (objc == 1) {
+    }
+
+    if (objc == 1) {
         if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 1, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
@@ -211,44 +233,36 @@ GraphCmdDelete(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const obj
 
 
 static int
-GraphCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
 
-    Graph* graphPtr = (Graph*) clientData;
-    const char *subCmds[] = {
-        "addnodes", "delnodes", "nodes", "configure", "cget", "delete", NULL
-    };
-    enum BlobIx {
-        AddNodesIx, RmNodesIx, NodesIx, ConfigureIx, CgetIx, DeleteIx
-    };
-
-    if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
-        return TCL_ERROR;
-    }
-    if (Tcl_GetIndexFromObj(interp, objv[1], subCmds, "method", 0, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, cmd, graphSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
     switch (cmdIdx) {
-    case AddNodesIx: {
-        return GraphCmdAddNodes(graphPtr, interp, objc-2, objv+2);
+    case GraphNewIx:
+    case GraphCreateIx: {
+        return TCL_ERROR;
     }
-    case RmNodesIx: {
-        return GraphCmdRmNodes(graphPtr, interp, objc-2, objv+2);
+    case GraphDeleteIx: {
+        return GraphCmdDelete(graphPtr, interp, objc, objv);
     }
-    case NodesIx: {
-        return GraphCmdNodes(graphPtr, interp, objc-2, objv+2);
+    case GraphConfigureIx: {
+        return GraphCmdConfigure(graphPtr, interp, objc, objv);
     }
-    case ConfigureIx: {
-        return GraphCmdConfigure(graphPtr, interp, objc-2, objv+2);
+    case GraphCgetIx: {
+        return GraphCmdCget(graphPtr, interp, objc, objv);
     }
-    case CgetIx: {
-        return GraphCmdCget(graphPtr, interp, objc-2, objv+2);
+    case GraphNodesIx: {
+        return GraphCmdNodes(graphPtr, interp, objc, objv);
     }
-    case DeleteIx: {
-        return GraphCmdDelete(graphPtr, interp, objc-2, objv+2);
+    case GraphEdgesIx: {
+
+    }
+    case GraphSubgraphsIx: {
+
     }
     default: {
         break;
@@ -256,6 +270,18 @@ GraphCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
     }
 
     return TCL_ERROR;
+}
+
+static int
+Graph_GraphSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    Graph* graphPtr = (Graph*)clientData;
+
+    if (objc < 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+        return TCL_ERROR;
+    }
+    return GraphSubCmd(graphPtr, objv[1], interp, objc-2, objv+2);
 }
 
 static void
@@ -272,48 +298,78 @@ GraphDeleteCmd(ClientData clientData)
 }
 
 int
-Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     GraphState* gState = (GraphState*)clientData;
     Graph* graphPtr;
     Tcl_HashEntry* entryPtr;
     int new;
+    int cmdIdx;
 
     if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 0, objv, "[new|cmdname] ?arg ...?");
+        Tcl_WrongNumArgs(interp, 0, objv, "option");
         return TCL_ERROR;
     }
 
-    graphPtr = (Graph*)Tcl_Alloc(sizeof(Graph));
-    graphPtr->statePtr = gState;
-    sprintf(graphPtr->name,"%s", "");
-
-    if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
-        sprintf(graphPtr->cmdName, "::tclgraphs::Graph%d", gState->graphUid);
-        gState->graphUid++;
-    } else {
-        sprintf(graphPtr->cmdName, Tcl_GetString(objv[1]));
-    }
-
-    if (Graphs_CheckCommandExists(interp, graphPtr->cmdName)) {
-        Tcl_Free((char*)graphPtr);
+    if (Tcl_GetIndexFromObj(interp, objv[1], graphSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
-    if ((objc > 2) && GraphCmdConfigure(graphPtr, interp, objc-2, objv+2) != TCL_OK) {
-        Tcl_Free((char*)graphPtr);
-        return TCL_ERROR;
+    switch (cmdIdx) {
+    case GraphNewIx:
+    case GraphCreateIx: {
+        int paramOffset;
+
+        graphPtr = (Graph*) Tcl_Alloc(sizeof(Graph));
+        graphPtr->statePtr = gState;
+        sprintf(graphPtr->name, "%s", "");
+
+        if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
+            sprintf(graphPtr->cmdName, "::tclgraphs::Graph%d", gState->graphUid);
+            gState->graphUid++;
+            paramOffset = 2;
+        } else {
+            if (objc < 3) {
+                Tcl_WrongNumArgs(interp, 0, objv, "<name>");
+                return TCL_ERROR;
+            }
+            const char* cmdName = Tcl_GetString(objv[2]);
+            if (Graphs_CheckCommandExists(interp, cmdName)) {
+                Tcl_Free((char*) graphPtr);
+                return TCL_ERROR;
+            }
+            sprintf(graphPtr->cmdName, cmdName);
+            paramOffset = 3;
+        }
+
+        Tcl_InitHashTable(&graphPtr->nodes, TCL_STRING_KEYS);
+        entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
+        Tcl_SetHashValue(entryPtr, (ClientData)graphPtr);
+        if (objc > paramOffset) {
+            if (GraphCmdConfigure(graphPtr, interp, objc - paramOffset, objv + paramOffset) != TCL_OK) {
+                GraphDeleteCmd(graphPtr);
+                return TCL_ERROR;
+            }
+        }
+
+        graphPtr->commandTkn = Tcl_CreateObjCommand(interp, graphPtr->cmdName, Graph_GraphSubCmd, graphPtr, GraphDeleteCmd);
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->cmdName, -1));
+        return TCL_OK;
+    }
+    default: {
+        break;
+    }
     }
 
-
-    Tcl_InitHashTable(&graphPtr->nodes, TCL_STRING_KEYS);
-
-    graphPtr->commandTkn = Tcl_CreateObjCommand(interp, graphPtr->cmdName, GraphCmd, graphPtr, GraphDeleteCmd);
-    entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
-    Tcl_SetHashValue(entryPtr, (ClientData)graphPtr);
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->cmdName, -1));
-
-    return TCL_OK;
+    if (objc < 3) {
+        Tcl_WrongNumArgs(interp, 0, objv, "option");
+        return TCL_ERROR;
+    }
+    graphPtr = Graphs_ValidateGraphCommand(gState, interp, Tcl_GetString(objv[2]));
+    if (graphPtr == NULL) {
+        return TCL_ERROR;
+    }
+    return GraphSubCmd(graphPtr, objv[1], interp, objc-3, objv+3);
 }
 
 void

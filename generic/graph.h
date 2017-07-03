@@ -41,7 +41,7 @@ typedef struct _edge {
     double weight;
 } Edge;
 
-int Graph_CreateCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 void Graph_CleanupCmd(ClientData data);
 
 int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);

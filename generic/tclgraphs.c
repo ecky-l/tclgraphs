@@ -44,7 +44,7 @@ Tclgraphs_Init(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_CreateCmd,
+    Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd,
        (ClientData)gState, (Tcl_CmdDeleteProc *)Graph_CleanupCmd);
     Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd,
        (ClientData)gState, (Tcl_CmdDeleteProc *)Node_CleanupCmd);
