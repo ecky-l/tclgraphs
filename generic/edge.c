@@ -209,7 +209,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     int unDirected = 0;
     int throughCommand = 0;
 
-    static char* directChars[] = { "->", "<-", "<->" };
+    static char* directChars[] = { "->", "<-", "<->", NULL };
     enum directIdx
     {
         OutIx,
@@ -227,8 +227,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
     int pOffset = (cmdIdx == EdgeCreateIx) ? 1 : 0;
 
-    if (objc
-        < 4|| Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", 0, &directionIdx) != TCL_OK) {
+    if (objc < 4 || Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", TCL_EXACT, &directionIdx) != TCL_OK) {
         /* edge is given as an edge command */
         throughCommand = 1;
         Tcl_ResetResult(interp);
@@ -253,10 +252,15 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
             toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
             unDirected = 1;
             break;
-
         }
         default: {
-            Tcl_SetObjResult(interp, Tcl_NewStringObj("Not a valid direction in edge command", -1));
+            Tcl_Obj* res = Tcl_NewObj();
+            Tcl_AppendStringsToObj(res,
+                                   "Not a valid edge direction: \"",
+                                   Tcl_GetString(objv[3+pOffset]),
+                                   "\". Must be ->, <- or <->",
+                                   NULL);
+            Tcl_SetObjResult(interp, res);
             return TCL_ERROR;
         }
 

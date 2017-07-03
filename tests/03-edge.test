@@ -20,8 +20,8 @@ set createTwoNodes {
 }
 
 set deleteTwoNodes {
-    n1 delete
-    n2 delete
+    catch {n1 delete}
+    catch {n2 delete}
 }
 
 #### fixtures
@@ -38,12 +38,22 @@ test edge-create-3.1.1 "create edge via edge command" -setup $createTwoNodes -bo
 ###
 
 test edge-create-3.1.2 "create undirected edge via edge command" -setup $createTwoNodes -body {
-    edge create e n1 - n2
+    edge create e n1 <-> n2
 } -cleanup {
-    e delete
+    catch {e delete}
     n1 delete
     n2 delete
 } -result {e}
+
+###
+
+test edge-create-3.1.3 "create edge w wrong direction raises" -setup $createTwoNodes -body {
+    edge create e n1 - n2
+} -cleanup {
+    catch {e delete}
+    n1 delete
+    n2 delete
+} -returnCodes error -result {Not a valid edge direction: "-". Must be ->, <- or <->}
 
 ###
 
