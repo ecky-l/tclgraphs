@@ -41,6 +41,17 @@ typedef struct _edge {
     double weight;
 } Edge;
 
+
+/*
+ * Enum to specify filter options, used to lookup entities by label contained,
+ * or labels not contained.
+ */
+enum ELabelFilterOption {
+    LABELS_IDX,
+    LABELS_NOT_IDX,
+    LABELS_ALL_IX
+};
+
 int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 void Graph_CleanupCmd(ClientData data);
 
@@ -93,5 +104,10 @@ void Graphs_DeleteEdge(Edge* nodePtr, Tcl_Interp* interp);
  * Additionally, all edges incident with that node are deleted and freed.
  */
 void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
+
+/*
+ * Get and filter nodes
+ */
+int Graphs_GetNodes(Tcl_HashTable, enum ELabelFilterOption, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 #endif /* GRAPH_H */

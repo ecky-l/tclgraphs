@@ -33,48 +33,15 @@ enum graphCommandIndex {
 static int
 GraphNodesGetNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    Tcl_HashSearch search;
-    Tcl_HashEntry* entry;
-    Tcl_Obj* result = Tcl_NewObj();
-    int tagLen = 0;
-    Tcl_Obj** tagsObj = NULL;
-
+    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
+    int optIdx = LABELS_ALL_IX;
     if (objc > 0) {
-        if (objc != 2 || !Tcl_StringMatch(Tcl_GetString(objv[0]), "-labels")) {
-            Tcl_WrongNumArgs(interp, 0, objv, "?-labels ...?");
-            return TCL_ERROR;
-        }
-        if (Tcl_ListObjGetElements(interp, objv[1], &tagLen, &tagsObj)) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
     }
 
-    entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
-    while (entry != NULL) {
-        Node* np = Tcl_GetHashValue(entry);
-        int appendRes = 1;
-
-        if (tagLen > 0) {
-            int i;
-            appendRes = 0;
-            for (i = 0; i < tagLen; i++) {
-                Tcl_HashEntry* tagsEntry = Tcl_FindHashEntry(&np->labels, Tcl_GetString(tagsObj[i]));
-                if (tagsEntry != NULL) {
-                    appendRes = 1;
-                    break;
-                }
-            }
-        }
-
-        if (appendRes == 1) {
-            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(np->cmdName, -1));
-        }
-
-        entry = Tcl_NextHashEntry(&search);
-    }
-
-    Tcl_SetObjResult(interp, result);
-    return TCL_OK;
+    return Graphs_GetNodes(graphPtr->nodes, optIdx, interp, objc-1, objv+1);
 }
 
 static int
@@ -342,7 +309,7 @@ Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
             paramOffset = 3;
         }
 
-        Tcl_InitHashTable(&graphPtr->nodes, TCL_STRING_KEYS);
+        Tcl_InitHashTable(&graphPtr->nodes, TCL_ONE_WORD_KEYS);
         entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
         Tcl_SetHashValue(entryPtr, (ClientData)graphPtr);
         if (objc > paramOffset) {

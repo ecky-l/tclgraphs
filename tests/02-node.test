@@ -34,13 +34,12 @@ set createThreeNodes {
     node create n2
     node create n3
     set result {}
-    
 }
 set deleteThreeNodes {
-    n1 delete
-    n2 delete
-    n3 delete
-    g delete
+    catch { n1 delete }
+    catch { n2 delete }
+    catch { n3 delete }
+    catch { g delete }
     unset -nocomplain result
 }
 

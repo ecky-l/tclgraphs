@@ -176,67 +176,15 @@ nodeCmdLabelsReturnLabels:
 static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
-    enum optsEnum {
-        NodeNeighborsLabelsIx, NodeNeighborsNotLabelsIx, NodeNeighborsAllIx
-    };
-
-    int optIdx = NodeNeighborsAllIx;
-    Tcl_HashEntry* entry;
-    Tcl_HashSearch search;
-    Tcl_Obj* result = Tcl_NewObj();
+    int optIdx = LABELS_ALL_IX;
 
     if (objc > 0) {
         if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
-
     }
 
-    entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
-    while (entry != NULL) {
-        Node* neighborPtr = (Node*)Tcl_GetHashKey(&nodePtr->neighbors, entry);
-        int appendRes;
-
-
-        switch (optIdx) {
-        case NodeNeighborsLabelsIx: {
-            Tcl_HashSearch lblSearch;
-            int found = 0;
-            for (int i = 1; i < objc; i++) {
-                Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&neighborPtr->labels, Tcl_GetString(objv[i]));
-                if (lblEntry != NULL) {
-                    found++;
-                }
-            }
-            appendRes = (found == (objc-1));
-            break;
-        }
-        case NodeNeighborsNotLabelsIx: {
-            appendRes = 1;
-            for (int i = 1; i < objc; i++) {
-                Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&neighborPtr->labels, Tcl_GetString(objv[i]));
-                if (lblEntry != NULL) {
-                    appendRes = 0;
-                    break;
-                }
-            }
-            break;
-        }
-        default: {
-            appendRes = 1;
-            break;
-        }
-        }
-
-        if (appendRes) {
-            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(neighborPtr->cmdName, -1));
-        }
-
-        entry = Tcl_NextHashEntry(&search);
-    }
-
-    Tcl_SetObjResult(interp, result);
-    return TCL_OK;
+    return Graphs_GetNodes(nodePtr->neighbors, optIdx, interp, objc-1, objv+1);
 }
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])

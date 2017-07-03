@@ -63,7 +63,7 @@ Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
     int new;
     Tcl_HashEntry* entry;
 
-    entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr->cmdName, &new);
+    entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr, &new);
     if (new) {
         Tcl_SetHashValue(entry, nodePtr);
     }
@@ -84,4 +84,58 @@ void
 Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp)
 {
     Tcl_DeleteCommandFromToken(interp, nodePtr->commandTkn);
+}
+
+int
+Graphs_GetNodes(Tcl_HashTable fromTbl, enum ELabelFilterOption optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    Tcl_HashSearch search;
+    Tcl_HashEntry* entry = Tcl_FirstHashEntry(&fromTbl, &search);
+    Tcl_Obj* result = Tcl_NewObj();
+
+    while (entry != NULL) {
+        Node* neighborPtr = (Node*)Tcl_GetHashKey(&fromTbl, entry);
+        int appendRes;
+
+
+        switch (optIdx) {
+        case LABELS_IDX: {
+            int found = 0;
+            for (int i = 0; i < objc; i++) {
+                Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&neighborPtr->labels, Tcl_GetString(objv[i]));
+                if (lblEntry != NULL) {
+                    found++;
+                }
+            }
+            appendRes = (found == objc);
+            break;
+        }
+        case LABELS_NOT_IDX: {
+            appendRes = 1;
+            for (int i = 0; i < objc; i++) {
+                Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&neighborPtr->labels, Tcl_GetString(objv[i]));
+                if (lblEntry != NULL) {
+                    appendRes = 0;
+                    break;
+                }
+            }
+            break;
+        }
+        case LABELS_ALL_IX:
+        default: {
+            appendRes = 1;
+            break;
+        }
+        }
+
+        if (appendRes) {
+            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(neighborPtr->cmdName, -1));
+        }
+
+        entry = Tcl_NextHashEntry(&search);
+    }
+
+    Tcl_SetObjResult(interp, result);
+    return TCL_OK;
+
 }
