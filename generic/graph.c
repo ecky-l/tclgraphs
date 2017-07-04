@@ -13,8 +13,8 @@ static const char* graphSubCommands[] = {
     "configure",
     "cget",
     "nodes",
-    "edges",
     "subgraphs",
+    "info",
     NULL
 };
 
@@ -25,8 +25,8 @@ enum graphCommandIndex {
     GraphConfigureIx,
     GraphCgetIx,
     GraphNodesIx,
-    GraphEdgesIx,
-    GraphSubgraphsIx
+    GraphSubgraphsIx,
+    GraphInfoIx
 };
 
 
@@ -198,6 +198,50 @@ GraphCmdDelete(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const obj
     return TCL_OK;
 }
 
+static int
+GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    return TCL_OK;
+}
+
+static int
+GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int cmdIdx;
+    static const char* subCmds[] = {
+                                  "nodes",
+                                  "edges",
+                                  "subgraphs",
+                                  NULL
+    };
+    enum cmdIndx {
+        InfoNodesIx,
+        InfoEdgesIx,
+        InfoSubgraphsIx
+    };
+
+    if (objc < 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "option");
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", 1, &cmdIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (cmdIdx) {
+    case InfoNodesIx: {
+        return GraphNodesGetNodes(graphPtr, interp, objc-1, objv+1);
+    }
+    case InfoEdgesIx: {
+        return GraphInfoEdges(graphPtr, interp, objc-1, objv+1);
+    }
+    case InfoSubgraphsIx: {
+
+    }
+    }
+
+
+    return TCL_OK;
+}
 
 static int
 GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
@@ -225,11 +269,11 @@ GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int objc, Tcl_Obj
     case GraphNodesIx: {
         return GraphCmdNodes(graphPtr, interp, objc, objv);
     }
-    case GraphEdgesIx: {
-
-    }
     case GraphSubgraphsIx: {
-
+        break;
+    }
+    case GraphInfoIx: {
+        return GraphCmdInfo(graphPtr, interp, objc, objv);
     }
     default: {
         break;

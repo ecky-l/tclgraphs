@@ -162,6 +162,33 @@ test graph-getnodes-1.5.6 "add and get nodes label 5" -setup $createThreeNodes -
     g nodes get -notlabel hi world
 } -cleanup $deleteThreeNodes -result {}
 
+###
+
+test graph-info-1.6.1 "info nodes 1" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    lmap x {n1 n2 n3} { expr { $x in [g info nodes] } }
+} -cleanup $deleteThreeNodes -result {1 1 1}
+
+###
+
+test graph-getnodes-1.6.2 "info nodes 2" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    n1 labels + world tu jours
+    n2 labels + hello world foo bar
+    n3 labels + blubb hi
+    g info nodes -notlabel hi world
+} -cleanup $deleteThreeNodes -result {}
+
+###
+
+test graph-getnodes-1.6.3 "info nodes 3" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    n1 labels + world tu jours
+    n2 labels + hello world foo bar
+    n3 labels + blubb hi
+    graph info g nodes -notlabel hi world
+} -cleanup $deleteThreeNodes -result {}
+
 
 # cleanup
 ::tcltest::cleanupTests
