@@ -142,6 +142,125 @@ tcltest::test edge-cmd-3.7.1 "edge command delete through cmd" -setup $createTwo
     edge delete e
     info commands e
 } -cleanup $deleteTwoNodes -result {}
+
+###
+
+tcltest::test edge-direction-3.8.1 "create out edge" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    list [n1 neighbors] [n2 neighbors]
+} -cleanup $deleteTwoNodes -result {n2 {}}
+
+###
+
+tcltest::test edge-direction-3.8.2 "create in edge" -setup $createTwoNodes -body {
+    edge create e n1 <- n2
+    list [n1 neighbors] [n2 neighbors]
+} -cleanup $deleteTwoNodes -result {{} n1}
+
+###
+
+tcltest::test edge-direction-3.8.3 "create undirected edge" -setup $createTwoNodes -body {
+    edge create e n1 <-> n2
+    list [n1 neighbors] [n2 neighbors]
+} -cleanup $deleteTwoNodes -result {n2 n1}
+
+###
+
+tcltest::test edge-delete-3.9.1 "create and delete edge" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    set result [list [n1 neighbors] [n2 neighbors]]
+    edge delete e
+    lappend result [n1 neighbors]
+} -cleanup $deleteTwoNodes -result {n2 {} {}}
+
+###
+
+tcltest::test edge-delete-3.9.2 "create edge and delete toNode" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    set result [n1 neighbors]
+    node delete n2
+    lappend result [n1 neighbors]
+} -cleanup $deleteTwoNodes -result {n2 {}}
+
+###
+
+tcltest::test edge-delete-3.9.3 "create edge and delete fromNode" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    set result [n1 neighbors]
+    node delete n1
+    lappend result [info command e]
+} -cleanup $deleteTwoNodes -result {n2 {}}
+
+###
+
+tcltest::test edge-cget-3.10.1 "cget -weight" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -weight 2.3
+    e cget -weight
+} -cleanup $deleteTwoNodes -result 2.3
+
+###
+
+tcltest::test edge-cget-3.10.2 "cget -name" -setup $createTwoNodes -body {
+    edge create e n1 -> n2 -name Etch
+    edge cget e -name
+} -cleanup $deleteTwoNodes -result Etch
+
+###
+
+tcltest::test edge-cget-3.10.3 "cget -from" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    e cget -from
+} -cleanup $deleteTwoNodes -result n1
+
+###
+
+tcltest::test edge-cget-3.10.4 "cget -to" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge cget e -to
+} -cleanup $deleteTwoNodes -result n2
+
+###
+
+tcltest::test edge-cget-3.10.5 "cget -undirected flag for directed" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge cget e -undirected
+} -cleanup $deleteTwoNodes -result 0
+
+###
+
+tcltest::test edge-cget-3.10.6 "cget -undirected flag for undirected" -setup $createTwoNodes -body {
+    edge create e n1 <-> n2
+    edge cget e -undirected
+} -cleanup $deleteTwoNodes -result 1
+
+###
+
+tcltest::test edge-labels-3.11.1 "add labels" -setup $createTwoNodes -body {
+    edge create e n1 <-> n2
+    edge labels e + hello world bla
+    lmap x {hello world bla} { expr { $x in [edge labels e] } }
+} -cleanup $deleteTwoNodes -result {1 1 1}
+
+###
+
+tcltest::test edge-labels-3.11.2 "add and remove labels" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge labels e + hello world bla
+    set result [lmap x {hello world bla} { expr { $x in [edge labels e] } }]
+    edge labels e - world
+    concat $result [lmap x {hello world bla} { expr { $x in [edge labels e] } }]
+} -cleanup $deleteTwoNodes -result {1 1 1 1 0 1}
+
+###
+
+tcltest::test edge-labels-3.11.3 "remove all labels" -setup $createTwoNodes -body {
+    edge create e n1 -> n2
+    edge labels e + hello world bla
+    set result [lmap x {hello world bla} { expr { $x in [edge labels e] } }]
+    edge labels e - world bla hello
+    lappend result [e labels]
+} -cleanup $deleteTwoNodes -result {1 1 1 {}}
+
 # cleanup
 ::tcltest::cleanupTests
 return

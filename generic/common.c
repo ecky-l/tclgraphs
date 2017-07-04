@@ -139,3 +139,64 @@ Graphs_GetNodes(Tcl_HashTable fromTbl, enum ELabelFilterOption optIdx, Tcl_Inter
     return TCL_OK;
 
 }
+
+int
+Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int new;
+    Tcl_HashEntry* entry;
+    int cmdIdx;
+    static char* subcmds[] = { "add", "+", "delete", "-", "get" };
+    enum subCmdIdx { LabelsAdd1, LabelsAdd2, LabelsDel1, LabelsDel2, LabelsGet };
+
+    if (objc == 0) {
+        /* List graphs */
+        goto labelsCommandReturnLabels;
+    }
+
+    if (Tcl_GetIndexFromObj(interp, objv[0], subcmds, "option", 0, &cmdIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (cmdIdx) {
+    case LabelsAdd1:
+    case LabelsAdd2: {
+        for (int i = 1; i < objc; i++) {
+            entry = Tcl_CreateHashEntry(&labelsTbl, Tcl_GetString(objv[i]), &new);
+            if (new) {
+                Tcl_SetHashValue(entry, NULL);
+            }
+        }
+        return TCL_OK;
+    }
+    case LabelsDel1:
+    case LabelsDel2: {
+        for (int i = 1; i < objc; i++) {
+            entry = Tcl_FindHashEntry(&labelsTbl, Tcl_GetString(objv[i]));
+            if (entry != NULL) {
+                Tcl_DeleteHashEntry(entry);
+            }
+        }
+        return TCL_OK;
+    }
+    case LabelsGet:
+    default: {
+        break;
+    }
+
+    }
+
+labelsCommandReturnLabels:
+    {
+        Tcl_HashSearch search;
+        Tcl_Obj* result = Tcl_NewObj();
+        entry = Tcl_FirstHashEntry(&labelsTbl, &search);
+        while (entry != NULL) {
+            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(Tcl_GetHashKey(&labelsTbl, entry), -1));
+            entry = Tcl_NextHashEntry(&search);
+        }
+        Tcl_SetObjResult(interp, result);
+
+    }
+    return TCL_OK;
+}

@@ -26,8 +26,17 @@ typedef struct _node {
     char name[30];
     GraphState* statePtr;
     Tcl_Command commandTkn;
+
+    /* Neighbor nodes reachable from this node. Map of nodes to edges */
     Tcl_HashTable neighbors;
+
+    /* Nodes with incoming edges, mapped to their edges. Mainly used for cleanup */
+    Tcl_HashTable incoming;
+
+    /* labels assigned to the node. Can be used for filtering */
     Tcl_HashTable labels;
+
+    /* graphs where the node is part of */
     Tcl_HashTable graphs;
 } Node;
 
@@ -39,6 +48,12 @@ typedef struct _edge {
     Node* fromNode;
     Node* toNode;
     double weight;
+
+    /* Indicates whether the edge is undirected. Default is directed, then this is 0 */
+    int undirected;
+
+    /* Labels for the edge */
+    Tcl_HashTable labels;
 } Edge;
 
 
@@ -109,5 +124,10 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
  * Get and filter nodes
  */
 int Graphs_GetNodes(Tcl_HashTable, enum ELabelFilterOption, Tcl_Interp*, int, Tcl_Obj* const[]);
+
+/*
+ * Common procedure to add/remove or get labels for nodes and edges
+ */
+int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 #endif /* GRAPH_H */

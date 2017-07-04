@@ -113,65 +113,6 @@ nodeCmdGraphsReturnGraphs:
 
 }
 
-static int NodeCmdLabels(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
-{
-    int new;
-    Tcl_HashEntry* entry;
-    int cmdIdx;
-    static char* subcmds[] = { "add", "+", "delete", "-", "get" };
-    enum subCmdIdx { NodeLabelsAdd1, NodeLabelsAdd2, NodeLabelsDel1, NodeLabelsDel2, NodeLabelsGet };
-
-    if (objc == 0) {
-        /* List graphs */
-        goto nodeCmdLabelsReturnLabels;
-    }
-
-    if (Tcl_GetIndexFromObj(interp, objv[0], subcmds, "option", 0, &cmdIdx) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    switch (cmdIdx) {
-    case NodeLabelsAdd1:
-    case NodeLabelsAdd2: {
-        for (int i = 1; i < objc; i++) {
-            entry = Tcl_CreateHashEntry(&nodePtr->labels, Tcl_GetString(objv[i]), &new);
-            if (new) {
-                Tcl_SetHashValue(entry, NULL);
-            }
-        }
-        return TCL_OK;
-    }
-    case NodeLabelsDel1:
-    case NodeLabelsDel2: {
-        for (int i = 1; i < objc; i++) {
-            entry = Tcl_FindHashEntry(&nodePtr->labels, Tcl_GetString(objv[i]));
-            if (entry != NULL) {
-                Tcl_DeleteHashEntry(entry);
-            }
-        }
-        return TCL_OK;
-    }
-    case NodeLabelsGet:
-    default: {
-        break;
-    }
-
-    }
-
-nodeCmdLabelsReturnLabels:
-    {
-        Tcl_HashSearch search;
-        Tcl_Obj* result = Tcl_NewObj();
-        entry = Tcl_FirstHashEntry(&nodePtr->labels, &search);
-        while (entry != NULL) {
-            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(Tcl_GetHashKey(&nodePtr->labels, entry), -1));
-            entry = Tcl_NextHashEntry(&search);
-        }
-        Tcl_SetObjResult(interp, result);
-
-    }
-    return TCL_OK;
-}
 
 static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
@@ -265,7 +206,7 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
         return NodeCmdGetNeighbours(nodePtr, interp, objc, objv);
     }
     case NodeLabelsIx: {
-        return NodeCmdLabels(nodePtr, interp, objc, objv);
+        return Graphs_LabelsCommand(nodePtr->labels, interp, objc, objv);
     }
     default: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong subcommand to node object!", -1));
@@ -294,11 +235,21 @@ static void NodeDeleteCmd(ClientData clientData)
     Tcl_HashEntry* entry;
     Tcl_HashSearch search;
 
+    /* delete outgoing edges (neighbors) */
     entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
     while (entry != NULL) {
         Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
         Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
         entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
+    }
+
+    /* delete incoming edges */
+    entry = Tcl_FirstHashEntry(&nodePtr->incoming, &search);
+    while (entry != NULL) {
+        Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
+        Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
+        Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
+        entry = Tcl_FirstHashEntry(&nodePtr->incoming, &search);
     }
 
     /* remove myself from the graphs where I am part of */
@@ -314,8 +265,10 @@ static void NodeDeleteCmd(ClientData clientData)
     }
 
     Tcl_DeleteHashTable(&nodePtr->neighbors);
-    Tcl_DeleteHashTable(&nodePtr->labels);
+    Tcl_DeleteHashTable(&nodePtr->incoming);
     Tcl_DeleteHashTable(&nodePtr->graphs);
+
+    Tcl_DeleteHashTable(&nodePtr->labels);
 
     entry = Tcl_FindHashEntry(&nodePtr->statePtr->nodes, nodePtr->cmdName);
     Tcl_DeleteHashEntry(entry);
@@ -368,6 +321,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         }
 
         Tcl_InitHashTable(&nodePtr->neighbors, TCL_ONE_WORD_KEYS);
+        Tcl_InitHashTable(&nodePtr->incoming, TCL_ONE_WORD_KEYS);
         Tcl_InitHashTable(&nodePtr->labels, TCL_STRING_KEYS);
         Tcl_InitHashTable(&nodePtr->graphs, TCL_STRING_KEYS);
 
