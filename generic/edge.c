@@ -29,14 +29,14 @@ enum edgeSubCmdIndices
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = { "-name", "-from", "-to", "-weight", "-undirected", NULL };
+    char* opts[] = { "-name", "-from", "-to", "-weight", "-directed", NULL };
     enum OptsIx
     {
         NameIx,
         FromIx,
         ToIx,
         WeightIx,
-        UndirectedIx
+        DirectedIx
     };
 
     if (objc != 1) {
@@ -64,8 +64,8 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         Tcl_SetObjResult(interp, Tcl_NewDoubleObj(edgePtr->weight));
         return TCL_OK;
     }
-    case UndirectedIx: {
-        Tcl_SetObjResult(interp, Tcl_NewBooleanObj(edgePtr->undirected));
+    case DirectedIx: {
+        Tcl_SetObjResult(interp, Tcl_NewBooleanObj( edgePtr->directionType == EDGE_DIRECTED));
         return TCL_OK;
     }
     default: {
@@ -387,7 +387,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     sprintf(edgePtr->name, "%s", "");
     edgePtr->weight = 0.;
-    edgePtr->undirected = 0;
+    edgePtr->directionType = EDGE_DIRECTED;
     edgePtr->fromNode = fromNodePtr;
     edgePtr->toNode = toNodePtr;
 
@@ -421,7 +421,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
                 return NULL;
             }
             Tcl_SetHashValue(entry2, edgePtr);
-            edgePtr->undirected = 1;
+            edgePtr->directionType = EDGE_UNDIRECTED;
         }
         else {
             entry1 = Tcl_CreateHashEntry(&toNodePtr->incoming, fromNodePtr, &new);

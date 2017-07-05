@@ -221,17 +221,17 @@ tcltest::test edge-cget-3.10.4 "cget -to" -setup $createTwoNodes -body {
 
 ###
 
-tcltest::test edge-cget-3.10.5 "cget -undirected flag for directed" -setup $createTwoNodes -body {
+tcltest::test edge-cget-3.10.5 "cget -directed flag for directed" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    edge cget e -undirected
-} -cleanup $deleteTwoNodes -result 0
+    edge cget e -directed
+} -cleanup $deleteTwoNodes -result 1
 
 ###
 
-tcltest::test edge-cget-3.10.6 "cget -undirected flag for undirected" -setup $createTwoNodes -body {
+tcltest::test edge-cget-3.10.6 "cget -directed flag for undirected" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
-    edge cget e -undirected
-} -cleanup $deleteTwoNodes -result 1
+    edge cget e -directed
+} -cleanup $deleteTwoNodes -result 0
 
 ###
 

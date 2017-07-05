@@ -40,6 +40,11 @@ typedef struct _node {
     Tcl_HashTable graphs;
 } Node;
 
+typedef enum _EdgeDirectionType {
+    EDGE_DIRECTED,
+    EDGE_UNDIRECTED
+} EdgeDirectionT;
+
 typedef struct _edge {
     char cmdName[30];
     char name[30];
@@ -50,12 +55,11 @@ typedef struct _edge {
     double weight;
 
     /* Indicates whether the edge is undirected. Default is directed, then this is 0 */
-    int undirected;
+    EdgeDirectionT directionType;
 
     /* Labels for the edge */
     Tcl_HashTable labels;
 } Edge;
-
 
 /*
  * Enum to specify filter options, used to lookup entities by label contained,

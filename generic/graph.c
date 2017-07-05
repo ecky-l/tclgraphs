@@ -204,6 +204,86 @@ GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
     return TCL_OK;
 }
 
+/*
+ * Append all nodes to the listObj, which are neighbors to a node but are not in the graph.
+ * (nodes on the other side of an edge, where this side of the edge is in the graph but
+ * the other side is not)
+ */
+static int
+GraphAppendDeltaToObj(Graph* graphPtr, Tcl_HashTable nodesTbl, EdgeDirectionT directionType, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
+{
+    Tcl_HashSearch search;
+    Tcl_HashEntry* entry = Tcl_FirstHashEntry(&nodesTbl, &search);
+    while (entry != NULL) {
+        Node* otherNodePtr = Tcl_GetHashKey(&nodesTbl, entry);
+        Tcl_HashEntry* lookupEntry = Tcl_FindHashEntry(&graphPtr->nodes, otherNodePtr);
+        if (lookupEntry == NULL) {
+            /* otherNode is not in this graph. Append if it meets the direction */
+            Edge* edgePtr = Tcl_GetHashValue(entry);
+            if (edgePtr->directionType == directionType) {
+                if (Tcl_ListObjAppendElement(interp, *listObjPtr, Tcl_NewStringObj(edgePtr->cmdName, -1)) != TCL_OK) {
+                    return TCL_ERROR;
+                }
+            }
+        }
+
+        entry = Tcl_NextHashEntry(&search);
+    }
+
+    return TCL_OK;
+}
+
+static int
+GraphInfoDelta(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    static const char* opts[] = { "+", "-", "+-", NULL };
+    enum optsIdx { DeltaPlusIx, DeltaMinusIx, DeltaIx };
+    int optIdx = DeltaIx;
+    Tcl_HashSearch search;
+
+    if (objc > 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "?+ | - | +-?");
+        return TCL_ERROR;
+    }
+    if (objc == 1 && Tcl_GetIndexFromObj(interp, objv[0], opts, "option", TCL_EXACT, &optIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    Tcl_HashEntry* entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
+    Tcl_Obj * resultObj = Tcl_NewObj();
+    while (entry != NULL) {
+        Node* nodePtr = Tcl_GetHashKey(&graphPtr->nodes, entry);
+        switch (optIdx) {
+        case DeltaPlusIx: {
+            if (GraphAppendDeltaToObj(graphPtr, nodePtr->neighbors, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            break;
+        }
+        case DeltaMinusIx: {
+            if (GraphAppendDeltaToObj(graphPtr, nodePtr->incoming, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            break;
+        }
+        case DeltaIx:
+        default: {
+            if (GraphAppendDeltaToObj(graphPtr, nodePtr->neighbors, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            if (GraphAppendDeltaToObj(graphPtr, nodePtr->incoming, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            break;
+        }
+        }
+        entry = Tcl_NextHashEntry(&search);
+    }
+
+    Tcl_SetObjResult(interp, resultObj);
+    return TCL_OK;
+}
+
 static int
 GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
@@ -211,12 +291,14 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     static const char* subCmds[] = {
                                   "nodes",
                                   "edges",
+                                  "delta",
                                   "subgraphs",
                                   NULL
     };
     enum cmdIndx {
         InfoNodesIx,
         InfoEdgesIx,
+        InfoDeltaIx,
         InfoSubgraphsIx
     };
 
@@ -234,6 +316,10 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     case InfoEdgesIx: {
         return GraphInfoEdges(graphPtr, interp, objc-1, objv+1);
     }
+    case InfoDeltaIx: {
+        return GraphInfoDelta(graphPtr,interp,objc-1, objv+1);
+    }
+
     case InfoSubgraphsIx: {
 
     }
