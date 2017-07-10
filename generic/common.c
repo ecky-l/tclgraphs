@@ -200,3 +200,34 @@ labelsCommandReturnLabels:
     }
     return TCL_OK;
 }
+
+
+int
+Graphs_AppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT directionType, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
+{
+    Tcl_HashSearch search;
+    Tcl_HashEntry* entry = Tcl_FirstHashEntry(&nodesTbl, &search);
+    while (entry != NULL) {
+        Node* nodePtr = Tcl_GetHashKey(&nodesTbl, entry);
+        if (graphPtr != NULL) {
+            Tcl_HashEntry* lookupEntry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr);
+            if (lookupEntry == NULL) {
+                /* otherNode is not in this graph. Append if it meets the direction */
+                Edge* edgePtr = Tcl_GetHashValue(entry);
+                if (edgePtr->directionType == directionType) {
+                    if (Tcl_ListObjAppendElement(interp, *listObjPtr, Tcl_NewStringObj(nodePtr->cmdName, -1)) != TCL_OK) {
+                        return TCL_ERROR;
+                    }
+                }
+            }
+        } else {
+            if (Tcl_ListObjAppendElement(interp, *listObjPtr, Tcl_NewStringObj(nodePtr->cmdName, -1)) != TCL_OK) {
+                return TCL_ERROR;
+            }
+        }
+
+        entry = Tcl_NextHashEntry(&search);
+    }
+
+    return TCL_OK;
+}

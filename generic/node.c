@@ -19,6 +19,7 @@ static const char* nodeSubCommands[] = {
                                       "configure",
                                       "cget",
                                       "graphs",
+                                      "info",
                                       "neighbors",
                                       "labels",
                                       NULL
@@ -31,10 +32,29 @@ enum nodeCommandIndex {
     NodeConfigureIx,
     NodeCgetIx,
     NodeGraphsIx,
+    NodeInfoIx,
     NodeNeighborsIx,
     NodeLabelsIx
 };
 
+
+static int
+NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+{
+    Tcl_HashEntry* entry;
+    Tcl_HashSearch search;
+    entry = Tcl_FirstHashEntry(&nodePtr->graphs, &search);
+    Tcl_Obj* result = Tcl_NewObj();
+    const char* graphCmd;
+    while (entry != NULL) {
+        graphCmd = (const char*)Tcl_GetHashKey(&nodePtr->graphs, entry);
+        Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(graphCmd, -1));
+        entry = Tcl_NextHashEntry(&search);
+    }
+    Tcl_SetObjResult(interp, result);
+
+    return TCL_OK;
+}
 
 static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
@@ -44,7 +64,7 @@ static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
     if (objc == 0) {
         /* List graphs */
-        goto nodeCmdGraphsReturnGraphs;
+        return NodeInfoGraphs(nodePtr, interp, objc, objv);
     }
 
     if (Tcl_GetIndexFromObj(interp, objv[0], subcmds, "option", 0, &cmdIdx) != TCL_OK) {
@@ -94,23 +114,7 @@ static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
     }
     }
 
-nodeCmdGraphsReturnGraphs:
-    {
-        Tcl_HashEntry* entry;
-        Tcl_HashSearch search;
-        entry = Tcl_FirstHashEntry(&nodePtr->graphs, &search);
-        Tcl_Obj* result = Tcl_NewObj();
-        const char* graphCmd;
-        while (entry != NULL) {
-            graphCmd = (const char*)Tcl_GetHashKey(&nodePtr->graphs, entry);
-            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(graphCmd, -1));
-            entry = Tcl_NextHashEntry(&search);
-        }
-        Tcl_SetObjResult(interp, result);
-    }
-
-    return TCL_OK;
-
+    return NodeInfoGraphs(nodePtr, interp, objc, objv);
 }
 
 
@@ -125,7 +129,7 @@ static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl
         }
     }
 
-    return Graphs_GetNodes(nodePtr->neighbors, optIdx, interp, objc-1, objv+1);
+    return Graphs_GetNodes(nodePtr->outgoing, optIdx, interp, objc-1, objv+1);
 }
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
@@ -176,6 +180,95 @@ static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
     return TCL_OK;
 }
 
+
+static int
+NodeInfoDelta(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    static const char* opts[] = { "+", "-", "+-", NULL };
+    enum optsIdx { DeltaPlusIx, DeltaMinusIx, DeltaIx };
+    int optIdx = DeltaIx;
+
+    if (objc > 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "?+ | - | +-?");
+        return TCL_ERROR;
+    }
+    if (objc == 1 && Tcl_GetIndexFromObj(interp, objv[0], opts, "option", TCL_EXACT, &optIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    Tcl_Obj * resultObj = Tcl_NewObj();
+    switch (optIdx) {
+    case DeltaPlusIx: {
+        if (Graphs_AppendDeltaToObj(nodePtr->outgoing, NULL, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case DeltaMinusIx: {
+        if (Graphs_AppendDeltaToObj(nodePtr->incoming, NULL, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case DeltaIx:
+    default: {
+        if (Graphs_AppendDeltaToObj(nodePtr->outgoing, NULL, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (Graphs_AppendDeltaToObj(nodePtr->incoming, NULL, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
+    }
+
+    Tcl_SetObjResult(interp, resultObj);
+    return TCL_OK;
+}
+
+static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+{
+    int cmdIdx;
+    static const char* subCmds[] = {
+                                  "delta",
+                                  "graphs",
+                                  "labels",
+                                  NULL
+    };
+    enum cmdIndx {
+        NodeInfoDeltaIx,
+        NodeInfoGraphsIx,
+        NodeInfoLabelsIx
+    };
+
+    if (objc < 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "option");
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", 1, &cmdIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (cmdIdx) {
+    case NodeInfoDeltaIx: {
+        return NodeInfoDelta(nodePtr, interp, objc-1, objv+1);
+    }
+    case NodeInfoGraphsIx: {
+        return NodeInfoGraphs(nodePtr, interp, objc-1, objv+1);
+    }
+    case NodeInfoLabelsIx: {
+        if (objc > 1) {
+            Tcl_WrongNumArgs(interp, 0, objv, "option");
+            return TCL_ERROR;
+        }
+        return Graphs_LabelsCommand(nodePtr->labels, interp, objc-1, objv+1);
+    }
+
+    }
+
+
+    return TCL_OK;
+}
+
 static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
@@ -201,6 +294,9 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
     }
     case NodeGraphsIx: {
         return NodeCmdGraphs(nodePtr, interp, objc, objv);
+    }
+    case NodeInfoIx: {
+        return NodeCmdInfo(nodePtr, interp, objc, objv);
     }
     case NodeNeighborsIx: {
         return NodeCmdGetNeighbours(nodePtr, interp, objc, objv);
@@ -236,11 +332,11 @@ static void NodeDeleteCmd(ClientData clientData)
     Tcl_HashSearch search;
 
     /* delete outgoing edges (neighbors) */
-    entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
+    entry = Tcl_FirstHashEntry(&nodePtr->outgoing, &search);
     while (entry != NULL) {
         Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
         Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
-        entry = Tcl_FirstHashEntry(&nodePtr->neighbors, &search);
+        entry = Tcl_FirstHashEntry(&nodePtr->outgoing, &search);
     }
 
     /* delete incoming edges */
@@ -264,7 +360,7 @@ static void NodeDeleteCmd(ClientData clientData)
         entry = Tcl_FirstHashEntry(&nodePtr->graphs, &search);
     }
 
-    Tcl_DeleteHashTable(&nodePtr->neighbors);
+    Tcl_DeleteHashTable(&nodePtr->outgoing);
     Tcl_DeleteHashTable(&nodePtr->incoming);
     Tcl_DeleteHashTable(&nodePtr->graphs);
 
@@ -320,7 +416,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
             paramOffset = 3;
         }
 
-        Tcl_InitHashTable(&nodePtr->neighbors, TCL_ONE_WORD_KEYS);
+        Tcl_InitHashTable(&nodePtr->outgoing, TCL_ONE_WORD_KEYS);
         Tcl_InitHashTable(&nodePtr->incoming, TCL_ONE_WORD_KEYS);
         Tcl_InitHashTable(&nodePtr->labels, TCL_STRING_KEYS);
         Tcl_InitHashTable(&nodePtr->graphs, TCL_STRING_KEYS);

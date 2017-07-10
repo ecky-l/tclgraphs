@@ -28,7 +28,7 @@ typedef struct _node {
     Tcl_Command commandTkn;
 
     /* Neighbor nodes reachable from this node. Map of nodes to edges */
-    Tcl_HashTable neighbors;
+    Tcl_HashTable outgoing;
 
     /* Nodes with incoming edges, mapped to their edges. Mainly used for cleanup */
     Tcl_HashTable incoming;
@@ -133,5 +133,12 @@ int Graphs_GetNodes(Tcl_HashTable, enum ELabelFilterOption, Tcl_Interp*, int, Tc
  * Common procedure to add/remove or get labels for nodes and edges
  */
 int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const[]);
+
+/*
+ * Append all nodes to the listObj, which are neighbors to a node but are not in the graph.
+ * (nodes on the other side of an edge, where this side of the edge is in the graph but
+ * the other side is not)
+ */
+int Graphs_AppendDeltaToObj(Tcl_HashTable, Graph*, EdgeDirectionT, Tcl_Interp*, Tcl_Obj**);
 
 #endif /* GRAPH_H */

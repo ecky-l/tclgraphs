@@ -177,7 +177,7 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
 static void EdgeDeleteCmd(ClientData clientData)
 {
     Edge* edgePtr = (Edge*) clientData;
-    Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->neighbors, edgePtr->toNode);
+    Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, edgePtr->toNode);
     if (entry1 != NULL) {
         Tcl_DeleteHashEntry(entry1);
         Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, edgePtr->fromNode);
@@ -185,7 +185,7 @@ static void EdgeDeleteCmd(ClientData clientData)
             Tcl_DeleteHashEntry(entry2);
         }
     }
-    entry1 = Tcl_FindHashEntry(&edgePtr->toNode->neighbors, edgePtr->fromNode);
+    entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, edgePtr->fromNode);
     if (entry1 != NULL) {
         Tcl_DeleteHashEntry(entry1);
         Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, edgePtr->toNode);
@@ -398,7 +398,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     /* create neighbor and check if exists */
     {
-        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->neighbors, toNodePtr, &new);
+        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->outgoing, toNodePtr, &new);
         if (!new) {
             Tcl_Obj* result = Tcl_NewObj();
             Tcl_AppendStringsToObj(result, toNodePtr->cmdName, " is already neighbor of ",
@@ -410,7 +410,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         Tcl_SetHashValue(entry1, edgePtr);
 
         if (unDirected) {
-            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->neighbors, fromNodePtr, &new);
+            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->outgoing, fromNodePtr, &new);
             if (!new) {
                 Tcl_Obj* result = Tcl_NewObj();
                 Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ",
@@ -442,7 +442,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 Edge*
 Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->neighbors, toNodePtr);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, toNodePtr);
     if (entry == NULL) {
         Tcl_Obj* res = Tcl_NewObj();
         Tcl_AppendStringsToObj(res, fromNodePtr->cmdName, " is not a neighbor of ", toNodePtr->cmdName, NULL);
@@ -452,7 +452,7 @@ Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirec
     Edge *edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
 
     if (unDirected) {
-        entry = Tcl_FindHashEntry(&toNodePtr->neighbors, fromNodePtr);
+        entry = Tcl_FindHashEntry(&toNodePtr->outgoing, fromNodePtr);
         if (entry == NULL) {
             Tcl_Obj* res = Tcl_NewObj();
             Tcl_AppendStringsToObj(res, toNodePtr->cmdName, " is not a neighbor of ", fromNodePtr->cmdName,
