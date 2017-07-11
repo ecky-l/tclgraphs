@@ -205,49 +205,27 @@ GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const obj
 }
 
 static int
-GraphInfoDelta(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static const char* opts[] = { "+", "-", "+-", NULL };
-    enum optsIdx { DeltaPlusIx, DeltaMinusIx, DeltaIx };
-    int optIdx = DeltaIx;
+    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
+    int optIdx = LABELS_ALL_IX;
+    if (objc > 0) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+    }
+
+    struct LabelFilter lblFilt;
+    lblFilt.filterType = optIdx;
+    lblFilt.objc = objc-1;
+    lblFilt.objv = (Tcl_Obj**)objv+1;
+
     Tcl_HashSearch search;
-
-    if (objc > 1) {
-        Tcl_WrongNumArgs(interp, 0, objv, "?+ | - | +-?");
-        return TCL_ERROR;
-    }
-    if (objc == 1 && Tcl_GetIndexFromObj(interp, objv[0], opts, "option", TCL_EXACT, &optIdx) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
     Tcl_Obj * resultObj = Tcl_NewObj();
     while (entry != NULL) {
         Node* nodePtr = Tcl_GetHashKey(&graphPtr->nodes, entry);
-        switch (optIdx) {
-        case DeltaPlusIx: {
-            if (Graphs_AppendDeltaToObj(nodePtr->outgoing, graphPtr, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
-                return TCL_ERROR;
-            }
-            break;
-        }
-        case DeltaMinusIx: {
-            if (Graphs_AppendDeltaToObj(nodePtr->incoming, graphPtr, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
-                return TCL_ERROR;
-            }
-            break;
-        }
-        case DeltaIx:
-        default: {
-            if (Graphs_AppendDeltaToObj(nodePtr->outgoing, graphPtr, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
-                return TCL_ERROR;
-            }
-            if (Graphs_AppendDeltaToObj(nodePtr->incoming, graphPtr, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
-                return TCL_ERROR;
-            }
-            break;
-        }
-        }
+        Graphs_GetDelta(nodePtr, graphPtr, deltaType, lblFilt, interp, &resultObj);
         entry = Tcl_NextHashEntry(&search);
     }
 
@@ -262,6 +240,8 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     static const char* subCmds[] = {
                                   "nodes",
                                   "edges",
+                                  "delta+",
+                                  "delta-",
                                   "delta",
                                   "subgraphs",
                                   NULL
@@ -269,6 +249,8 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     enum cmdIndx {
         InfoNodesIx,
         InfoEdgesIx,
+        InfoDeltaPlusIx,
+        InfoDeltaMinusIx,
         InfoDeltaIx,
         InfoSubgraphsIx
     };
@@ -276,7 +258,7 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     if (objc < 1) {
         Tcl_WrongNumArgs(interp, 0, objv, "option");
     }
-    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", 1, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", TCL_EXACT, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
@@ -287,8 +269,14 @@ GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[
     case InfoEdgesIx: {
         return GraphInfoEdges(graphPtr, interp, objc-1, objv+1);
     }
+    case InfoDeltaPlusIx: {
+        return GraphInfoDelta(graphPtr, DELTA_PLUS, interp, objc-1, objv+1);
+    }
+    case InfoDeltaMinusIx: {
+        return GraphInfoDelta(graphPtr, DELTA_MINUS, interp, objc-1, objv+1);
+    }
     case InfoDeltaIx: {
-        return GraphInfoDelta(graphPtr,interp,objc-1, objv+1);
+        return GraphInfoDelta(graphPtr, DELTA_ALL, interp, objc-1, objv+1);
     }
 
     case InfoSubgraphsIx: {

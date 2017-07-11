@@ -289,7 +289,7 @@ test node-neighbors-2.4.3.3 "neighbors without label 3" -setup $createThreeNodes
 test node-info-2.5.1.1 "node info delta + via node" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    lmap x {n2 n3} { expr { $x in [n1 info delta +] } }
+    lmap x {n2 n3} { expr { $x in [n1 info delta+] } }
 } -cleanup $deleteThreeNodes -result {1 1}
 
 ###
@@ -297,7 +297,7 @@ test node-info-2.5.1.1 "node info delta + via node" -setup $createThreeNodes -bo
 test node-info-2.5.1.2 "node info delta + via node cmd" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    lmap x {n2 n3} { expr { $x in [node info n1 delta +] } }
+    lmap x {n2 n3} { expr { $x in [node info n1 delta+] } }
 } -cleanup $deleteThreeNodes -result {1 1}
 
 ###
@@ -305,8 +305,8 @@ test node-info-2.5.1.2 "node info delta + via node cmd" -setup $createThreeNodes
 test node-info-2.5.2.1 "node info delta - via node" -setup $createThreeNodes -body {
     edge new n1 <- n2
     edge new n1 <- n3
-    concat [n2 info delta +] [n3 info delta +] \
-        [lmap x {n2 n3} { expr { $x in [n1 info delta -] } }]
+    concat [n2 info delta+] [n3 info delta+] \
+        [lmap x {n2 n3} { expr { $x in [n1 info delta-] } }]
 } -cleanup $deleteThreeNodes -result {n1 n1 1 1}
 
 ###
@@ -314,8 +314,8 @@ test node-info-2.5.2.1 "node info delta - via node" -setup $createThreeNodes -bo
 test node-info-2.5.2.2 "node info delta - via node cmd" -setup $createThreeNodes -body {
     edge new n1 <- n2
     edge new n1 <- n3
-    concat [node info n2 delta +] [node info n3 delta +] \
-        [lmap x {n2 n3} { expr { $x in [node info n1 delta -] } }]
+    concat [node info n2 delta+] [node info n3 delta+] \
+        [lmap x {n2 n3} { expr { $x in [node info n1 delta-] } }]
 } -cleanup $deleteThreeNodes -result {n1 n1 1 1}
 
 # cleanup

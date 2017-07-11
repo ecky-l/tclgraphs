@@ -37,6 +37,19 @@ set deleteThreeNodes {
     catch { g delete }
     unset -nocomplain result
 }
+
+set createTwoGraphs {
+    foreach g {g1 g2} {graph create $g}
+    foreach n {n1 n2 n3 n4} {node create $n}
+    n1 graphs + g1
+    n2 graphs + g1
+    n3 graphs + g2
+    n4 graphs + g2
+}
+set deleteTwoGraphs {
+    g1 delete -nodes
+    g2 delete -nodes
+}
 #### /fixtures
 
 ###
@@ -189,6 +202,20 @@ test graph-getnodes-1.6.3 "info nodes 3" -setup $createThreeNodes -body {
     graph info g nodes -notlabel hi world
 } -cleanup $deleteThreeNodes -result {}
 
+###
+
+test graph-delta-1.7.1 "info delta 1" -setup $createTwoGraphs -body {
+    edge new n1 -> n3
+    graph info g1 delta+
+} -cleanup $deleteTwoGraphs -result n3
+
+###
+
+test graph-delta-1.7.2 "info delta 2" -setup $createTwoGraphs -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    g1 info delta+
+} -cleanup $deleteTwoGraphs -result n3
 
 # cleanup
 ::tcltest::cleanupTests

@@ -45,6 +45,12 @@ typedef enum _EdgeDirectionType {
     EDGE_UNDIRECTED
 } EdgeDirectionT;
 
+typedef enum DeltaType {
+    DELTA_PLUS,
+    DELTA_MINUS,
+    DELTA_ALL
+} DeltaT;
+
 typedef struct _edge {
     char cmdName[30];
     char name[30];
@@ -65,10 +71,16 @@ typedef struct _edge {
  * Enum to specify filter options, used to lookup entities by label contained,
  * or labels not contained.
  */
-enum ELabelFilterOption {
+typedef enum ELabelFilterOption {
     LABELS_IDX,
     LABELS_NOT_IDX,
     LABELS_ALL_IX
+} LabelFilterT;
+
+struct LabelFilter {
+    LabelFilterT filterType;
+    int objc;
+    Tcl_Obj** objv;
 };
 
 int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
@@ -127,7 +139,7 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
 /*
  * Get and filter nodes
  */
-int Graphs_GetNodes(Tcl_HashTable, enum ELabelFilterOption, Tcl_Interp*, int, Tcl_Obj* const[]);
+int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 /*
  * Common procedure to add/remove or get labels for nodes and edges
@@ -135,10 +147,8 @@ int Graphs_GetNodes(Tcl_HashTable, enum ELabelFilterOption, Tcl_Interp*, int, Tc
 int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 /*
- * Append all nodes to the listObj, which are neighbors to a node but are not in the graph.
- * (nodes on the other side of an edge, where this side of the edge is in the graph but
- * the other side is not)
+ * Get delta (neighborhood) of a node or graph
  */
-int Graphs_AppendDeltaToObj(Tcl_HashTable, Graph*, EdgeDirectionT, Tcl_Interp*, Tcl_Obj**);
+int Graphs_GetDelta(Node*, Graph*, DeltaT, struct LabelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj);
 
 #endif /* GRAPH_H */

@@ -87,7 +87,7 @@ Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp)
 }
 
 int
-Graphs_GetNodes(Tcl_HashTable fromTbl, enum ELabelFilterOption optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&fromTbl, &search);
@@ -202,8 +202,8 @@ labelsCommandReturnLabels:
 }
 
 
-int
-Graphs_AppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT directionType, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
+static int
+GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT directionType, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
 {
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&nodesTbl, &search);
@@ -227,6 +227,39 @@ Graphs_AppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT 
         }
 
         entry = Tcl_NextHashEntry(&search);
+    }
+
+    return TCL_OK;
+}
+
+
+int
+Graphs_GetDelta(Node* nodePtr, Graph* graphPtr, DeltaT deltaT, struct LabelFilter labelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj)
+{
+    Tcl_Obj* resObj = *resultObj;
+    switch (deltaT) {
+    case DELTA_PLUS: {
+        if (GraphsAppendDeltaToObj(nodePtr->outgoing, graphPtr, EDGE_DIRECTED, interp, &resObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case DELTA_MINUS: {
+        if (GraphsAppendDeltaToObj(nodePtr->incoming, graphPtr, EDGE_DIRECTED, interp, &resObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case DELTA_ALL:
+    default: {
+        if (GraphsAppendDeltaToObj(nodePtr->outgoing, graphPtr, EDGE_UNDIRECTED, interp, &resObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (GraphsAppendDeltaToObj(nodePtr->incoming, graphPtr, EDGE_UNDIRECTED, interp, &resObj) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        break;
+    }
     }
 
     return TCL_OK;

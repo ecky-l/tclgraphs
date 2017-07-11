@@ -182,47 +182,26 @@ static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
 
 static int
-NodeInfoDelta(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static const char* opts[] = { "+", "-", "+-", NULL };
-    enum optsIdx { DeltaPlusIx, DeltaMinusIx, DeltaIx };
-    int optIdx = DeltaIx;
+    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
+    int optIdx = LABELS_ALL_IX;
 
-    if (objc > 1) {
-        Tcl_WrongNumArgs(interp, 0, objv, "?+ | - | +-?");
+    if (objc > 0) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+    }
+
+    Tcl_Obj* deltaList = Tcl_NewObj();
+    struct LabelFilter lblFilt;
+    lblFilt.filterType = optIdx;
+    lblFilt.objc = objc-1;
+    lblFilt.objv = (Tcl_Obj**)objv+1;
+    if (Graphs_GetDelta(nodePtr, NULL, deltaType, lblFilt, interp, &deltaList) != TCL_OK) {
         return TCL_ERROR;
     }
-    if (objc == 1 && Tcl_GetIndexFromObj(interp, objv[0], opts, "option", TCL_EXACT, &optIdx) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    Tcl_Obj * resultObj = Tcl_NewObj();
-    switch (optIdx) {
-    case DeltaPlusIx: {
-        if (Graphs_AppendDeltaToObj(nodePtr->outgoing, NULL, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
-            return TCL_ERROR;
-        }
-        break;
-    }
-    case DeltaMinusIx: {
-        if (Graphs_AppendDeltaToObj(nodePtr->incoming, NULL, EDGE_DIRECTED, interp, &resultObj) != TCL_OK) {
-            return TCL_ERROR;
-        }
-        break;
-    }
-    case DeltaIx:
-    default: {
-        if (Graphs_AppendDeltaToObj(nodePtr->outgoing, NULL, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
-            return TCL_ERROR;
-        }
-        if (Graphs_AppendDeltaToObj(nodePtr->incoming, NULL, EDGE_UNDIRECTED, interp, &resultObj) != TCL_OK) {
-            return TCL_ERROR;
-        }
-        break;
-    }
-    }
-
-    Tcl_SetObjResult(interp, resultObj);
+    Tcl_SetObjResult(interp, deltaList);
     return TCL_OK;
 }
 
@@ -230,12 +209,16 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
 {
     int cmdIdx;
     static const char* subCmds[] = {
+                                  "delta+",
+                                  "delta-",
                                   "delta",
                                   "graphs",
                                   "labels",
                                   NULL
     };
     enum cmdIndx {
+        NodeInfoDeltaPlusIx,
+        NodeInfoDeltaMinusIx,
         NodeInfoDeltaIx,
         NodeInfoGraphsIx,
         NodeInfoLabelsIx
@@ -244,13 +227,19 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
     if (objc < 1) {
         Tcl_WrongNumArgs(interp, 0, objv, "option");
     }
-    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", 1, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", TCL_EXACT, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
     switch (cmdIdx) {
+    case NodeInfoDeltaPlusIx: {
+        return NodeInfoDelta(nodePtr, DELTA_PLUS, interp, objc-1, objv+1);
+    }
+    case NodeInfoDeltaMinusIx: {
+        return NodeInfoDelta(nodePtr, DELTA_MINUS, interp, objc-1, objv+1);
+    }
     case NodeInfoDeltaIx: {
-        return NodeInfoDelta(nodePtr, interp, objc-1, objv+1);
+        return NodeInfoDelta(nodePtr, DELTA_ALL, interp, objc-1, objv+1);
     }
     case NodeInfoGraphsIx: {
         return NodeInfoGraphs(nodePtr, interp, objc-1, objv+1);
