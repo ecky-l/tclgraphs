@@ -318,6 +318,26 @@ test node-info-2.5.2.2 "node info delta - via node cmd" -setup $createThreeNodes
         [lmap x {n2 n3} { expr { $x in [node info n1 delta-] } }]
 } -cleanup $deleteThreeNodes -result {n1 n1 1 1}
 
+###
+
+test node-info-2.5.3.1 "node info delta with labels via node cmd" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    n2 labels + hello world foo bar
+    n3 labels + hello
+    node info n1 delta+ -labels hello foo 
+} -cleanup $deleteThreeNodes -result {n2}
+
+###
+
+test node-info-2.5.3.2 "node info delta with notlabels" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    n2 labels + hello world foo bar
+    n3 labels + hello
+    list [n1 info delta+ -notlabels foo] [n1 info delta+ -notlabels hello]
+} -cleanup $deleteThreeNodes -result {n3 {}}
+
 # cleanup
 
 ::tcltest::cleanupTests
