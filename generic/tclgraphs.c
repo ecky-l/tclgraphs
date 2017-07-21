@@ -1,6 +1,4 @@
-
 #include "graph.h"
-
 
 /*
  *----------------------------------------------------------------------
@@ -18,8 +16,7 @@
  *	The Combopt package is created.
  *----------------------------------------------------------------------
  */
-DLLEXPORT int
-Tclgraphs_Init(Tcl_Interp *interp)
+DLLEXPORT int Tclgraphs_Init(Tcl_Interp *interp)
 {
     Tcl_Namespace *graphsNS = NULL;
     GraphState* gState;
@@ -30,7 +27,7 @@ Tclgraphs_Init(Tcl_Interp *interp)
     }
 #endif //USE_TCL_STUBS
 
-    gState = (GraphState*)Tcl_Alloc(sizeof(GraphState));
+    gState = (GraphState*) Tcl_Alloc(sizeof(GraphState));
     gState->interp = interp;
     Tcl_InitHashTable(&gState->graphs, TCL_STRING_KEYS);
     Tcl_InitHashTable(&gState->nodes, TCL_STRING_KEYS);
@@ -44,12 +41,12 @@ Tclgraphs_Init(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd,
-       (ClientData)gState, (Tcl_CmdDeleteProc *)Graph_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd,
-       (ClientData)gState, (Tcl_CmdDeleteProc *)Node_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::tclgraphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd,
-       (ClientData)gState, (Tcl_CmdDeleteProc *)Edge_CleanupCmd);
+    Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData) gState,
+            (Tcl_CmdDeleteProc *) Graph_CleanupCmd);
+    Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData) gState,
+            (Tcl_CmdDeleteProc *) Node_CleanupCmd);
+    Tcl_CreateObjCommand(interp, "::tclgraphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData) gState,
+            (Tcl_CmdDeleteProc *) Edge_CleanupCmd);
     Tcl_Export(interp, graphsNS, "graph", 0);
     Tcl_Export(interp, graphsNS, "node", 0);
     Tcl_Export(interp, graphsNS, "edge", 0);

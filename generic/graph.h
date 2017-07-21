@@ -3,7 +3,8 @@
 
 #include <tcl.h>
 
-typedef struct _graphState {
+typedef struct _graphState
+{
     Tcl_Interp* interp;
     Tcl_HashTable graphs;
     Tcl_HashTable nodes;
@@ -13,7 +14,8 @@ typedef struct _graphState {
     int edgeUid;
 } GraphState;
 
-typedef struct _graph {
+typedef struct _graph
+{
     char cmdName[30];
     char name[30];
     Tcl_Command commandTkn;
@@ -21,7 +23,8 @@ typedef struct _graph {
     Tcl_HashTable nodes;
 } Graph;
 
-typedef struct _node {
+typedef struct _node
+{
     char cmdName[30];
     char name[30];
     GraphState* statePtr;
@@ -40,18 +43,21 @@ typedef struct _node {
     Tcl_HashTable graphs;
 } Node;
 
-typedef enum _EdgeDirectionType {
+typedef enum _EdgeDirectionType
+{
     EDGE_DIRECTED,
     EDGE_UNDIRECTED
 } EdgeDirectionT;
 
-typedef enum DeltaType {
+typedef enum DeltaType
+{
     DELTA_PLUS,
     DELTA_MINUS,
     DELTA_ALL
 } DeltaT;
 
-typedef struct _edge {
+typedef struct _edge
+{
     char cmdName[30];
     char name[30];
     GraphState* statePtr;
@@ -71,27 +77,29 @@ typedef struct _edge {
  * Enum to specify filter options, used to lookup entities by label contained,
  * or labels not contained.
  */
-typedef enum ELabelFilterOption {
+typedef enum ELabelFilterOption
+{
     LABELS_IDX,
     LABELS_NOT_IDX,
     LABELS_ALL_IX
 } LabelFilterT;
 
-struct LabelFilter {
+struct LabelFilter
+{
     LabelFilterT filterType;
     int objc;
     Tcl_Obj** objv;
 };
 
-int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
 void Graph_CleanupCmd(ClientData data);
 
-int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
 void Node_CleanupCmd(ClientData data);
 
-int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
 void Edge_CleanupCmd(ClientData data);
-Edge* Edge_CreateEdge(GraphState*, Node*, Node*, int, Tcl_Interp*, const char*, int, Tcl_Obj* const[]);
+Edge* Edge_CreateEdge(GraphState*, Node*, Node*, int, Tcl_Interp*, const char*, int, Tcl_Obj* const []);
 Edge* Edge_GetEdge(GraphState*, Node*, Node*, int, Tcl_Interp*);
 int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
 
@@ -123,7 +131,6 @@ Edge* Graphs_ValidateEdgeCommand(GraphState* statePtr, Tcl_Interp* interp, const
  */
 void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr);
 
-
 /*
  * Delete and free an edge.
  * Additionally, the edge is removed from statePtr and other node.
@@ -139,12 +146,12 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
 /*
  * Get and filter nodes
  */
-int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
+int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const []);
 
 /*
  * Common procedure to add/remove or get labels for nodes and edges
  */
-int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const[]);
+int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const []);
 
 /*
  * Get delta (neighborhood) of a node or graph

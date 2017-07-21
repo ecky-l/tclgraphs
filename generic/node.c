@@ -13,19 +13,19 @@ typedef enum _EdgeDirection
 } EdgeDirection;
 
 static const char* nodeSubCommands[] = {
-                                      "new",
-                                      "create",
-                                      "delete",
-                                      "configure",
-                                      "cget",
-                                      "graphs",
-                                      "info",
-                                      "neighbors",
-                                      "labels",
-                                      NULL
-};
+        "new",
+        "create",
+        "delete",
+        "configure",
+        "cget",
+        "graphs",
+        "info",
+        "neighbors",
+        "labels",
+        NULL };
 
-enum nodeCommandIndex {
+enum nodeCommandIndex
+{
     NodeNewIx,
     NodeCreateIx,
     NodeDeleteIx,
@@ -37,9 +37,7 @@ enum nodeCommandIndex {
     NodeLabelsIx
 };
 
-
-static int
-NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+static int NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     Tcl_HashEntry* entry;
     Tcl_HashSearch search;
@@ -47,7 +45,7 @@ NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv
     Tcl_Obj* result = Tcl_NewObj();
     const char* graphCmd;
     while (entry != NULL) {
-        graphCmd = (const char*)Tcl_GetHashKey(&nodePtr->graphs, entry);
+        graphCmd = (const char*) Tcl_GetHashKey(&nodePtr->graphs, entry);
         Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(graphCmd, -1));
         entry = Tcl_NextHashEntry(&search);
     }
@@ -59,8 +57,20 @@ NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv
 static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
-    static char* subcmds[] = { "add", "+", "delete", "-", "get" };
-    enum subCmdIdx { NodeToGraphAdd1, NodeToGraphAdd2, NodeToGraphDel1, NodeToGraphDel2, NodeToGraphGet };
+    static char* subcmds[] = {
+            "add",
+            "+",
+            "delete",
+            "-",
+            "get" };
+    enum subCmdIdx
+    {
+        NodeToGraphAdd1,
+        NodeToGraphAdd2,
+        NodeToGraphDel1,
+        NodeToGraphDel2,
+        NodeToGraphGet
+    };
 
     if (objc == 0) {
         /* List graphs */
@@ -117,10 +127,13 @@ static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
     return NodeInfoGraphs(nodePtr, interp, objc, objv);
 }
 
-
 static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
-    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
+    static char* opts[] = {
+            "-labels",
+            "-notlabels",
+            "-all",
+            NULL };
     int optIdx = LABELS_ALL_IX;
 
     if (objc > 0) {
@@ -129,13 +142,15 @@ static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl
         }
     }
 
-    return Graphs_GetNodes(nodePtr->outgoing, optIdx, interp, objc-1, objv+1);
+    return Graphs_GetNodes(nodePtr->outgoing, optIdx, interp, objc - 1, objv + 1);
 }
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int i, optIdx;
-    char* opts[] = { "-name", NULL };
+    char* opts[] = {
+            "-name",
+            NULL };
     enum OptsIx
     {
         NameIx
@@ -180,11 +195,13 @@ static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
     return TCL_OK;
 }
 
-
-static int
-NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
+    static char* opts[] = {
+            "-labels",
+            "-notlabels",
+            "-all",
+            NULL };
     int optIdx = LABELS_ALL_IX;
 
     if (objc > 0) {
@@ -196,8 +213,8 @@ NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl
     Tcl_Obj* deltaList = Tcl_NewObj();
     struct LabelFilter lblFilt;
     lblFilt.filterType = optIdx;
-    lblFilt.objc = objc-1;
-    lblFilt.objv = (Tcl_Obj**)objv+1;
+    lblFilt.objc = objc - 1;
+    lblFilt.objv = (Tcl_Obj**) objv + 1;
     if (Graphs_GetDelta(nodePtr, NULL, deltaType, lblFilt, interp, &deltaList) != TCL_OK) {
         return TCL_ERROR;
     }
@@ -209,14 +226,14 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
 {
     int cmdIdx;
     static const char* subCmds[] = {
-                                  "delta+",
-                                  "delta-",
-                                  "delta",
-                                  "graphs",
-                                  "labels",
-                                  NULL
-    };
-    enum cmdIndx {
+            "delta+",
+            "delta-",
+            "delta",
+            "graphs",
+            "labels",
+            NULL };
+    enum cmdIndx
+    {
         NodeInfoDeltaPlusIx,
         NodeInfoDeltaMinusIx,
         NodeInfoDeltaIx,
@@ -233,27 +250,26 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
 
     switch (cmdIdx) {
     case NodeInfoDeltaPlusIx: {
-        return NodeInfoDelta(nodePtr, DELTA_PLUS, interp, objc-1, objv+1);
+        return NodeInfoDelta(nodePtr, DELTA_PLUS, interp, objc - 1, objv + 1);
     }
     case NodeInfoDeltaMinusIx: {
-        return NodeInfoDelta(nodePtr, DELTA_MINUS, interp, objc-1, objv+1);
+        return NodeInfoDelta(nodePtr, DELTA_MINUS, interp, objc - 1, objv + 1);
     }
     case NodeInfoDeltaIx: {
-        return NodeInfoDelta(nodePtr, DELTA_ALL, interp, objc-1, objv+1);
+        return NodeInfoDelta(nodePtr, DELTA_ALL, interp, objc - 1, objv + 1);
     }
     case NodeInfoGraphsIx: {
-        return NodeInfoGraphs(nodePtr, interp, objc-1, objv+1);
+        return NodeInfoGraphs(nodePtr, interp, objc - 1, objv + 1);
     }
     case NodeInfoLabelsIx: {
         if (objc > 1) {
             Tcl_WrongNumArgs(interp, 0, objv, "option");
             return TCL_ERROR;
         }
-        return Graphs_LabelsCommand(nodePtr->labels, interp, objc-1, objv+1);
+        return Graphs_LabelsCommand(nodePtr->labels, interp, objc - 1, objv + 1);
     }
 
     }
-
 
     return TCL_OK;
 }
@@ -269,7 +285,8 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
     switch (cmdIdx) {
     case NodeNewIx:
     case NodeCreateIx: {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj("cannot create node from within a node! Use the [node] command!", -1));
+        Tcl_SetObjResult(interp,
+                Tcl_NewStringObj("cannot create node from within a node! Use the [node] command!", -1));
         return TCL_ERROR;
     }
     case NodeDeleteIx: {
@@ -303,12 +320,12 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
 
 static int Node_NodeSubCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
-    Node* nodePtr = (Node*)clientData;
+    Node* nodePtr = (Node*) clientData;
     if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
-    return NodeSubCmd(nodePtr, objv[1], interp, objc-2, objv+2);
+    return NodeSubCmd(nodePtr, objv[1], interp, objc - 2, objv + 2);
 }
 
 /*
@@ -401,7 +418,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
                 Tcl_Free((char*) nodePtr);
                 return TCL_ERROR;
             }
-            sprintf(nodePtr->cmdName, cmdName);
+            sprintf(nodePtr->cmdName, "%s", cmdName);
             paramOffset = 3;
         }
 
@@ -415,7 +432,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
         if (objc > paramOffset) {
             if (NodeCmdConfigure(nodePtr, interp, objc - paramOffset, objv + paramOffset) != TCL_OK) {
-                NodeDeleteCmd((ClientData)nodePtr);
+                NodeDeleteCmd((ClientData) nodePtr);
                 return TCL_ERROR;
             }
         }
@@ -438,7 +455,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     if (nodePtr == NULL) {
         return TCL_ERROR;
     }
-    return NodeSubCmd(nodePtr, objv[1], interp, objc-3, objv+3);
+    return NodeSubCmd(nodePtr, objv[1], interp, objc - 3, objv + 3);
 }
 
 void Node_CleanupCmd(ClientData data)
