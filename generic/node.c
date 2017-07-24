@@ -5,6 +5,8 @@
  * Node API
  */
 
+static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
+
 typedef enum _EdgeDirection
 {
     EDGE_DIRECTION_NONE,
@@ -122,19 +124,6 @@ static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
     return NodeInfoGraphs(nodePtr, interp, objc, objv);
 }
 
-static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
-{
-    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
-    int optIdx = LABELS_ALL_IX;
-
-    if (objc > 0) {
-        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
-            return TCL_ERROR;
-        }
-    }
-
-    return Graphs_GetNodes(nodePtr->outgoing, optIdx, interp, objc - 1, objv + 1);
-}
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
@@ -186,11 +175,12 @@ static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
 static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
-    int optIdx = LABELS_ALL_IX;
-
+    int optIdx = LABELS_ALL_IDX;
     if (objc > 0) {
-        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], LabelFilterOptions, "option", 0, &optIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (Graphs_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
             return TCL_ERROR;
         }
     }

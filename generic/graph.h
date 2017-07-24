@@ -79,9 +79,10 @@ typedef struct _edge
  */
 typedef enum ELabelFilterOption
 {
+    LABELS_NAME_IDX,
     LABELS_IDX,
     LABELS_NOT_IDX,
-    LABELS_ALL_IX
+    LABELS_ALL_IDX
 } LabelFilterT;
 
 struct LabelFilter
@@ -147,6 +148,14 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
  * Get and filter nodes
  */
 int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const []);
+
+/*
+ * \brief Checks the argument count for label filters.
+ *
+ * Places an appropriate error message in the interp result, if the objc count
+ * is not correct and returns TCL_ERROR. Otherwise returns TCL_OK
+ */
+int Graphs_CheckLabelsOptions(LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 /*
  * Common procedure to add/remove or get labels for nodes and edges

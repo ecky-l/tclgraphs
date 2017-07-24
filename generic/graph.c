@@ -4,8 +4,10 @@
  * Graph API
  */
 
-static const char* graphSubCommands[] = { "new", "create", "delete", "configure", "cget", "nodes", "subgraphs", "info",
-NULL };
+static const char* graphSubCommands[] = {
+        "new", "create", "delete", "configure", "cget", "nodes", "subgraphs", "info", NULL };
+
+static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
 enum graphCommandIndex
 {
@@ -21,10 +23,12 @@ enum graphCommandIndex
 
 static int GraphNodesGetNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
-    int optIdx = LABELS_ALL_IX;
+    int optIdx = LABELS_ALL_IDX;
     if (objc > 0) {
-        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], LabelFilterOptions, "option", 0, &optIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (Graphs_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
             return TCL_ERROR;
         }
     }
@@ -100,8 +104,7 @@ static int GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj*
 static int GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    static const char* opts[] = { "-name",
-    NULL };
+    static const char* opts[] = { "-name", NULL };
     enum OptsIx
     {
         NameIx
@@ -201,11 +204,9 @@ static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj
 
 static int GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static char* opts[] = { "-labels", "-notlabels", "-all",
-    NULL };
-    int optIdx = LABELS_ALL_IX;
+    int optIdx = LABELS_ALL_IDX;
     if (objc > 0) {
-        if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], LabelFilterOptions, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
     }
@@ -231,14 +232,16 @@ static int GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp,
 static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
-    static const char* subCmds[] = { "nodes", "edges", "delta+", "delta-", "delta", "subgraphs",
-    NULL };
+    static const char* subCmds[] = {
+            "nodes", "edges", "delta+", "deltaplus", "delta-", "deltaminus", "delta", "subgraphs", NULL };
     enum cmdIndx
     {
         InfoNodesIx,
         InfoEdgesIx,
-        InfoDeltaPlusIx,
-        InfoDeltaMinusIx,
+        InfoDeltaPlus1Ix,
+        InfoDeltaPlus2Ix,
+        InfoDeltaMinus1Ix,
+        InfoDeltaMinus2Ix,
         InfoDeltaIx,
         InfoSubgraphsIx
     };
@@ -257,10 +260,12 @@ static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
     case InfoEdgesIx: {
         return GraphInfoEdges(graphPtr, interp, objc - 1, objv + 1);
     }
-    case InfoDeltaPlusIx: {
+    case InfoDeltaPlus1Ix:
+    case InfoDeltaPlus2Ix: {
         return GraphInfoDelta(graphPtr, DELTA_PLUS, interp, objc - 1, objv + 1);
     }
-    case InfoDeltaMinusIx: {
+    case InfoDeltaMinus1Ix:
+    case InfoDeltaMinus2Ix: {
         return GraphInfoDelta(graphPtr, DELTA_MINUS, interp, objc - 1, objv + 1);
     }
     case InfoDeltaIx: {
@@ -378,7 +383,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
                 Tcl_Free((char*) graphPtr);
                 return TCL_ERROR;
             }
-            sprintf(graphPtr->cmdName, cmdName);
+            sprintf(graphPtr->cmdName, "%s", cmdName);
             paramOffset = 3;
         }
 

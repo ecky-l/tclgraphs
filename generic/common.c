@@ -104,6 +104,10 @@ static int GraphsFilterLabels(Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_
     int result = 0;
 
     switch (optIdx) {
+    case LABELS_NAME_IDX: {
+        result = Tcl_StringMatch(nodePtr->name, Tcl_GetString(objv[0]));
+        break;
+    }
     case LABELS_IDX: {
         int found = 0;
         for (int i = 0; i < objc; i++) {
@@ -126,7 +130,7 @@ static int GraphsFilterLabels(Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_
         }
         break;
     }
-    case LABELS_ALL_IX:
+    case LABELS_ALL_IDX:
     default: {
         result = 1;
         break;
@@ -153,6 +157,39 @@ int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* inte
     Tcl_SetObjResult(interp, result);
     return TCL_OK;
 
+}
+
+int Graphs_CheckLabelsOptions(LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    switch (optIdx) {
+    case LABELS_NAME_IDX: {
+        if (objc != 2) {
+            Tcl_WrongNumArgs(interp, objc, objv, "name");
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case LABELS_ALL_IDX: {
+        if (objc != 1) {
+            Tcl_WrongNumArgs(interp, objc, objv, "");
+            return TCL_ERROR;
+        }
+        break;
+    }
+    case LABELS_IDX:
+    case LABELS_NOT_IDX: {
+        if (objc < 2) {
+            Tcl_WrongNumArgs(interp, objc, objv, "label ?label ...?");
+            return TCL_ERROR;
+        }
+        break;
+    }
+    default: {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("Error in LabelsOption Check, wrong index!", -1));
+        return TCL_ERROR;
+    }
+    }
+    return TCL_OK;
 }
 
 int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])

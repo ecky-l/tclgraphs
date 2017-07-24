@@ -367,7 +367,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         gState->edgeUid++;
     }
     else {
-        sprintf(edgePtr->cmdName, cmdName);
+        sprintf(edgePtr->cmdName, "%s", cmdName);
     }
 
     if (Graphs_CheckCommandExists(interp, edgePtr->cmdName)) {

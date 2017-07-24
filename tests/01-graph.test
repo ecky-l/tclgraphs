@@ -13,7 +13,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {pass}
+#tcltest::configure -verbose {pass}
 
 if {$tcl_platform(platform) eq "windows"} {
     load tclgraphs.dll
@@ -204,6 +204,26 @@ test graph-getnodes-1.6.3 "info nodes 3" -setup $createThreeNodes -body {
 
 ###
 
+test graph-getnodes-1.6.4 "info nodes by name" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    n1 configure -name hello
+    n2 configure -name world
+    n3 configure -name bla
+    graph info g nodes -name hello
+} -cleanup $deleteThreeNodes -result {n1}
+
+###
+
+test graph-getnodes-1.6.5 "info nodes by name error" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    n1 configure -name hello
+    n2 configure -name world
+    n3 configure -name bla
+    graph info g nodes -name
+} -cleanup $deleteThreeNodes -returnCodes error -result {wrong # args: should be "-name name"}
+
+###
+
 test graph-delta-1.7.1 "info delta 1" -setup $createTwoGraphs -body {
     edge new n1 -> n3
     graph info g1 delta+
@@ -211,10 +231,25 @@ test graph-delta-1.7.1 "info delta 1" -setup $createTwoGraphs -body {
 
 ###
 
-test graph-delta-1.7.2 "info delta 2" -setup $createTwoGraphs -body {
+test graph-delta-1.7.2 "info deltaminus 1" -setup $createTwoGraphs -body {
+    edge new n1 <- n3
+    graph info g1 deltaminus
+} -cleanup $deleteTwoGraphs -result n3
+
+###
+
+test graph-delta-1.7.3 "info delta 2" -setup $createTwoGraphs -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    g1 info delta+
+    g1 info deltaplus
+} -cleanup $deleteTwoGraphs -result n3
+
+###
+
+test graph-delta-1.7.4 "info deltaminus 2" -setup $createTwoGraphs -body {
+    edge new n1 -> n2
+    edge new n1 <- n3
+    g1 info deltaminus
 } -cleanup $deleteTwoGraphs -result n3
 
 # cleanup

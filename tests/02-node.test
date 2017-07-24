@@ -4,7 +4,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {pass}
+#tcltest::configure -verbose {pass}
 
 if {$tcl_platform(platform) eq "windows"} {
     load tclgraphs.dll
@@ -222,7 +222,7 @@ test node-neighbors-2.4.1.4 "get neighbors wron args" -setup $createThreeNodes -
     edge new n1 -> n3
     n1 info delta+ -xxx
 } -cleanup $deleteThreeNodes -returnCodes error \
-    -result {bad option "-xxx": must be -labels, -notlabels, or -all}
+    -result {bad option "-xxx": must be -name, -labels, -notlabels, or -all}
 
 ###
 
@@ -338,6 +338,25 @@ test node-info-2.5.3.2 "node info delta with notlabels" -setup $createThreeNodes
     list [n1 info delta+ -notlabels foo] [n1 info delta+ -notlabels hello]
 } -cleanup $deleteThreeNodes -result {n3 {}}
 
+###
+
+test node-info-2.5.4.1 "node info delta with name" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    n2 configure -name hello
+    n3 configure -name world
+    list [n1 info delta+ -name hello] [n1 info delta+ -name world] [n1 info deltaplus -name foo]
+} -cleanup $deleteThreeNodes -result {n2 n3 {}}
+
+###
+
+test node-info-2.5.4.1 "node info delta with name raise error" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    n2 configure -name hello
+    n3 configure -name world
+    node info n1 deltaplus -name
+} -cleanup $deleteThreeNodes -returnCodes error -result {wrong # args: should be "-name name"}
 # cleanup
 
 ::tcltest::cleanupTests
