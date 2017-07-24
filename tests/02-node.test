@@ -196,7 +196,7 @@ test node-label-2.3.5 "remove all label via cmd" -setup $createTwoNodes -body {
 
 test node-neighbors-2.4.1.1 "get neighbors" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    n1 neighbors
+    n1 info deltaplus
 } -cleanup $deleteTwoNodes -result n2
 
 ###
@@ -204,7 +204,7 @@ test node-neighbors-2.4.1.1 "get neighbors" -setup $createTwoNodes -body {
 test node-neighbors-2.4.1.2 "get neighbors 2" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    lmap x {n2 n3} { expr { $x in [n1 neighbors] } }
+    lmap x {n2 n3} { expr { $x in [n1 info delta+] } }
 } -cleanup $deleteThreeNodes -result {1 1}
 
 ###
@@ -212,7 +212,7 @@ test node-neighbors-2.4.1.2 "get neighbors 2" -setup $createThreeNodes -body {
 test node-neighbors-2.4.1.3 "get neighbors 3" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    lmap x {n2 n3} { expr { $x in [n1 neighbors -all] } }
+    lmap x {n2 n3} { expr { $x in [n1 info delta+ -all] } }
 } -cleanup $deleteThreeNodes -result {1 1}
 
 ###
@@ -220,7 +220,7 @@ test node-neighbors-2.4.1.3 "get neighbors 3" -setup $createThreeNodes -body {
 test node-neighbors-2.4.1.4 "get neighbors wron args" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    n1 neighbors -xxx
+    n1 info delta+ -xxx
 } -cleanup $deleteThreeNodes -returnCodes error \
     -result {bad option "-xxx": must be -labels, -notlabels, or -all}
 
@@ -231,7 +231,7 @@ test node-neighbors-2.4.2.1 "get neighbors with label 1" -setup $createThreeNode
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb hi
-    n1 neighbors -labels world
+    n1 info deltaplus -labels world
 } -cleanup $deleteThreeNodes -result n2
 
 ###
@@ -241,7 +241,7 @@ test node-neighbors-2.4.2.2 "get neighbors with label 2" -setup $createThreeNode
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb world
-    n1 neighbors -labels world foo
+    n1 info deltaplus -labels world foo
 } -cleanup $deleteThreeNodes -result n2
 
 ###
@@ -251,7 +251,7 @@ test node-neighbors-2.4.2.3 "get neighbors with label 3" -setup $createThreeNode
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb world
-    lmap x {n2 n3} { expr { $x in [n1 neighbors -labels world] } }
+    lmap x {n2 n3} { expr { $x in [n1 info delta+ -labels world] } }
 } -cleanup $deleteThreeNodes -result {1 1}
 
 ###
@@ -261,7 +261,7 @@ test node-neighbors-2.4.3.1 "neighbors without label 1" -setup $createThreeNodes
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb hi
-    n1 neighbors -notlabel world
+    n1 info deltaplus -notlabel world
 } -cleanup $deleteThreeNodes -result n3
 
 ###
@@ -271,7 +271,7 @@ test node-neighbors-2.4.3.2 "neighbors without label 2" -setup $createThreeNodes
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb hi
-    n1 neighbors -notlabel world blubb
+    n1 info deltaplus -notlabel world blubb
 } -cleanup $deleteThreeNodes -result {}
 
 ###
@@ -281,7 +281,7 @@ test node-neighbors-2.4.3.3 "neighbors without label 3" -setup $createThreeNodes
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + blubb world
-    n1 neighbors -notlabel world
+    n1 info delta+ -notlabel world
 } -cleanup $deleteThreeNodes -result {}
 
 ###

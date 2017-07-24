@@ -12,7 +12,8 @@ typedef enum _EdgeDirection
     EDGE_DIRECTION_IN
 } EdgeDirection;
 
-static const char* nodeSubCommands[] = {
+static const char* nodeSubCommands[] =
+{
         "new",
         "create",
         "delete",
@@ -20,9 +21,9 @@ static const char* nodeSubCommands[] = {
         "cget",
         "graphs",
         "info",
-        "neighbors",
         "labels",
-        NULL };
+        NULL
+};
 
 enum nodeCommandIndex
 {
@@ -33,7 +34,6 @@ enum nodeCommandIndex
     NodeCgetIx,
     NodeGraphsIx,
     NodeInfoIx,
-    NodeNeighborsIx,
     NodeLabelsIx
 };
 
@@ -57,12 +57,7 @@ static int NodeInfoGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj *
 static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
-    static char* subcmds[] = {
-            "add",
-            "+",
-            "delete",
-            "-",
-            "get" };
+    static char* subcmds[] = { "add", "+", "delete", "-", "get", NULL };
     enum subCmdIdx
     {
         NodeToGraphAdd1,
@@ -129,11 +124,7 @@ static int NodeCmdGraphs(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
 static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
-    static char* opts[] = {
-            "-labels",
-            "-notlabels",
-            "-all",
-            NULL };
+    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
     int optIdx = LABELS_ALL_IX;
 
     if (objc > 0) {
@@ -148,9 +139,7 @@ static int NodeCmdGetNeighbours(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int i, optIdx;
-    char* opts[] = {
-            "-name",
-            NULL };
+    char* opts[] = { "-name", NULL };
     enum OptsIx
     {
         NameIx
@@ -197,11 +186,7 @@ static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
 static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    static char* opts[] = {
-            "-labels",
-            "-notlabels",
-            "-all",
-            NULL };
+    static char* opts[] = { "-labels", "-notlabels", "-all", NULL };
     int optIdx = LABELS_ALL_IX;
 
     if (objc > 0) {
@@ -225,17 +210,13 @@ static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, in
 static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
-    static const char* subCmds[] = {
-            "delta+",
-            "delta-",
-            "delta",
-            "graphs",
-            "labels",
-            NULL };
+    static const char* subCmds[] = { "delta+", "deltaplus", "delta-", "deltaminus", "delta", "graphs", "labels", NULL };
     enum cmdIndx
     {
-        NodeInfoDeltaPlusIx,
-        NodeInfoDeltaMinusIx,
+        NodeInfoDeltaPlus1Ix,
+        NodeInfoDeltaPlus2Ix,
+        NodeInfoDeltaMinus1Ix,
+        NodeInfoDeltaMinus2Ix,
         NodeInfoDeltaIx,
         NodeInfoGraphsIx,
         NodeInfoLabelsIx
@@ -249,10 +230,12 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
     }
 
     switch (cmdIdx) {
-    case NodeInfoDeltaPlusIx: {
+    case NodeInfoDeltaPlus1Ix:
+    case NodeInfoDeltaPlus2Ix: {
         return NodeInfoDelta(nodePtr, DELTA_PLUS, interp, objc - 1, objv + 1);
     }
-    case NodeInfoDeltaMinusIx: {
+    case NodeInfoDeltaMinus1Ix:
+    case NodeInfoDeltaMinus2Ix: {
         return NodeInfoDelta(nodePtr, DELTA_MINUS, interp, objc - 1, objv + 1);
     }
     case NodeInfoDeltaIx: {
@@ -303,9 +286,6 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
     }
     case NodeInfoIx: {
         return NodeCmdInfo(nodePtr, interp, objc, objv);
-    }
-    case NodeNeighborsIx: {
-        return NodeCmdGetNeighbours(nodePtr, interp, objc, objv);
     }
     case NodeLabelsIx: {
         return Graphs_LabelsCommand(nodePtr->labels, interp, objc, objv);

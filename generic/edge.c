@@ -5,16 +5,8 @@
  * Edge API
  */
 
-static char* edgeSubCmds[] = {
-        "new",
-        "create",
-        "get",
-        "configure",
-        "cget",
-        "delete",
-        "labels",
-        NULL
-};
+static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "delete", "labels",
+NULL };
 enum edgeSubCmdIndices
 {
     EdgeNewIx,
@@ -29,13 +21,7 @@ enum edgeSubCmdIndices
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = {
-            "-name",
-            "-from",
-            "-to",
-            "-weight",
-            "-directed",
-            NULL };
+    char* opts[] = { "-name", "-from", "-to", "-weight", "-directed", NULL };
     enum OptsIx
     {
         NameIx,
@@ -85,10 +71,7 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
 int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    char* opts[] = {
-            "-name",
-            "-weight",
-            NULL };
+    char* opts[] = { "-name", "-weight", NULL };
     enum OptsIx
     {
         NameIx,
@@ -158,7 +141,7 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
     default: {
         Tcl_Obj* res = Tcl_NewObj();
         Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx], " should be configure cget or delete",
-                NULL);
+        NULL);
         Tcl_SetObjResult(interp, res);
         return TCL_ERROR;
     }
@@ -249,11 +232,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     int unDirected = 0;
     int throughCommand = 0;
 
-    static char* directChars[] = {
-            "->",
-            "<-",
-            "<->",
-            NULL };
+    static char* directChars[] = { "->", "<-", "<->", NULL };
     enum directIdx
     {
         OutIx,
@@ -424,7 +403,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
             if (!new) {
                 Tcl_Obj* result = Tcl_NewObj();
                 Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ", toNodePtr->cmdName,
-                        NULL);
+                NULL);
                 Tcl_SetObjResult(interp, result);
                 Tcl_DeleteHashEntry(entry1);
                 Tcl_Free((char*) edgePtr);

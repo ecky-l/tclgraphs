@@ -147,46 +147,46 @@ tcltest::test edge-cmd-3.7.1 "edge command delete through cmd" -setup $createTwo
 
 tcltest::test edge-direction-3.8.1 "create out edge" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    list [n1 neighbors] [n2 neighbors]
+    list [n1 info delta+] [n2 info deltaplus]
 } -cleanup $deleteTwoNodes -result {n2 {}}
 
 ###
 
 tcltest::test edge-direction-3.8.2 "create in edge" -setup $createTwoNodes -body {
     edge create e n1 <- n2
-    list [n1 neighbors] [n2 neighbors]
+    list [n1 info deltaplus] [n2 info delta+]
 } -cleanup $deleteTwoNodes -result {{} n1}
 
 ###
 
 tcltest::test edge-direction-3.8.3 "create undirected edge" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
-    list [n1 neighbors] [n2 neighbors]
+    list [n1 info deltaplus] [n2 info deltaplus]
 } -cleanup $deleteTwoNodes -result {n2 n1}
 
 ###
 
 tcltest::test edge-delete-3.9.1 "create and delete edge" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    set result [list [n1 neighbors] [n2 neighbors]]
+    set result [list [n1 info delta+] [n2 info delta+]]
     edge delete e
-    lappend result [n1 neighbors]
+    lappend result [node info n1 delta+]
 } -cleanup $deleteTwoNodes -result {n2 {} {}}
 
 ###
 
 tcltest::test edge-delete-3.9.2 "create edge and delete toNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    set result [n1 neighbors]
+    set result [n1 info delta+]
     node delete n2
-    lappend result [n1 neighbors]
+    lappend result [n1 info deltaplus]
 } -cleanup $deleteTwoNodes -result {n2 {}}
 
 ###
 
 tcltest::test edge-delete-3.9.3 "create edge and delete fromNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
-    set result [n1 neighbors]
+    set result [n1 info deltaplus]
     node delete n1
     lappend result [info command e]
 } -cleanup $deleteTwoNodes -result {n2 {}}

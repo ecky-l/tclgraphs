@@ -165,7 +165,9 @@ int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, 
             "+",
             "delete",
             "-",
-            "get" };
+            "get",
+            NULL
+    };
     enum subCmdIdx
     {
         LabelsAdd1,
