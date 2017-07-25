@@ -333,23 +333,23 @@ static int Graph_GraphSubCmd(ClientData clientData, Tcl_Interp* interp, int objc
 static void GraphDeleteCmd(ClientData clientData)
 {
     Graph* g = (Graph*) clientData;
-    Tcl_HashEntry* entryPtr;
+    Tcl_HashEntry* entry1;
     Tcl_HashSearch search;
 
     /* Remove all nodes from the graph */
-    entryPtr = Tcl_FirstHashEntry(&g->nodes, &search);
-    while (entryPtr != NULL) {
-        Node* nodePtr = Tcl_GetHashValue(entryPtr);
+    entry1 = Tcl_FirstHashEntry(&g->nodes, &search);
+    while (entry1 != NULL) {
+        Node* nodePtr = Tcl_GetHashValue(entry1);
         Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&nodePtr->graphs, g->cmdName);
         if (entry2 != NULL) {
             Tcl_DeleteHashEntry(entry2);
         }
-        entryPtr = Tcl_NextHashEntry(&search);
+        entry1 = Tcl_NextHashEntry(&search);
     }
 
     /* Delete the graph from global state */
-    entryPtr = Tcl_FindHashEntry(&g->statePtr->graphs, g->cmdName);
-    Tcl_DeleteHashEntry(entryPtr);
+    entry1 = Tcl_FindHashEntry(&g->statePtr->graphs, g->cmdName);
+    Tcl_DeleteHashEntry(entry1);
 
     /* free the nodes and edges */
     Tcl_DeleteHashTable(&g->nodes);
