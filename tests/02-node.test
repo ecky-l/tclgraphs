@@ -4,31 +4,23 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {pass}
-
-if {$tcl_platform(platform) eq "windows"} {
-    if {$::tcl_platform(pointerSize) == 4} {
-        load libtclgraphs0.8-win32.dll
-    } else {
-        load libtclgraphs0.8-win64.dll
-    }
-}
-
-package require tclgraphs
-namespace import tclgraphs::*
+#tcltest::configure -verbose {pass}
+source [file join [file dirname [info script]] loadpackage.tcl]
 
 #### fixtures
 set createTwoNodes {
     graph create g
+    graph create g2
     node create n1
     node create n2
     set result {}
 }
 
 set deleteTwoNodes {
-    n1 delete
-    n2 delete
-    g delete
+    catch {n1 delete}
+    catch {n2 delete}
+    catch {g delete}
+    catch {g2 delete}
     unset -nocomplain result
 }
 
@@ -69,7 +61,7 @@ test node-cmd-2.1.2 "create node via new" -setup {} -body {
 
 ###
 
-test node-cmd-2.2 "delete node via node cmd" -setup {} -body {
+test node-cmd-2.2.1 "delete node via node cmd" -setup {} -body {
     node create n -name "Note"
     lappend result [info commands n]
     node delete n
@@ -78,11 +70,11 @@ test node-cmd-2.2 "delete node via node cmd" -setup {} -body {
 
 ###
 
-test node-addtograph-2.1.1 "add node to graph via cmd" -setup {
+test node-addtograph-2.3.1 "add node to graph via cmd" -setup {
     graph create g
     node create n
 } -body {
-    node graphs n + g
+    node configure n -graph g
     g nodes get
 } -cleanup {
     n delete
@@ -91,11 +83,11 @@ test node-addtograph-2.1.1 "add node to graph via cmd" -setup {
 
 ###
 
-test node-addtograph-2.1.2 "add node to graph via node" -setup {
+test node-addtograph-2.3.2 "add node to graph via node" -setup {
     graph create g
     node create n
 } -body {
-    n graphs + g
+    n configure -graph g
     g nodes get
 } -cleanup {
     n delete
@@ -104,12 +96,12 @@ test node-addtograph-2.1.2 "add node to graph via node" -setup {
 
 ###
 
-test node-addtograph-2.1.3 "add node to graph via node, retrieval via cmd" -setup {
+test node-addtograph-2.3.3 "add node to graph via node, retrieval via cmd" -setup {
     graph create g
     node create n
 } -body {
-    node graphs n + g
-    node graphs n
+    node config n -graph g
+    node info n graph
 } -cleanup {
     n delete
     g delete
@@ -117,61 +109,66 @@ test node-addtograph-2.1.3 "add node to graph via node, retrieval via cmd" -setu
 
 ###
 
-test node-addtograph-2.1.4 "add node to graph, retrieve via node" -setup {
+test node-addtograph-2.3.4 "add node to graph, retrieve via node" -setup {
     graph create g1
     graph create g2
     node create n
 } -body {
-    n graphs + g1 g2
-    n graphs
+    n config -graph g1
+    n info graph
 } -cleanup {
     n delete
     g1 delete
     g2 delete
-} -result {g1 g2}
+} -result {g1}
 ###
 
-test node-addtograph-and-delete-2.2.1 "add and delete node removes node from graph" -setup $createTwoNodes -body {
-    n1 graphs + g
-    n2 graphs + g
+test node-addtograph-and-delete-2.4.1 "add and delete node removes node from graph" -setup $createTwoNodes -body {
+    n1 config -graph g
+    n2 config -graph g
     n1 delete
     g nodes get
-} -cleanup {
-    n2 delete
-    g delete
-} -result {n2}
+} -cleanup $deleteTwoNodes -result {n2}
 
 ###
 
-test node-addtograph-and-delete-2.2.2 "add and delete node leaves empty graph" -setup $createTwoNodes -body {
-    n1 graphs + g
-    n2 graphs + g
+test node-addtograph-and-delete-2.4.2 "add and delete node leaves empty graph" -setup $createTwoNodes -body {
+    n1 configure -graph g
+    lappend result [g info nodes]
+    n1 configure -graph g2
+    lappend result [g info nodes] [g2 info nodes]
+    n1 configure -graph {}
+    lappend result [g2 info nodes]
+} -cleanup $deleteTwoNodes -result {n1 {} n1 {}}
+
+###
+
+test node-addtograph-and-delete-2.4.3 "change graph for node" -setup $createTwoNodes -body {
+    n1 configure -graph g
+    n2 configure -graph g
     lappend result [llength [g nodes get]]
     n1 delete
     n2 delete
-    lappend result [g nodes get]
-} -cleanup {
-    g delete
-    unset result
-} -result {2 {}}
+    lappend result [g info nodes]
+} -cleanup $deleteTwoNodes -result {2 {}}
 
 ###
 
-test node-label-2.3.1 "add label via cmd" -setup $createTwoNodes -body {
+test node-label-2.5.1 "add label via cmd" -setup $createTwoNodes -body {
     node labels n1 + mylab yourlab
     node labels n1
 } -cleanup $deleteTwoNodes -result {mylab yourlab}
 
 ###
 
-test node-label-2.3.2 "add label via node" -setup $createTwoNodes -body {
+test node-label-2.5.2 "add label via node" -setup $createTwoNodes -body {
     n1 labels + mylab yourlab
     n1 labels
 } -cleanup $deleteTwoNodes -result {mylab yourlab}
 
 ###
 
-test node-label-2.3.3 "remove label via cmd" -setup $createTwoNodes -body {
+test node-label-2.5.3 "remove label via cmd" -setup $createTwoNodes -body {
     node labels n1 + mylab yourlab
     set result [node labels n1]
     node labels n1 - mylab
@@ -180,7 +177,7 @@ test node-label-2.3.3 "remove label via cmd" -setup $createTwoNodes -body {
 
 ###
 
-test node-label-2.3.4 "remove label via node" -setup $createTwoNodes -body {
+test node-label-2.5.4 "remove label via node" -setup $createTwoNodes -body {
     n1 labels + mylab yourlab
     set result [n1 labels]
     n1 labels - mylab
@@ -189,7 +186,7 @@ test node-label-2.3.4 "remove label via node" -setup $createTwoNodes -body {
 
 ###
 
-test node-label-2.3.5 "remove all label via cmd" -setup $createTwoNodes -body {
+test node-label-2.5.5 "remove all label via cmd" -setup $createTwoNodes -body {
     node labels n1 + mylab yourlab
     set result [node labels n1]
     node labels n1 - yourlab mylab
@@ -198,14 +195,14 @@ test node-label-2.3.5 "remove all label via cmd" -setup $createTwoNodes -body {
 
 ###
 
-test node-neighbors-2.4.1.1 "get neighbors" -setup $createTwoNodes -body {
+test node-neighbors-2.6.1.1 "get neighbors" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     n1 info deltaplus
 } -cleanup $deleteTwoNodes -result n2
 
 ###
 
-test node-neighbors-2.4.1.2 "get neighbors 2" -setup $createThreeNodes -body {
+test node-neighbors-2.6.1.2 "get neighbors 2" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     lmap x {n2 n3} { expr { $x in [n1 info delta+] } }
@@ -213,7 +210,7 @@ test node-neighbors-2.4.1.2 "get neighbors 2" -setup $createThreeNodes -body {
 
 ###
 
-test node-neighbors-2.4.1.3 "get neighbors 3" -setup $createThreeNodes -body {
+test node-neighbors-2.6.1.3 "get neighbors 3" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     lmap x {n2 n3} { expr { $x in [n1 info delta+ -all] } }
@@ -221,7 +218,7 @@ test node-neighbors-2.4.1.3 "get neighbors 3" -setup $createThreeNodes -body {
 
 ###
 
-test node-neighbors-2.4.1.4 "get neighbors wron args" -setup $createThreeNodes -body {
+test node-neighbors-2.6.1.4 "get neighbors wron args" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n1 info delta+ -xxx
@@ -230,7 +227,7 @@ test node-neighbors-2.4.1.4 "get neighbors wron args" -setup $createThreeNodes -
 
 ###
 
-test node-neighbors-2.4.2.1 "get neighbors with label 1" -setup $createThreeNodes -body {
+test node-neighbors-2.6.2.1 "get neighbors with label 1" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -240,7 +237,7 @@ test node-neighbors-2.4.2.1 "get neighbors with label 1" -setup $createThreeNode
 
 ###
 
-test node-neighbors-2.4.2.2 "get neighbors with label 2" -setup $createThreeNodes -body {
+test node-neighbors-2.6.2.2 "get neighbors with label 2" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -250,7 +247,7 @@ test node-neighbors-2.4.2.2 "get neighbors with label 2" -setup $createThreeNode
 
 ###
 
-test node-neighbors-2.4.2.3 "get neighbors with label 3" -setup $createThreeNodes -body {
+test node-neighbors-2.6.2.3 "get neighbors with label 3" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -260,7 +257,7 @@ test node-neighbors-2.4.2.3 "get neighbors with label 3" -setup $createThreeNode
 
 ###
 
-test node-neighbors-2.4.3.1 "neighbors without label 1" -setup $createThreeNodes -body {
+test node-neighbors-2.6.3.1 "neighbors without label 1" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -270,7 +267,7 @@ test node-neighbors-2.4.3.1 "neighbors without label 1" -setup $createThreeNodes
 
 ###
 
-test node-neighbors-2.4.3.2 "neighbors without label 2" -setup $createThreeNodes -body {
+test node-neighbors-2.6.3.2 "neighbors without label 2" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -280,7 +277,7 @@ test node-neighbors-2.4.3.2 "neighbors without label 2" -setup $createThreeNodes
 
 ###
 
-test node-neighbors-2.4.3.3 "neighbors without label 3" -setup $createThreeNodes -body {
+test node-neighbors-2.6.3.3 "neighbors without label 3" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -290,7 +287,7 @@ test node-neighbors-2.4.3.3 "neighbors without label 3" -setup $createThreeNodes
 
 ###
 
-test node-info-2.5.1.1 "node info delta + via node" -setup $createThreeNodes -body {
+test node-info-2.7.1.1 "node info delta + via node" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     lmap x {n2 n3} { expr { $x in [n1 info delta+] } }
@@ -298,7 +295,7 @@ test node-info-2.5.1.1 "node info delta + via node" -setup $createThreeNodes -bo
 
 ###
 
-test node-info-2.5.1.2 "node info delta + via node cmd" -setup $createThreeNodes -body {
+test node-info-2.7.1.2 "node info delta + via node cmd" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     lmap x {n2 n3} { expr { $x in [node info n1 delta+] } }
@@ -306,7 +303,7 @@ test node-info-2.5.1.2 "node info delta + via node cmd" -setup $createThreeNodes
 
 ###
 
-test node-info-2.5.2.1 "node info delta - via node" -setup $createThreeNodes -body {
+test node-info-2.7.2.1 "node info delta - via node" -setup $createThreeNodes -body {
     edge new n1 <- n2
     edge new n1 <- n3
     concat [n2 info delta+] [n3 info delta+] \
@@ -315,7 +312,7 @@ test node-info-2.5.2.1 "node info delta - via node" -setup $createThreeNodes -bo
 
 ###
 
-test node-info-2.5.2.2 "node info delta - via node cmd" -setup $createThreeNodes -body {
+test node-info-2.7.2.2 "node info delta - via node cmd" -setup $createThreeNodes -body {
     edge new n1 <- n2
     edge new n1 <- n3
     concat [node info n2 delta+] [node info n3 delta+] \
@@ -324,7 +321,7 @@ test node-info-2.5.2.2 "node info delta - via node cmd" -setup $createThreeNodes
 
 ###
 
-test node-info-2.5.3.1 "node info delta with labels via node cmd" -setup $createThreeNodes -body {
+test node-info-2.7.3.1 "node info delta with labels via node cmd" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -334,7 +331,7 @@ test node-info-2.5.3.1 "node info delta with labels via node cmd" -setup $create
 
 ###
 
-test node-info-2.5.3.2 "node info delta with notlabels" -setup $createThreeNodes -body {
+test node-info-2.7.3.2 "node info delta with notlabels" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
@@ -344,7 +341,7 @@ test node-info-2.5.3.2 "node info delta with notlabels" -setup $createThreeNodes
 
 ###
 
-test node-info-2.5.4.1 "node info delta with name" -setup $createThreeNodes -body {
+test node-info-2.7.4.1 "node info delta with name" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 configure -name hello
@@ -354,7 +351,7 @@ test node-info-2.5.4.1 "node info delta with name" -setup $createThreeNodes -bod
 
 ###
 
-test node-info-2.5.4.1 "node info delta with name raise error" -setup $createThreeNodes -body {
+test node-info-2.7.4.1 "node info delta with name raise error" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 configure -name hello

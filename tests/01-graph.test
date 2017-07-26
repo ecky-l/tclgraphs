@@ -13,18 +13,8 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {pass}
-
-if {$tcl_platform(platform) eq "windows"} {
-    if {$::tcl_platform(pointerSize) == 4} {
-        load libtclgraphs0.8-win32.dll
-    } else {
-        load libtclgraphs0.8-win64.dll
-    }
-}
-
-package require tclgraphs
-namespace import tclgraphs::*
+#tcltest::configure -verbose {pass}
+source [file join [file dirname [info script]] loadpackage.tcl]
 
 #### fixtures
 set createThreeNodes {
@@ -45,10 +35,10 @@ set deleteThreeNodes {
 set createTwoGraphs {
     foreach g {g1 g2} {graph create $g}
     foreach n {n1 n2 n3 n4} {node create $n}
-    n1 graphs + g1
-    n2 graphs + g1
-    n3 graphs + g2
-    n4 graphs + g2
+    n1 configure -graph g1
+    n2 configure -graph g1
+    n3 configure -graph g2
+    n4 configure -graph g2
 }
 set deleteTwoGraphs {
     g1 delete -nodes
@@ -120,12 +110,21 @@ test graph-addnode-and-delete-1.3 "delete graph deletes nodes with -nodes flag" 
 
 ###
 
-test graph-addnode-and-delete-1.4 "delete node from graph" -setup $createThreeNodes -body {
+test graph-addnode-and-delete-1.4.1 "delete node from graph" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     lappend result [llength [g nodes get]]
-    n1 graphs - g
+    n1 configure -graph {}
     lappend result [info commands n1] [llength [g nodes get]]
 } -cleanup $deleteThreeNodes -result {3 n1 2}
+
+###
+
+test graph-addnode-and-delete-1.4.2 "delete node from graph 2" -setup $createThreeNodes -body {
+    g nodes + n1 n2 n3
+    lappend result [llength [g nodes get]]
+    g nodes - n1 n2
+    lappend result [g info nodes] [n1 cget -graph] [n2 cget -graph] [n3 cget -graph]
+} -cleanup $deleteThreeNodes -result {3 n3 {} {} g}
 
 ###
 
@@ -255,6 +254,15 @@ test graph-delta-1.7.4 "info deltaminus 2" -setup $createTwoGraphs -body {
     edge new n1 <- n3
     g1 info deltaminus
 } -cleanup $deleteTwoGraphs -result n3
+
+###
+
+test graph-slave-interp-1.8.1 "create and delete graph + nodes in slave interp" -setup {} -body {
+    interp create slave
+    interp eval slave {source [file join tests loadpackage.tcl]}
+    interp eval slave {source [file join tests createtwographs.tcl]}
+    interp delete slave
+} -cleanup {} -result {}
 
 # cleanup
 ::tcltest::cleanupTests

@@ -57,6 +57,19 @@ static int GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl
 
 static int GraphNodesDeleteNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
+    /* Validation first. No node is added unless all nodes are valid */
+    for (int j = 0; j < objc; j++) {
+        const char* nName = Tcl_GetString(objv[j]);
+        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
+        if (nodePtr == NULL) {
+            return TCL_ERROR;
+        }
+    }
+    for (int j = 0; j < objc; j++) {
+        const char* nName = Tcl_GetString(objv[j]);
+        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
+        Graphs_DeleteNodeFromGraph(graphPtr, nodePtr);
+    }
     return TCL_OK;
 }
 
@@ -340,10 +353,7 @@ static void GraphDeleteCmd(ClientData clientData)
     entry1 = Tcl_FirstHashEntry(&g->nodes, &search);
     while (entry1 != NULL) {
         Node* nodePtr = Tcl_GetHashValue(entry1);
-        Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&nodePtr->graphs, g->cmdName);
-        if (entry2 != NULL) {
-            Tcl_DeleteHashEntry(entry2);
-        }
+        nodePtr->graph = NULL;
         entry1 = Tcl_NextHashEntry(&search);
     }
 

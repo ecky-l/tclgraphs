@@ -39,8 +39,8 @@ typedef struct _node
     /* labels assigned to the node. Can be used for filtering */
     Tcl_HashTable labels;
 
-    /* graphs where the node is part of */
-    Tcl_HashTable graphs;
+    /* graph where the node is part of */
+    Graph* graph;
 } Node;
 
 typedef enum _EdgeDirectionType
@@ -131,6 +131,11 @@ Edge* Graphs_ValidateEdgeCommand(GraphState* statePtr, Tcl_Interp* interp, const
  * Add a node to a graph
  */
 void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr);
+
+/*
+ * Add a node to a graph
+ */
+void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr);
 
 /*
  * Delete and free an edge.
