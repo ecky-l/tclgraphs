@@ -4,7 +4,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-#tcltest::configure -verbose {pass}
+tcltest::configure -verbose {pass}
 source [file join [file dirname [info script]] loadpackage.tcl]
 
 #### fixtures
@@ -62,7 +62,7 @@ test edge-create-3.1.3 "create undirected edge via edge command and arguments" -
 
 ###
 
-test edge-delete-3.2 "edge is deleted when node 1 is deleted" -setup {
+test edge-delete-3.2.1 "edge is deleted when node 1 is deleted" -setup {
     node create n1
     node create n2
     edge create e n1 -> n2
@@ -73,6 +73,47 @@ test edge-delete-3.2 "edge is deleted when node 1 is deleted" -setup {
     n2 delete
 } -result {}
 
+###
+
+tcltest::test edge-delete-3.2.2 "delete edge via node" -setup $createTwoNodes -body {
+    edge create e1 n1 -> n2
+    edge create e2 n1 <- n2
+    set result [list [n1 info deltaplus] [n2 info deltaplus]]
+    n1 delete ;# should delete both edges
+    lappend result [info commands n1] [info command e1] [info command e2] [n2 info delta+]
+} -cleanup $deleteTwoNodes -result {n2 n1 {} {} {} {}}
+
+###
+
+tcltest::test edge-delete-3.2.3 "delete edge 2" -setup $createTwoNodes -body {
+    edge create e1 n1 -> n2
+    edge create e2 n1 <- n2
+    set result [list [n1 info deltaplus] [n2 info deltaplus]]
+    e1 delete
+    e2 delete
+    lappend result [n1 info deltaplus] [n2 info deltaplus]
+} -cleanup $deleteTwoNodes -result {n2 n1 {} {}}
+
+###
+
+tcltest::test edge-delete-3.2.4 "delete in slave interp works" -setup {} -body {
+    interp create slave
+    interp eval slave {source [file join tests loadpackage.tcl]}
+    interp eval slave {source [file join tests createtwographs.tcl]}
+    interp eval slave {edge new n1 -> n2}
+    interp delete slave
+} -cleanup {} -result {}
+
+###
+
+tcltest::test edge-delete-3.2.5 "delete in slave interp works with two edges" -setup {} -body {
+    interp create slave
+    interp eval slave {source [file join tests loadpackage.tcl]}
+    interp eval slave {source [file join tests createtwographs.tcl]}
+    interp eval slave {edge new n1 -> n2}
+    interp eval slave {edge new n1 <- n2}
+    interp delete slave
+} -cleanup {} -result {}
 ###
 
 tcltest::test edge-cmd-3.3.1 "edge command create" -setup $createTwoNodes -body {
