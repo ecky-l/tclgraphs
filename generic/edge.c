@@ -168,27 +168,38 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
 static void EdgeDeleteCmd(ClientData clientData)
 {
     Edge* edgePtr = (Edge*) clientData;
-    Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, edgePtr->toNode);
-    if (entry1 != NULL) {
-        Tcl_DeleteHashEntry(entry1);
-        Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, edgePtr->fromNode);
-        if (entry2 != NULL) {
-            Tcl_DeleteHashEntry(entry2);
+
+    if (edgePtr->fromNode != NULL && edgePtr->toNode != NULL) {
+        Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, edgePtr->toNode);
+        if (entry1 != NULL) {
+            Tcl_DeleteHashEntry(entry1);
+            Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, edgePtr->fromNode);
+            if (entry2 != NULL) {
+                Tcl_DeleteHashEntry(entry2);
+            }
         }
-    }
-    entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, edgePtr->fromNode);
-    if (entry1 != NULL) {
-        Tcl_DeleteHashEntry(entry1);
-        Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, edgePtr->toNode);
-        if (entry2 != NULL) {
-            Tcl_DeleteHashEntry(entry2);
+
+        /*
+         * Undirected edges are linked to the other side (from toNode to fromNode) as well.
+         * Delete this link without any further intervention.
+         */
+        if (edgePtr->directionType == EDGE_UNDIRECTED) {
+            entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, edgePtr->fromNode);
+            if (entry1 != NULL) {
+                Tcl_DeleteHashEntry(entry1);
+                Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, edgePtr->toNode);
+                if (entry2 != NULL) {
+                    Tcl_DeleteHashEntry(entry2);
+                }
+            }
         }
     }
 
     Tcl_DeleteHashTable(&edgePtr->labels);
+    edgePtr->fromNode = edgePtr->toNode = NULL;
 
-    entry1 = Tcl_FindHashEntry(&edgePtr->statePtr->edges, edgePtr->cmdName);
-    Tcl_DeleteHashEntry(entry1);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&edgePtr->statePtr->edges, edgePtr->cmdName);
+    Tcl_DeleteHashEntry(entry);
 
     Tcl_Free((char*) edgePtr);
 }
