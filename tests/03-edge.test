@@ -4,7 +4,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import ::tcltest::*
 }
-tcltest::configure -verbose {pass}
+#tcltest::configure -verbose {pass}
 source [file join [file dirname [info script]] loadpackage.tcl]
 
 #### fixtures

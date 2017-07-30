@@ -358,6 +358,36 @@ test node-info-2.7.4.1 "node info delta with name raise error" -setup $createThr
     n3 configure -name world
     node info n1 deltaplus -name
 } -cleanup $deleteThreeNodes -returnCodes error -result {wrong # args: should be "-name name"}
+
+###
+
+test node-info-2.8.1 "node info degree 1" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    node info n1 degree+
+} -cleanup $deleteThreeNodes -result 2
+
+###
+
+test node-info-2.8.2 "node info degree 2" -setup $createThreeNodes -body {
+    edge new n1 -> n2
+    edge new n1 -> n3
+    list [n1 info degreeplus] [n2 info degreeminus] [n3 info degree-] [n1 info degree-]
+} -cleanup $deleteThreeNodes -result {2 1 1 0}
+
+###
+
+test node-info-2.8.2 "node info degree: degree is adjusted after edge delete" -setup $createThreeNodes -body {
+    lappend result [n1 info degreeplus]
+    edge new n1 -> n2
+    edge new n1 -> n3
+    lappend result [n1 info degree+]
+    edge delete n1 -> n2
+    lappend result [n1 info degree+]
+    edge delete n1 -> n3
+    lappend result [n1 info degree+]
+} -cleanup $deleteThreeNodes -result {0 2 1 0}
+
 # cleanup
 
 ::tcltest::cleanupTests

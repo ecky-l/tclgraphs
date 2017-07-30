@@ -21,6 +21,7 @@ typedef struct _graph
     Tcl_Command commandTkn;
     GraphState* statePtr;
     Tcl_HashTable nodes;
+    int order;
 } Graph;
 
 typedef struct _node
@@ -41,6 +42,11 @@ typedef struct _node
 
     /* graph where the node is part of */
     Graph* graph;
+
+    int degreeplus;
+    int degreeminus;
+    int degreeundir;
+
 } Node;
 
 typedef enum _EdgeDirectionType

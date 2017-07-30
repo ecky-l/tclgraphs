@@ -153,7 +153,21 @@ static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, in
 static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
-    static const char* subCmds[] = { "delta+", "deltaplus", "delta-", "deltaminus", "delta", "graph", "labels", NULL };
+    static const char* subCmds[] = {
+            "delta+",
+            "deltaplus",
+            "delta-",
+            "deltaminus",
+            "delta",
+            "degree+",
+            "degreeplus",
+            "degree-",
+            "degreeminus",
+            "degree",
+            "graph",
+            "labels",
+            NULL
+    };
     enum cmdIndx
     {
         NodeInfoDeltaPlus1Ix,
@@ -161,6 +175,11 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
         NodeInfoDeltaMinus1Ix,
         NodeInfoDeltaMinus2Ix,
         NodeInfoDeltaIx,
+        NodeInfoDegreePlus1Ix,
+        NodeInfoDegreePlus2Ix,
+        NodeInfoDegreeMinus1Ix,
+        NodeInfoDegreeMinus2Ix,
+        NodeInfoDegreeIx,
         NodeInfoGraphIx,
         NodeInfoLabelsIx
     };
@@ -183,6 +202,20 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
     }
     case NodeInfoDeltaIx: {
         return NodeInfoDelta(nodePtr, DELTA_ALL, interp, objc - 1, objv + 1);
+    }
+    case NodeInfoDegreePlus1Ix:
+    case NodeInfoDegreePlus2Ix: {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj(nodePtr->degreeplus));
+        return TCL_OK;
+    }
+    case NodeInfoDegreeMinus1Ix:
+    case NodeInfoDegreeMinus2Ix: {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj(nodePtr->degreeminus));
+        return TCL_OK;
+    }
+    case NodeInfoDegreeIx: {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj(nodePtr->degreeundir));
+        return TCL_OK;
     }
     case NodeInfoGraphIx: {
         if (nodePtr->graph == NULL) {
@@ -318,6 +351,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         nodePtr = (Node*) Tcl_Alloc(sizeof(Node));
         nodePtr->statePtr = gState;
         nodePtr->graph = NULL;
+        nodePtr->degreeplus = nodePtr->degreeminus = nodePtr->degreeundir = 0;
         sprintf(nodePtr->name, "%s", "");
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {

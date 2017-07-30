@@ -246,7 +246,7 @@ static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
 {
     int cmdIdx;
     static const char* subCmds[] = {
-            "nodes", "edges", "delta+", "deltaplus", "delta-", "deltaminus", "delta", "subgraphs", NULL };
+            "nodes", "edges", "delta+", "deltaplus", "delta-", "deltaminus", "delta", "subgraphs", "order", NULL };
     enum cmdIndx
     {
         InfoNodesIx,
@@ -256,7 +256,8 @@ static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
         InfoDeltaMinus1Ix,
         InfoDeltaMinus2Ix,
         InfoDeltaIx,
-        InfoSubgraphsIx
+        InfoSubgraphsIx,
+        InfoOrderIx
     };
 
     if (objc < 1) {
@@ -284,9 +285,12 @@ static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
     case InfoDeltaIx: {
         return GraphInfoDelta(graphPtr, DELTA_ALL, interp, objc - 1, objv + 1);
     }
-
     case InfoSubgraphsIx: {
-
+        break;
+    }
+    case InfoOrderIx: {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj(graphPtr->order));
+        return TCL_OK;
     }
     }
 
@@ -391,6 +395,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         graphPtr = (Graph*) Tcl_Alloc(sizeof(Graph));
         graphPtr->statePtr = gState;
         sprintf(graphPtr->name, "%s", "");
+        graphPtr->order = 0;
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
             sprintf(graphPtr->cmdName, "::tclgraphs::Graph%d", gState->graphUid);

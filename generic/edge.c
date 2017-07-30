@@ -192,6 +192,11 @@ static void EdgeDeleteCmd(ClientData clientData)
                     Tcl_DeleteHashEntry(entry2);
                 }
             }
+            edgePtr->fromNode->degreeundir--;
+            edgePtr->toNode->degreeundir--;
+        } else {
+            edgePtr->fromNode->degreeplus--;
+            edgePtr->toNode->degreeminus--;
         }
     }
 
@@ -422,11 +427,15 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
             }
             Tcl_SetHashValue(entry2, edgePtr);
             edgePtr->directionType = EDGE_UNDIRECTED;
+            fromNodePtr->degreeundir++;
+            toNodePtr->degreeundir++;
         }
         else {
             entry1 = Tcl_CreateHashEntry(&toNodePtr->incoming, fromNodePtr, &new);
             /* should not be there, since it is always associated with a neighbor */
             Tcl_SetHashValue(entry1, edgePtr);
+            fromNodePtr->degreeplus++;
+            toNodePtr->degreeminus++;
         }
     }
 

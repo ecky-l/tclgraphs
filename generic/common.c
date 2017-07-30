@@ -70,16 +70,13 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
         }
     }
 
-    if (graphPtr == NULL) {
-        goto setNodeGraph;
+    if (graphPtr != NULL) {
+        entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr, &new);
+        if (new) {
+            Tcl_SetHashValue(entry, nodePtr);
+        }
+        graphPtr->order++;
     }
-
-    entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr, &new);
-    if (new) {
-        Tcl_SetHashValue(entry, nodePtr);
-    }
-
-setNodeGraph:
     nodePtr->graph = graphPtr;
 }
 
@@ -91,6 +88,7 @@ void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr)
             Tcl_DeleteHashEntry(entry);
         }
         nodePtr->graph = NULL;
+        graphPtr->order--;
     }
 }
 

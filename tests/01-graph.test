@@ -264,6 +264,33 @@ test graph-slave-interp-1.8.1 "create and delete graph + nodes in slave interp" 
     interp delete slave
 } -cleanup {} -result {}
 
+###
+
+test graph-order-1.9.1 "info order 1" -setup $createThreeNodes -body {
+    foreach {n} {n1 n2 n3} {
+    	$n configure -graph g
+    }
+    graph info g order
+} -cleanup $deleteThreeNodes -result 3
+
+###
+
+test graph-order-1.9.2 "info order 2 0 before anything" -setup $createThreeNodes -body {
+    graph info g order
+} -cleanup $deleteThreeNodes -result 0
+
+###
+
+test graph-order-1.9.2 "info order 3: 0 after node add/subtract" -setup $createThreeNodes -body {
+    lappend result [g info order]
+    foreach {n} {n1 n2 n3} {
+    	$n configure -graph g
+    }
+    lappend result [g info order]
+    g nodes - n1 n2 n3
+    lappend result [g info order]
+} -cleanup $deleteThreeNodes -result {0 3 0}
+
 # cleanup
 ::tcltest::cleanupTests
 return
