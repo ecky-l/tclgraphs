@@ -58,11 +58,11 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         return TCL_OK;
     }
     case DataIx: {
-        if (edgePtr->data == NULL) {
+        if (edgePtr->dataObjPtr == NULL) {
             Tcl_SetObjResult(interp, Tcl_NewListObj(0, NULL));
         }
         else {
-            Tcl_SetObjResult(interp, edgePtr->data);
+            Tcl_SetObjResult(interp, edgePtr->dataObjPtr);
         }
         return TCL_OK;
     }
@@ -109,8 +109,9 @@ int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const
             break;
         }
         case DataIx: {
-            edgePtr->data = objv[i + 1];
-            Tcl_IncrRefCount(edgePtr->data);
+            printf("hahaha %s\n", Tcl_GetString(objv[i+1]));
+            edgePtr->dataObjPtr = objv[i + 1];
+            Tcl_IncrRefCount(edgePtr->dataObjPtr);
             break;
         }
         default: {
@@ -139,6 +140,7 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
 {
     switch (cmdIdx) {
     case EdgeConfigureIx: {
+        printf("bkafbksdfknsdkjf\n");
         return EdgeCmdConfigure(edgePtr, interp, objc, objv);
     }
     case EdgeCgetIx: {
@@ -215,8 +217,8 @@ static void EdgeDestroyCmd(ClientData clientData)
         }
     }
     
-    if (edgePtr->data != NULL) {
-        Tcl_DecrRefCount(edgePtr->data);
+    if (edgePtr->dataObjPtr != NULL) {
+        Tcl_DecrRefCount(edgePtr->dataObjPtr);
     }
 
     Tcl_DeleteHashTable(&edgePtr->labels);
@@ -393,7 +395,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     edgePtr = (Edge*) Tcl_Alloc(sizeof(Edge));
     edgePtr->statePtr = gState;
-    edgePtr->data = NULL;
+    edgePtr->dataObjPtr = NULL;
 
     if (Tcl_StringMatch(cmdName, "new")) {
         sprintf(edgePtr->cmdName, "::tclgraphs::Edge%d", gState->edgeUid);

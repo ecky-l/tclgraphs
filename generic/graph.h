@@ -73,14 +73,14 @@ typedef struct _edge
     Tcl_Command commandTkn;
     Node* fromNode;
     Node* toNode;
+    Tcl_Obj* dataObjPtr;
+    /* Labels for the edge */
+    Tcl_HashTable labels;
+
     double weight;
-    Tcl_Obj* data;
 
     /* Indicates whether the edge is undirected. Default is directed, then this is 0 */
     EdgeDirectionT directionType;
-
-    /* Labels for the edge */
-    Tcl_HashTable labels;
 } Edge;
 
 /*
