@@ -5,7 +5,7 @@
  */
 
 static const char* graphSubCommands[] = {
-        "new", "create", "delete", "configure", "cget", "nodes", "subgraphs", "info", NULL };
+        "new", "create", "destroy", "configure", "cget", "nodes", "subgraphs", "info", NULL };
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
@@ -13,7 +13,7 @@ enum graphCommandIndex
 {
     GraphNewIx,
     GraphCreateIx,
-    GraphDeleteIx,
+    GraphDestroyIx,
     GraphConfigureIx,
     GraphCgetIx,
     GraphNodesIx,
@@ -177,7 +177,7 @@ static int GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
     return TCL_ERROR;
 }
 
-static int GraphCmdDelete(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+static int GraphCmdDestroy(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int optIdx;
     static const char *opts[] = { "-nodes",
@@ -310,8 +310,8 @@ static int GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int ob
     case GraphCreateIx: {
         return TCL_ERROR;
     }
-    case GraphDeleteIx: {
-        return GraphCmdDelete(graphPtr, interp, objc, objv);
+    case GraphDestroyIx: {
+        return GraphCmdDestroy(graphPtr, interp, objc, objv);
     }
     case GraphConfigureIx: {
         return GraphCmdConfigure(graphPtr, interp, objc, objv);
@@ -347,7 +347,7 @@ static int Graph_GraphSubCmd(ClientData clientData, Tcl_Interp* interp, int objc
     return GraphSubCmd(graphPtr, objv[1], interp, objc - 2, objv + 2);
 }
 
-static void GraphDeleteCmd(ClientData clientData)
+static void GraphDestroyCmd(ClientData clientData)
 {
     Graph* g = (Graph*) clientData;
     Tcl_HashEntry* entry1;
@@ -421,13 +421,13 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         Tcl_SetHashValue(entryPtr, (ClientData )graphPtr);
         if (objc > paramOffset) {
             if (GraphCmdConfigure(graphPtr, interp, objc - paramOffset, objv + paramOffset) != TCL_OK) {
-                GraphDeleteCmd(graphPtr);
+                GraphDestroyCmd(graphPtr);
                 return TCL_ERROR;
             }
         }
 
         graphPtr->commandTkn = Tcl_CreateObjCommand(interp, graphPtr->cmdName, Graph_GraphSubCmd, graphPtr,
-                GraphDeleteCmd);
+                GraphDestroyCmd);
         Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->cmdName, -1));
         return TCL_OK;
     }

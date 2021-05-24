@@ -43,6 +43,9 @@ typedef struct _node
     /* graph where the node is part of */
     Graph* graph;
 
+    /* additional arbitrary data attached to the node */
+    Tcl_Obj* data;
+
     int degreeplus;
     int degreeminus;
     int degreeundir;
@@ -71,6 +74,7 @@ typedef struct _edge
     Node* fromNode;
     Node* toNode;
     double weight;
+    Tcl_Obj* data;
 
     /* Indicates whether the edge is undirected. Default is directed, then this is 0 */
     EdgeDirectionT directionType;

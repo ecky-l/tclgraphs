@@ -5,7 +5,7 @@
  * Edge API
  */
 
-static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "delete", "labels",
+static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "destroy", "labels",
 NULL };
 enum edgeSubCmdIndices
 {
@@ -14,20 +14,21 @@ enum edgeSubCmdIndices
     EdgeGetIx,
     EdgeConfigureIx,
     EdgeCgetIx,
-    EdgeDeleteIx,
+    EdgeDestroyIx,
     EdgeLabelsIx
 };
 
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = { "-name", "-from", "-to", "-weight", "-directed", NULL };
+    char* opts[] = { "-name", "-from", "-to", "-weight", "-data", "-directed", NULL };
     enum OptsIx
     {
         NameIx,
         FromIx,
         ToIx,
         WeightIx,
+        DataIx,
         DirectedIx
     };
 
@@ -56,6 +57,15 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         Tcl_SetObjResult(interp, Tcl_NewDoubleObj(edgePtr->weight));
         return TCL_OK;
     }
+    case DataIx: {
+        if (edgePtr->data == NULL) {
+            Tcl_SetObjResult(interp, Tcl_NewListObj(0, NULL));
+        }
+        else {
+            Tcl_SetObjResult(interp, edgePtr->data);
+        }
+        return TCL_OK;
+    }
     case DirectedIx: {
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(edgePtr->directionType == EDGE_DIRECTED));
         return TCL_OK;
@@ -71,18 +81,18 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
 int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    char* opts[] = { "-name", "-weight", NULL };
+    char* opts[] = { "-name", "-weight", "-data", NULL };
     enum OptsIx
     {
         NameIx,
-        WeightIx
+        WeightIx,
+        DataIx
     };
 
-    if (objc < 1 || objc > 10) {
+    if (objc < 1 || objc > 12 || (objc % 2) != 0) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
-
     for (i = 0; i < objc; i += 2) {
         if (Tcl_GetIndexFromObj(interp, objv[i], opts, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
@@ -98,6 +108,11 @@ int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const
             }
             break;
         }
+        case DataIx: {
+            edgePtr->data = objv[i + 1];
+            Tcl_IncrRefCount(edgePtr->data);
+            break;
+        }
         default: {
             Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong options in edge configure", -1));
             return TCL_ERROR;
@@ -109,7 +124,7 @@ int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const
     return TCL_OK;
 }
 
-int EdgeCmdDelete(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int EdgeCmdDestroy(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     Tcl_DeleteCommandFromToken(interp, edgePtr->commandTkn);
     return TCL_OK;
@@ -129,8 +144,8 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
     case EdgeCgetIx: {
         return EdgeCmdCget(edgePtr, interp, objc, objv);
     }
-    case EdgeDeleteIx: {
-        return EdgeCmdDelete(edgePtr, interp, objc, objv);
+    case EdgeDestroyIx: {
+        return EdgeCmdDestroy(edgePtr, interp, objc, objv);
     }
     case EdgeLabelsIx: {
         return Graphs_LabelsCommand(edgePtr->labels, interp, objc, objv);
@@ -140,7 +155,7 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
     case EdgeGetIx:
     default: {
         Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx], " should be configure cget or delete",
+        Tcl_AppendStringsToObj(res, "Wrong edge method ", edgeSubCmds[cmdIdx], " should be configure cget or destroy",
         NULL);
         Tcl_SetObjResult(interp, res);
         return TCL_ERROR;
@@ -165,7 +180,7 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
     return EdgeCmd(edgePtr, cmdIdx, interp, objc - 2, objv + 2);
 }
 
-static void EdgeDeleteCmd(ClientData clientData)
+static void EdgeDestroyCmd(ClientData clientData)
 {
     Edge* edgePtr = (Edge*) clientData;
 
@@ -198,6 +213,10 @@ static void EdgeDeleteCmd(ClientData clientData)
             edgePtr->fromNode->degreeplus--;
             edgePtr->toNode->degreeminus--;
         }
+    }
+    
+    if (edgePtr->data != NULL) {
+        Tcl_DecrRefCount(edgePtr->data);
     }
 
     Tcl_DeleteHashTable(&edgePtr->labels);
@@ -235,7 +254,7 @@ static void EdgeDeleteCmd(ClientData clientData)
  *  edge configure n1 -> n2 -weight 42
  *  - configures the directed edge from n1 to n2 with a weight of 42
  *
- *  edge delete e
+ *  edge destroy e
  *  - deletes the edge with token/command e
  */
 int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
@@ -264,10 +283,17 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         return TCL_ERROR;
     }
 
-    int pOffset = (cmdIdx == EdgeCreateIx) ? 1 : 0;
+    int pOffset = 0;
+    if (cmdIdx == EdgeCreateIx) {
+        if (objc < 6) {
+            Tcl_WrongNumArgs(interp, 1, objv, "[new | create <name> | get] <node> [-> | <->] <node> ?arg ...?");
+            return TCL_ERROR;
+        }
+        objc--;
+        objv++;
+    }
 
-    if (objc
-            < 4|| Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", TCL_EXACT, &directionIdx) != TCL_OK) {
+    if (objc < 4 || Tcl_GetIndexFromObj(interp, objv[3+pOffset], directChars, "xxx", TCL_EXACT, &directionIdx) != TCL_OK) {
         /* edge is given as an edge command */
         throughCommand = 1;
         Tcl_ResetResult(interp);
@@ -309,24 +335,14 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
             return TCL_ERROR;
         }
 
-        switch (cmdIdx) {
-        case EdgeNewIx:
-        case EdgeCreateIx: {
+        if (cmdIdx == EdgeNewIx || cmdIdx == EdgeCreateIx) {
             edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
-                    Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
+                Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
             if (edgePtr == NULL) {
                 return TCL_ERROR;
             }
             Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
             return TCL_OK;
-        }
-        default: {
-            edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
-            if (edgePtr == NULL) {
-                return TCL_ERROR;
-            }
-            break;
-        }
         }
     }
 
@@ -345,7 +361,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
     case EdgeConfigureIx:
     case EdgeCgetIx:
-    case EdgeDeleteIx:
+    case EdgeDestroyIx:
     case EdgeLabelsIx: {
         int argcOff = (throughCommand) ? 3 : 5;
         if (edgePtr == NULL) {
@@ -377,6 +393,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     edgePtr = (Edge*) Tcl_Alloc(sizeof(Edge));
     edgePtr->statePtr = gState;
+    edgePtr->data = NULL;
 
     if (Tcl_StringMatch(cmdName, "new")) {
         sprintf(edgePtr->cmdName, "::tclgraphs::Edge%d", gState->edgeUid);
@@ -387,6 +404,9 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     }
 
     if (Graphs_CheckCommandExists(interp, edgePtr->cmdName)) {
+        Tcl_Obj* result = Tcl_NewObj();
+        Tcl_AppendStringsToObj(result, edgePtr->cmdName, " exists already", NULL);
+        Tcl_SetObjResult(interp, result);
         Tcl_Free((char*) edgePtr);
         return NULL;
     }
@@ -418,8 +438,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
             Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->outgoing, fromNodePtr, &new);
             if (!new) {
                 Tcl_Obj* result = Tcl_NewObj();
-                Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ", toNodePtr->cmdName,
-                NULL);
+                Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ", toNodePtr->cmdName, NULL);
                 Tcl_SetObjResult(interp, result);
                 Tcl_DeleteHashEntry(entry1);
                 Tcl_Free((char*) edgePtr);
@@ -441,7 +460,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     Tcl_InitHashTable(&edgePtr->labels, TCL_STRING_KEYS);
 
-    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeSubCmd, edgePtr, EdgeDeleteCmd);
+    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeSubCmd, edgePtr, EdgeDestroyCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);
     return edgePtr;
@@ -452,9 +471,11 @@ Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirec
 {
     Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, toNodePtr);
     if (entry == NULL) {
+        /*
         Tcl_Obj* res = Tcl_NewObj();
         Tcl_AppendStringsToObj(res, fromNodePtr->cmdName, " is not a neighbor of ", toNodePtr->cmdName, NULL);
         Tcl_SetObjResult(interp, res);
+        */
         return NULL;
     }
     Edge *edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
@@ -462,19 +483,23 @@ Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirec
     if (unDirected) {
         entry = Tcl_FindHashEntry(&toNodePtr->outgoing, fromNodePtr);
         if (entry == NULL) {
+            /*
             Tcl_Obj* res = Tcl_NewObj();
             Tcl_AppendStringsToObj(res, toNodePtr->cmdName, " is not a neighbor of ", fromNodePtr->cmdName,
             NULL);
             Tcl_SetObjResult(interp, res);
+            */
             return NULL;
         }
 
         Edge *edgePtr2 = (Edge*) Tcl_GetHashValue(entry);
         if (edgePtr1 != edgePtr2) {
+            /*
             Tcl_Obj* res = Tcl_NewObj();
             Tcl_AppendStringsToObj(res, fromNodePtr->cmdName, " is not connected to ", toNodePtr->cmdName,
                     " by an undirected edge", NULL);
             Tcl_SetObjResult(interp, res);
+            */
             return NULL;
         }
     }

@@ -7,8 +7,8 @@
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
-static const char* NodeOptions[] = { "-name", "-graph", NULL };
-enum NodeOptsIdx { NameIx, GraphIx };
+static const char* NodeOptions[] = { "-name", "-graph", "-data", NULL };
+enum NodeOptsIdx { NameIx, GraphIx, DataIx };
 
 typedef enum _EdgeDirection
 {
@@ -21,7 +21,7 @@ static const char* nodeSubCommands[] =
 {
         "new",
         "create",
-        "delete",
+        "destroy",
         "configure",
         "cget",
         "info",
@@ -33,7 +33,7 @@ enum nodeCommandIndex
 {
     NodeNewIx,
     NodeCreateIx,
-    NodeDeleteIx,
+    NodeDestroyIx,
     NodeConfigureIx,
     NodeCgetIx,
     NodeInfoIx,
@@ -62,14 +62,18 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
         case GraphIx: {
             Graph* g = NULL;
             if (Tcl_StringMatch(Tcl_GetString(objv[i+1]), "")) {
-                goto addNodeToGraph;
+                Graphs_AddNodeToGraph(g, nodePtr);
             }
             g = Graphs_ValidateGraphCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[i+1]));
             if (g == NULL) {
                 return TCL_ERROR;
             }
-addNodeToGraph:
             Graphs_AddNodeToGraph(g, nodePtr);
+            break;
+        }
+        case DataIx: {
+            nodePtr->data = objv[i + 1];
+            Tcl_IncrRefCount(nodePtr->data);
             break;
         }
         default: {
@@ -108,6 +112,15 @@ static int NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
         }
         return TCL_OK;
     }
+    case DataIx: {
+        if (nodePtr->data == NULL) {
+            Tcl_SetObjResult(interp, Tcl_NewStringObj("", -1));
+        }
+        else {
+            Tcl_SetObjResult(interp, nodePtr->data);
+        }
+        return TCL_OK;
+    }
     default: {
         break;
     }
@@ -120,7 +133,7 @@ static int NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
 /*
  * The delete subcommand, calls the command delete procedure.
  */
-static int NodeCmdDelete(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+static int NodeCmdDestroy(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     Tcl_DeleteCommandFromToken(interp, nodePtr->commandTkn);
     return TCL_OK;
@@ -253,8 +266,8 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
                 Tcl_NewStringObj("cannot create node from within a node! Use the [node] command!", -1));
         return TCL_ERROR;
     }
-    case NodeDeleteIx: {
-        return NodeCmdDelete(nodePtr, interp, objc, objv);
+    case NodeDestroyIx: {
+        return NodeCmdDestroy(nodePtr, interp, objc, objv);
     }
     case NodeConfigureIx: {
         return NodeCmdConfigure(nodePtr, interp, objc, objv);
@@ -289,7 +302,7 @@ static int Node_NodeSubCmd(ClientData clientData, Tcl_Interp *interp, int objc, 
 /*
  * Command Delete callback
  */
-static void NodeDeleteCmd(ClientData clientData)
+static void NodeDestroyCmd(ClientData clientData)
 {
     Node* nodePtr = (Node*) clientData;
     Tcl_HashEntry* entry;
@@ -315,6 +328,10 @@ static void NodeDeleteCmd(ClientData clientData)
     /* remove myself from the graphs where I am part of */
     if (nodePtr->graph != NULL) {
         Graphs_DeleteNodeFromGraph(nodePtr->graph, nodePtr);
+    }
+
+    if (nodePtr->data != NULL) {
+        Tcl_DecrRefCount(nodePtr->data);
     }
 
     Tcl_DeleteHashTable(&nodePtr->outgoing);
@@ -351,6 +368,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         nodePtr = (Node*) Tcl_Alloc(sizeof(Node));
         nodePtr->statePtr = gState;
         nodePtr->graph = NULL;
+        nodePtr->data = NULL;
         nodePtr->degreeplus = nodePtr->degreeminus = nodePtr->degreeundir = 0;
         sprintf(nodePtr->name, "%s", "");
 
@@ -382,12 +400,12 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
         if (objc > paramOffset) {
             if (NodeCmdConfigure(nodePtr, interp, objc - paramOffset, objv + paramOffset) != TCL_OK) {
-                NodeDeleteCmd((ClientData) nodePtr);
+                NodeDestroyCmd((ClientData) nodePtr);
                 return TCL_ERROR;
             }
         }
 
-        nodePtr->commandTkn = Tcl_CreateObjCommand(interp, nodePtr->cmdName, Node_NodeSubCmd, nodePtr, NodeDeleteCmd);
+        nodePtr->commandTkn = Tcl_CreateObjCommand(interp, nodePtr->cmdName, Node_NodeSubCmd, nodePtr, NodeDestroyCmd);
         Tcl_SetObjResult(interp, Tcl_NewStringObj(nodePtr->cmdName, -1));
         return TCL_OK;
 
