@@ -1,4 +1,4 @@
-#include "graph.h"
+#include "graphs.h"
 #include <string.h>
 
 /*

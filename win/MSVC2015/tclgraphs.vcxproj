@@ -178,7 +178,7 @@
     <ClCompile Include="..\..\generic\node.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\generic\graph.h" />
+    <ClInclude Include="..\..\generic\graphs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

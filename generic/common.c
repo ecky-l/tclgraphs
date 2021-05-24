@@ -1,7 +1,7 @@
 /*
  * Common procedures for entities
  */
-#include "graph.h"
+#include "graphs.h"
 
 int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
 {

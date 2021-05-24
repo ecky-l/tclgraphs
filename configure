@@ -5380,7 +5380,7 @@ done
 
 
 
-    vars="generic/graph.h"
+    vars="generic/graphs.h"
     for i in $vars; do
 	# check for existence, be strict because it is installed
 	if test ! -f "${srcdir}/$i" ; then

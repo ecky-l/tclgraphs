@@ -72,7 +72,7 @@ TEA_SETUP_COMPILER
 #-----------------------------------------------------------------------
 
 TEA_ADD_SOURCES([graphs.c common.c edge.c graph.c node.c])
-TEA_ADD_HEADERS([generic/graph.h])
+TEA_ADD_HEADERS([generic/graphs.h])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])

@@ -1,5 +1,5 @@
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef GRAPHS_H
+#define GRAPHS_H
 
 #include <tcl.h>
 
@@ -182,4 +182,4 @@ int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const []);
  */
 int Graphs_GetDelta(Node*, Graph*, DeltaT, struct LabelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj);
 
-#endif /* GRAPH_H */
+#endif /* GRAPHS_H */
