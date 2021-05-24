@@ -27,7 +27,7 @@ AC_INIT([graphs], [0.9])
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-TEA_INIT([3.10])
+TEA_INIT()
 
 AC_CONFIG_AUX_DIR(tclconfig)
 
@@ -71,12 +71,12 @@ TEA_SETUP_COMPILER
 # and PKG_TCL_SOURCES.
 #-----------------------------------------------------------------------
 
-TEA_ADD_SOURCES([graphs.c common.c edge.c graph.c node.c])
-TEA_ADD_HEADERS([generic/graphs.h])
+TEA_ADD_SOURCES([graphs.c common.c edge.c graph.c node.c graphsStubInit.c])
+TEA_ADD_HEADERS([generic/graphsDecls.h generic/graphs.h])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
-TEA_ADD_STUB_SOURCES([])
+TEA_ADD_STUB_SOURCES([graphsStubLib.c])
 TEA_ADD_TCL_SOURCES([])
 
 #--------------------------------------------------------------------
@@ -182,5 +182,6 @@ TEA_PROG_TCLSH
 # You may alternatively have a special pkgIndex.tcl.in or other files
 # which require substituting th AC variables in.  Include these here.
 #--------------------------------------------------------------------
+AC_CONFIG_FILES([Makefile pkgIndex.tcl])
 
-AC_OUTPUT([Makefile pkgIndex.tcl])
+AC_OUTPUT()

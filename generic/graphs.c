@@ -1,5 +1,15 @@
 #include "graphs.h"
 
+GraphState* Graphs_GetState(Tcl_Interp* interp)
+{
+    Tcl_CmdInfo cmdInfo;
+    if (Tcl_GetCommandInfo(interp, "::graphs::graph", &cmdInfo) != TCL_OK) {
+        return NULL;
+    }
+
+    return (GraphState*) cmdInfo.clientData;
+}
+
 /*
  *----------------------------------------------------------------------
  *

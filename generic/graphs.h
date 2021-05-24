@@ -182,4 +182,12 @@ int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const []);
  */
 int Graphs_GetDelta(Node*, Graph*, DeltaT, struct LabelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj);
 
+#ifdef USE_TCL_STUBS
+DLLEXPORT CONST char* Graphs_InitStubs _ANSI_ARGS_((Tcl_Interp* interp, CONST char* version, int exact));
+#else
+#	define Graphs_InitStubs(interp, version, exact) Tcl_PkgRequire(interp, "graphs", version, exact)
+#endif
+#include "graphsDecls.h"
+
+
 #endif /* GRAPHS_H */
