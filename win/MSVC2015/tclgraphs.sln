@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "graphs", "graphs.vcxproj", "{0A925523-0B59-4EA3-A84C-2753B3A0E4F3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "graphsstublib", "graphsstublib.vcxproj", "{CD1102BA-A187-417D-9D3F-2E9813CE467F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "graphsstub", "graphsstub.vcxproj", "{CD1102BA-A187-417D-9D3F-2E9813CE467F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

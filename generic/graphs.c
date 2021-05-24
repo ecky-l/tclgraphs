@@ -1,5 +1,7 @@
 #include "graphs.h"
 
+MODULE_SCOPE GraphsStubs graphsStubs;
+
 GraphState* Graphs_GetState(Tcl_Interp* interp)
 {
     Tcl_CmdInfo cmdInfo;
@@ -61,7 +63,7 @@ DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
     Tcl_Export(interp, graphsNS, "node", 0);
     Tcl_Export(interp, graphsNS, "edge", 0);
 
-    if (Tcl_PkgProvide(interp, PACKAGE_NAME, PACKAGE_VERSION) != TCL_OK) {
+    if (Tcl_PkgProvideEx(interp, PACKAGE_NAME, PACKAGE_VERSION, &graphsStubs) != TCL_OK) {
         return TCL_ERROR;
     }
 

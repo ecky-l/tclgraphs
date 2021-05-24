@@ -1,5 +1,7 @@
 #include "graphs.h"
 
+MODULE_SCOPE const GraphsStubs graphsStubs;
+
 /* !BEGIN!: Do not edit below this line. */
 
 const GraphsStubs graphsStubs = {

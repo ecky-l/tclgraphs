@@ -108,7 +108,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(TCL64_HOME)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_TCL_STUBS=1;BUILD_graphs=1;MODULE_SCOPE=extern;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
@@ -151,7 +151,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(TCL64_HOME)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_TCL_STUBS=1;BUILD_graphs=1;MODULE_SCOPE=extern;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <SupportJustMyCode>true</SupportJustMyCode>
       <WholeProgramOptimization>false</WholeProgramOptimization>

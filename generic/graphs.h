@@ -3,6 +3,16 @@
 
 #include <tcl.h>
 
+#ifndef GRAPHSAPI
+#   if defined(BUILD_graphs)
+#	define GRAPHSAPI MODULE_SCOPE
+#   else
+#	define GRAPHSAPI extern
+#	undef USE_GRAPHS_STUBS
+#	define USE_GRAPHS_STUBS 1
+#   endif
+#endif
+
 typedef struct _graphState
 {
     Tcl_Interp* interp;

@@ -1,29 +1,28 @@
+#ifndef USE_TCL_STUBS
+#define USE_TCL_STUBS
+#endif
+
 #include "graphs.h"
 
-#ifdef USE_TCL_STUBS
-//const GraphsStubs *graphsStubsPtr;
+#undef Graphs_InitStubs
 
-const GraphsStubs *graphsStubsPtr = NULL;
+const GraphsStubs *graphsStubsPtr;
 
 DLLEXPORT CONST
 char* Graphs_InitStubs(Tcl_Interp* interp, const char* version, int exact)
 {
     const char* packageName = "graphs";
     const char* errMsg = NULL;
-    GraphsStubs* stubsPtr = NULL;
-    const char* actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, packageName, version, exact, &stubsPtr);
+    const char* actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, packageName, version, exact, (ClientData*)&graphsStubsPtr);
+    
     if (actualVersion == NULL) {
         return NULL;
     }
-    if (stubsPtr == NULL) {
-        errMsg = "missing stub table pointer";
-        tclStubsPtr->tcl_ResetResult(interp);
-        tclStubsPtr->tcl_AppendResult(interp, "Error loading ", packageName,
-            " (requested version ", version, ", actual version ",
-            actualVersion, "): ", errMsg, NULL);
+    if (graphsStubsPtr == NULL) {
+        Tcl_SetResult(interp, "This implementation of the graphs extension does not support stubs", TCL_STATIC);
         return NULL;
     }
-    graphsStubsPtr = stubsPtr;
+
     return actualVersion;
 }
-#endif
+

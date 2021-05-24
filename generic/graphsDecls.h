@@ -10,7 +10,7 @@ extern "C" {
  */
 
 /* 0 */
-EXTERN GraphState*	Graphs_GetState(Tcl_Interp*interp);
+GRAPHSAPI GraphState*	Graphs_GetState(Tcl_Interp*interp);
 
 typedef struct GraphsStubs {
     int magic;
