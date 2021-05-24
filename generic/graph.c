@@ -398,7 +398,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         graphPtr->order = 0;
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
-            sprintf(graphPtr->cmdName, "::tclgraphs::Graph%d", gState->graphUid);
+            sprintf(graphPtr->cmdName, "::graphs::Graph%d", gState->graphUid);
             gState->graphUid++;
             paramOffset = 2;
         }

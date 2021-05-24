@@ -22,6 +22,7 @@
     <ProjectGuid>{0A925523-0B59-4EA3-A84C-2753B3A0E4F3}</ProjectGuid>
     <RootNamespace>tclgraphs</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>graphs</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -69,10 +70,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>lib$(ProjectName)0.8-win64</TargetName>
+    <TargetName>lib$(ProjectName)0.9-win64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>lib$(ProjectName)0.8-win64</TargetName>
+    <TargetName>lib$(ProjectName)0.9</TargetName>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -107,7 +108,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(TCL64_HOME)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="tclgraphs";PACKAGE_VERSION="0.8";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
@@ -150,7 +151,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(TCL64_HOME)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="tclgraphs";PACKAGE_VERSION="0.8";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_TCL_STUBS=1;PACKAGE_NAME="graphs";PACKAGE_VERSION="0.9";_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <SupportJustMyCode>true</SupportJustMyCode>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -166,14 +167,14 @@
       <LinkTimeCodeGeneration />
     </Link>
     <PostBuildEvent>
-      <Command>cp $(TargetPath) $(SolutionDir)..\..\lib$(ProjectName)0.8-win64$(TargetExt)</Command>
+      <Command>cp $(TargetPath) $(SolutionDir)..\..\lib$(ProjectName)0.9$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\generic\common.c" />
-    <ClCompile Include="..\..\generic\tclgraphs.c" />
     <ClCompile Include="..\..\generic\edge.c" />
     <ClCompile Include="..\..\generic\graph.c" />
+    <ClCompile Include="..\..\generic\graphs.c" />
     <ClCompile Include="..\..\generic\node.c" />
   </ItemGroup>
   <ItemGroup>

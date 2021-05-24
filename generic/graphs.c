@@ -16,7 +16,7 @@
  *	The Combopt package is created.
  *----------------------------------------------------------------------
  */
-DLLEXPORT int Tclgraphs_Init(Tcl_Interp *interp)
+DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
 {
     Tcl_Namespace *graphsNS = NULL;
     GraphState* gState;
@@ -36,16 +36,16 @@ DLLEXPORT int Tclgraphs_Init(Tcl_Interp *interp)
     gState->nodeUid = 0;
     gState->edgeUid = 0;
 
-    if ((graphsNS = Tcl_CreateNamespace(interp, "::tclgraphs", NULL, NULL)) == NULL) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj("Cannot create ::tclgraphs namespace", -1));
+    if ((graphsNS = Tcl_CreateNamespace(interp, "::graphs", NULL, NULL)) == NULL) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("Cannot create ::graphs namespace", -1));
         return TCL_ERROR;
     }
 
-    Tcl_CreateObjCommand(interp, "::tclgraphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData) gState,
             (Tcl_CmdDeleteProc *) Graph_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::tclgraphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData) gState,
             (Tcl_CmdDeleteProc *) Node_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::tclgraphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData) gState,
             (Tcl_CmdDeleteProc *) Edge_CleanupCmd);
     Tcl_Export(interp, graphsNS, "graph", 0);
     Tcl_Export(interp, graphsNS, "node", 0);

@@ -377,7 +377,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     edgePtr->dataObjPtr = NULL;
 
     if (Tcl_StringMatch(cmdName, "new")) {
-        sprintf(edgePtr->cmdName, "::tclgraphs::Edge%d", gState->edgeUid);
+        sprintf(edgePtr->cmdName, "::graphs::Edge%d", gState->edgeUid);
         gState->edgeUid++;
     }
     else {

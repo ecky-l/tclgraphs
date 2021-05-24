@@ -19,7 +19,7 @@ dnl	to configure the system for the local environment.
 # so that we create the export library with the dll.
 #-----------------------------------------------------------------------
 
-AC_INIT([tclgraphs], [0.8])
+AC_INIT([graphs], [0.9])
 
 #--------------------------------------------------------------------
 # Call TEA_INIT as the first TEA_ macro to set up initial vars.
@@ -71,7 +71,7 @@ TEA_SETUP_COMPILER
 # and PKG_TCL_SOURCES.
 #-----------------------------------------------------------------------
 
-TEA_ADD_SOURCES([tclgraphs.c common.c edge.c graph.c node.c])
+TEA_ADD_SOURCES([graphs.c common.c edge.c graph.c node.c])
 TEA_ADD_HEADERS([generic/graph.h])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])

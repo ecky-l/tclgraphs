@@ -373,7 +373,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         sprintf(nodePtr->name, "%s", "");
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
-            sprintf(nodePtr->cmdName, "::tclgraphs::Node%d", gState->nodeUid);
+            sprintf(nodePtr->cmdName, "::graphs::Node%d", gState->nodeUid);
             gState->nodeUid++;
             paramOffset = 2;
         }
