@@ -2,14 +2,18 @@
 
 MODULE_SCOPE GraphsStubs graphsStubs;
 
+static GraphState* graphState;
+
 GraphState* Graphs_GetState(Tcl_Interp* interp)
 {
+    /*
     Tcl_CmdInfo cmdInfo;
     if (Tcl_GetCommandInfo(interp, "::graphs::graph", &cmdInfo) != TCL_OK) {
         return NULL;
     }
-
     return (GraphState*) cmdInfo.clientData;
+    */
+    return graphState;
 }
 
 /*
@@ -31,7 +35,6 @@ GraphState* Graphs_GetState(Tcl_Interp* interp)
 DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
 {
     Tcl_Namespace *graphsNS = NULL;
-    GraphState* gState;
 
 #ifdef USE_TCL_STUBS
     if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
@@ -39,25 +42,25 @@ DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
     }
 #endif //USE_TCL_STUBS
 
-    gState = (GraphState*) Tcl_Alloc(sizeof(GraphState));
-    gState->interp = interp;
-    Tcl_InitHashTable(&gState->graphs, TCL_STRING_KEYS);
-    Tcl_InitHashTable(&gState->nodes, TCL_STRING_KEYS);
-    Tcl_InitHashTable(&gState->edges, TCL_STRING_KEYS);
-    gState->graphUid = 0;
-    gState->nodeUid = 0;
-    gState->edgeUid = 0;
+    graphState = (GraphState*) Tcl_Alloc(sizeof(GraphState));
+    graphState->interp = interp;
+    Tcl_InitHashTable(&graphState->graphs, TCL_STRING_KEYS);
+    Tcl_InitHashTable(&graphState->nodes, TCL_STRING_KEYS);
+    Tcl_InitHashTable(&graphState->edges, TCL_STRING_KEYS);
+    graphState->graphUid = 0;
+    graphState->nodeUid = 0;
+    graphState->edgeUid = 0;
 
     if ((graphsNS = Tcl_CreateNamespace(interp, "::graphs", NULL, NULL)) == NULL) {
         Tcl_SetObjResult(interp, Tcl_NewStringObj("Cannot create ::graphs namespace", -1));
         return TCL_ERROR;
     }
 
-    Tcl_CreateObjCommand(interp, "::graphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData)graphState,
             (Tcl_CmdDeleteProc *) Graph_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::graphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData)graphState,
             (Tcl_CmdDeleteProc *) Node_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::graphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData) gState,
+    Tcl_CreateObjCommand(interp, "::graphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData)graphState,
             (Tcl_CmdDeleteProc *) Edge_CleanupCmd);
     Tcl_Export(interp, graphsNS, "graph", 0);
     Tcl_Export(interp, graphsNS, "node", 0);

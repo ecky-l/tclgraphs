@@ -12,7 +12,6 @@ DLLEXPORT CONST
 char* Graphs_InitStubs(Tcl_Interp* interp, const char* version, int exact)
 {
     const char* packageName = "graphs";
-    const char* errMsg = NULL;
     const char* actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, packageName, version, exact, (ClientData*)&graphsStubsPtr);
     
     if (actualVersion == NULL) {
