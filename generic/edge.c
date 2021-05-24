@@ -5,8 +5,7 @@
  * Edge API
  */
 
-static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "destroy", "labels",
-NULL };
+static char* edgeSubCmds[] = { "new", "create", "get", "configure", "cget", "destroy", "labels", NULL };
 enum edgeSubCmdIndices
 {
     EdgeNewIx,
@@ -18,46 +17,55 @@ enum edgeSubCmdIndices
     EdgeLabelsIx
 };
 
+static char* GetOptions[] = { "-name", "-from", "-to", "-weight", "-data", "-directed", NULL };
+enum GetOptionsIx
+{
+    GetOptionNameIx,
+    GetOptionFromIx,
+    GetOptionToIx,
+    GetOptionWeightIx,
+    GetOptionDataIx,
+    GetOptionDirectedIx
+};
+
+static char* ConfigureOptions[] = { "-name", "-weight", "-data", NULL };
+enum ConfigureOptionsIx
+{
+    ConfigureOptionNameIx,
+    ConfigureOptionWeightIx,
+    ConfigureOptionDataIx
+};
+
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = { "-name", "-from", "-to", "-weight", "-data", "-directed", NULL };
-    enum OptsIx
-    {
-        NameIx,
-        FromIx,
-        ToIx,
-        WeightIx,
-        DataIx,
-        DirectedIx
-    };
 
     if (objc != 1) {
         Tcl_WrongNumArgs(interp, 1, objv, "option arg");
         return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[0], opts, "option", 0, &optIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[0], GetOptions, "option", 0, &optIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
     switch (optIdx) {
-    case NameIx: {
+    case GetOptionNameIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->name, -1));
         return TCL_OK;
     }
-    case FromIx: {
+    case GetOptionFromIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->fromNode->cmdName, -1));
         return TCL_OK;
     }
-    case ToIx: {
+    case GetOptionToIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->toNode->cmdName, -1));
         return TCL_OK;
     }
-    case WeightIx: {
+    case GetOptionWeightIx: {
         Tcl_SetObjResult(interp, Tcl_NewDoubleObj(edgePtr->weight));
         return TCL_OK;
     }
-    case DataIx: {
+    case GetOptionDataIx: {
         if (edgePtr->dataObjPtr == NULL) {
             Tcl_SetObjResult(interp, Tcl_NewListObj(0, NULL));
         }
@@ -66,7 +74,7 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         }
         return TCL_OK;
     }
-    case DirectedIx: {
+    case GetOptionDirectedIx: {
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(edgePtr->directionType == EDGE_DIRECTED));
         return TCL_OK;
     }
@@ -81,35 +89,27 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
 int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    char* opts[] = { "-name", "-weight", "-data", NULL };
-    enum OptsIx
-    {
-        NameIx,
-        WeightIx,
-        DataIx
-    };
 
     if (objc < 1 || objc > 12 || (objc % 2) != 0) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
     for (i = 0; i < objc; i += 2) {
-        if (Tcl_GetIndexFromObj(interp, objv[i], opts, "option", 0, &optIdx) != TCL_OK) {
+        if (Tcl_GetIndexFromObj(interp, objv[i], ConfigureOptions, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
         switch (optIdx) {
-        case NameIx: {
+        case ConfigureOptionNameIx: {
             sprintf(edgePtr->name, "%s", Tcl_GetString(objv[i + 1]));
             break;
         }
-        case WeightIx: {
+        case ConfigureOptionWeightIx: {
             if (Tcl_GetDoubleFromObj(interp, objv[i + 1], &edgePtr->weight) != TCL_OK) {
                 return TCL_ERROR;
             }
             break;
         }
-        case DataIx: {
-            printf("hahaha %s\n", Tcl_GetString(objv[i+1]));
+        case ConfigureOptionDataIx: {
             edgePtr->dataObjPtr = objv[i + 1];
             Tcl_IncrRefCount(edgePtr->dataObjPtr);
             break;
@@ -140,7 +140,6 @@ static int EdgeCmd(Edge* edgePtr, enum edgeSubCmdIndices cmdIdx, Tcl_Interp* int
 {
     switch (cmdIdx) {
     case EdgeConfigureIx: {
-        printf("bkafbksdfknsdkjf %i %s\n", objc, Tcl_GetString(objv[0]));
         return EdgeCmdConfigure(edgePtr, interp, objc, objv);
     }
     case EdgeCgetIx: {
