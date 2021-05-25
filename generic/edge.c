@@ -303,18 +303,18 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     */
     switch (directionIdx) {
     case OutIx: {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+        fromNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[2 + pOffset]));
+        toNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[4 + pOffset]));
         break;
     }
     case InIx: {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
+        fromNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[4 + pOffset]));
+        toNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[2 + pOffset]));
         break;
     }
     case UndirIx: {
-        fromNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2 + pOffset]));
-        toNodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[4 + pOffset]));
+        fromNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[2 + pOffset]));
+        toNodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[4 + pOffset]));
         unDirected = 1;
         break;
     }

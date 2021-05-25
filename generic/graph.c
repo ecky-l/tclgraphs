@@ -41,14 +41,16 @@ static int GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl
     /* Validation first. No node is added unless all nodes are valid */
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
-        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
-        if (nodePtr == NULL) {
+        if (Graphs_NodeGetByCommand(graphPtr->statePtr, nName) == NULL) {
+            Tcl_Obj* res = Tcl_NewStringObj("No such node: ", -1);
+            Tcl_AppendObjToObj(res, objv[j]);
+            Tcl_SetObjResult(interp, res);
             return TCL_ERROR;
         }
     }
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
-        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
+        Node* nodePtr = Graphs_NodeGetByCommand(graphPtr->statePtr, nName);
         Graphs_AddNodeToGraph(graphPtr, nodePtr);
     }
 
@@ -60,14 +62,16 @@ static int GraphNodesDeleteNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, 
     /* Validation first. No node is added unless all nodes are valid */
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
-        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
-        if (nodePtr == NULL) {
+        if (Graphs_NodeGetByCommand(graphPtr->statePtr, nName) == NULL) {
+            Tcl_Obj* res = Tcl_NewStringObj("No such node: ", -1);
+            Tcl_AppendObjToObj(res, objv[j]);
+            Tcl_SetObjResult(interp, res);
             return TCL_ERROR;
         }
     }
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
-        Node* nodePtr = Graphs_ValidateNodeCommand(graphPtr->statePtr, interp, nName);
+        Node* nodePtr = Graphs_NodeGetByCommand(graphPtr->statePtr, nName);
         Graphs_DeleteNodeFromGraph(graphPtr, nodePtr);
     }
     return TCL_OK;
@@ -440,8 +444,11 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         Tcl_WrongNumArgs(interp, 0, objv, "option");
         return TCL_ERROR;
     }
-    graphPtr = Graphs_ValidateGraphCommand(gState, interp, Tcl_GetString(objv[2]));
+    graphPtr = Graphs_GraphGetByCommand(gState, Tcl_GetString(objv[2]));
     if (graphPtr == NULL) {
+        Tcl_Obj* res = Tcl_NewStringObj("No such graph: ", -1);
+        Tcl_AppendObjToObj(res, objv[2]);
+        Tcl_SetObjResult(interp, res);
         return TCL_ERROR;
     }
     return GraphSubCmd(graphPtr, objv[1], interp, objc - 3, objv + 3);

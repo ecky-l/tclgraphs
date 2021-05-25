@@ -8,7 +8,17 @@
 
 const GraphsStubs *graphsStubsPtr;
 
-DLLEXPORT CONST
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+
+#if defined(BUILD_graphsstub) && !defined(STATIC_BUILD)
+#   define GRAPHSSTUB_EXTERN extern DLLEXPORT
+#else
+#   define GRAPHSSTUB_EXTERN extern
+#endif
+
+GRAPHSSTUB_EXTERN CONST
 char* Graphs_InitStubs(Tcl_Interp* interp, const char* version, int exact)
 {
     const char* packageName = "graphs";
@@ -24,4 +34,6 @@ char* Graphs_InitStubs(Tcl_Interp* interp, const char* version, int exact)
 
     return actualVersion;
 }
-
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */

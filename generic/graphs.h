@@ -13,6 +13,18 @@
 #   endif
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(BUILD_graphs) && !defined(STATIC_BUILD)
+#   define GRAPHS_EXTERN extern DLLEXPORT
+#else
+#   define GRAPHS_EXTERN extern
+#endif
+
+GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
+
 typedef struct _graphState
 {
     Tcl_Interp* interp;
@@ -129,11 +141,6 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
  */
 int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName);
 
-/*
- * Validate a graph command name
- * Return NULL if the command does not lead to a valid node and set an appropriate error result
- */
-Graph* Graphs_ValidateGraphCommand(GraphState* statePtr, Tcl_Interp* interp, const char* gName);
 
 /*
  * Validate a node command name
@@ -198,6 +205,10 @@ DLLEXPORT CONST char* Graphs_InitStubs _ANSI_ARGS_((Tcl_Interp* interp, CONST ch
 #	define Graphs_InitStubs(interp, version, exact) Tcl_PkgRequire(interp, "graphs", version, exact)
 #endif
 #include "graphsDecls.h"
+
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
 
 
 #endif /* GRAPHS_H */

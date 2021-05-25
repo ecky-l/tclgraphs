@@ -2,6 +2,7 @@
 
 MODULE_SCOPE GraphsStubs graphsStubs;
 
+/* Kept as a reference to be returned from depending C library packages */
 static GraphState* graphState;
 
 GraphState* Graphs_GetState(Tcl_Interp* interp)
@@ -32,7 +33,10 @@ GraphState* Graphs_GetState(Tcl_Interp* interp)
  *	The Combopt package is created.
  *----------------------------------------------------------------------
  */
-DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+int Graphs_Init(Tcl_Interp *interp)
 {
     Tcl_Namespace *graphsNS = NULL;
 
@@ -72,3 +76,6 @@ DLLEXPORT int Graphs_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */

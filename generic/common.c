@@ -18,30 +18,17 @@ int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
 
 }
 
-Graph*
-Graphs_ValidateGraphCommand(GraphState* statePtr, Tcl_Interp* interp, const char* gName)
+Graph* Graphs_GraphGetByCommand(GraphState* statePtr, const char* gName)
 {
     Tcl_HashEntry* entry = Tcl_FindHashEntry(&statePtr->graphs, gName);
-    if (entry == NULL) {
-        Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "No such graph: ", gName, NULL);
-        Tcl_SetObjResult(interp, res);
-        return NULL;
-    }
-    return ((Graph*) Tcl_GetHashValue(entry));
+    return entry == NULL ? NULL : (Graph*)Tcl_GetHashValue(entry);
 }
 
 Node*
-Graphs_ValidateNodeCommand(GraphState* statePtr, Tcl_Interp* interp, const char* nName)
+Graphs_NodeGetByCommand(GraphState* statePtr, const char* nName)
 {
     Tcl_HashEntry* entry = Tcl_FindHashEntry(&statePtr->nodes, nName);
-    if (entry == NULL) {
-        Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "No such node: ", nName, NULL);
-        Tcl_SetObjResult(interp, res);
-        return NULL;
-    }
-    return ((Node*) Tcl_GetHashValue(entry));
+    return (entry == NULL) ? NULL : (Node*)Tcl_GetHashValue(entry);
 }
 
 Edge*

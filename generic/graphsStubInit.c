@@ -8,6 +8,8 @@ const GraphsStubs graphsStubs = {
     TCL_STUB_MAGIC,
     0,
     Graphs_GetState, /* 0 */
+    Graphs_GraphGetByCommand, /* 1 */
+    Graphs_NodeGetByCommand, /* 2 */
 };
 
 /* !END!: Do not edit above this line. */

@@ -64,8 +64,11 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
             if (Tcl_StringMatch(Tcl_GetString(objv[i+1]), "")) {
                 Graphs_AddNodeToGraph(g, nodePtr);
             }
-            g = Graphs_ValidateGraphCommand(nodePtr->statePtr, interp, Tcl_GetString(objv[i+1]));
+            g = Graphs_GraphGetByCommand(nodePtr->statePtr, Tcl_GetString(objv[i+1]));
             if (g == NULL) {
+                Tcl_Obj* res = Tcl_NewStringObj("No such graph: ", -1);
+                Tcl_AppendObjToObj(res, objv[2]);
+                Tcl_SetObjResult(interp, res);
                 return TCL_ERROR;
             }
             Graphs_AddNodeToGraph(g, nodePtr);
@@ -419,8 +422,11 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         Tcl_WrongNumArgs(interp, 0, objv, "option");
         return TCL_ERROR;
     }
-    nodePtr = Graphs_ValidateNodeCommand(gState, interp, Tcl_GetString(objv[2]));
+    nodePtr = Graphs_NodeGetByCommand(gState, Tcl_GetString(objv[2]));
     if (nodePtr == NULL) {
+        Tcl_Obj* res = Tcl_NewStringObj("No such node: ", -1);
+        Tcl_AppendObjToObj(res, objv[2]);
+        Tcl_SetObjResult(interp, res);
         return TCL_ERROR;
     }
     return NodeSubCmd(nodePtr, objv[1], interp, objc - 3, objv + 3);
