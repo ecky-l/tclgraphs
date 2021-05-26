@@ -25,6 +25,15 @@ extern "C" {
 
 GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
 
+/* 
+ * Marks that can be set wit the [graph mark], [edge mark] or [node mark] commands.
+ * These are useful for filtering these entities in algorithms.
+ */
+typedef enum _GraphsMarksT
+{
+    GRAPHS_MARKS_HIDDEN = 1
+} GraphsMarksT;
+
 typedef struct _graphState
 {
     Tcl_Interp* interp;
@@ -44,6 +53,12 @@ typedef struct _graph
     GraphState* statePtr;
     Tcl_HashTable nodes;
     int order;
+
+    /* Arbitrary data that can be attached to the graph */
+    Tcl_Obj* data;
+
+    /* OR-combined flag of marks that can be set to the graph */
+    int marks;
 } Graph;
 
 typedef struct _node
@@ -72,6 +87,8 @@ typedef struct _node
     int degreeminus;
     int degreeundir;
 
+    /* OR-combined flag of marks that can be set to the graph */
+    int marks;
 } Node;
 
 typedef enum _EdgeDirectionType
@@ -95,7 +112,10 @@ typedef struct _edge
     Tcl_Command commandTkn;
     Node* fromNode;
     Node* toNode;
-    Tcl_Obj* dataObjPtr;
+
+    /* Arbitrary data that can be attached to the edge */
+    Tcl_Obj* data;
+
     /* Labels for the edge */
     Tcl_HashTable labels;
 
@@ -103,6 +123,9 @@ typedef struct _edge
 
     /* Indicates whether the edge is undirected. Default is directed, then this is 0 */
     EdgeDirectionT directionType;
+
+    /* OR-combined flag of marks that can be set to the graph */
+    int marks;
 } Edge;
 
 /*

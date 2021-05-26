@@ -17,7 +17,7 @@ typedef enum _EdgeDirection
     EDGE_DIRECTION_IN
 } EdgeDirection;
 
-static const char* nodeSubCommands[] =
+static const char* NodeSubCommands[] =
 {
         "new",
         "create",
@@ -39,6 +39,39 @@ enum nodeCommandIndex
     NodeInfoIx,
     NodeLabelsIx
 };
+
+static const char* NodeInfoOptions[] = {
+        "delta+",
+        "deltaplus",
+        "delta-",
+        "deltaminus",
+        "delta",
+        "degree+",
+        "degreeplus",
+        "degree-",
+        "degreeminus",
+        "degree",
+        "graph",
+        "labels",
+        NULL
+};
+
+enum NodeInfoIndex
+{
+    NodeInfoDeltaPlus1Ix,
+    NodeInfoDeltaPlus2Ix,
+    NodeInfoDeltaMinus1Ix,
+    NodeInfoDeltaMinus2Ix,
+    NodeInfoDeltaIx,
+    NodeInfoDegreePlus1Ix,
+    NodeInfoDegreePlus2Ix,
+    NodeInfoDegreeMinus1Ix,
+    NodeInfoDegreeMinus2Ix,
+    NodeInfoDegreeIx,
+    NodeInfoGraphIx,
+    NodeInfoLabelsIx
+};
+
 
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
@@ -169,41 +202,10 @@ static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, in
 static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
-    static const char* subCmds[] = {
-            "delta+",
-            "deltaplus",
-            "delta-",
-            "deltaminus",
-            "delta",
-            "degree+",
-            "degreeplus",
-            "degree-",
-            "degreeminus",
-            "degree",
-            "graph",
-            "labels",
-            NULL
-    };
-    enum cmdIndx
-    {
-        NodeInfoDeltaPlus1Ix,
-        NodeInfoDeltaPlus2Ix,
-        NodeInfoDeltaMinus1Ix,
-        NodeInfoDeltaMinus2Ix,
-        NodeInfoDeltaIx,
-        NodeInfoDegreePlus1Ix,
-        NodeInfoDegreePlus2Ix,
-        NodeInfoDegreeMinus1Ix,
-        NodeInfoDegreeMinus2Ix,
-        NodeInfoDegreeIx,
-        NodeInfoGraphIx,
-        NodeInfoLabelsIx
-    };
-
     if (objc < 1) {
         Tcl_WrongNumArgs(interp, 0, objv, "option");
     }
-    if (Tcl_GetIndexFromObj(interp, objv[0], subCmds, "option", TCL_EXACT, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[0], NodeInfoOptions, "option", TCL_EXACT, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
@@ -258,7 +260,7 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
 {
     int cmdIdx;
 
-    if (Tcl_GetIndexFromObj(interp, cmd, nodeSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, cmd, NodeSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
@@ -359,7 +361,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         return TCL_ERROR;
     }
 
-    if (Tcl_GetIndexFromObj(interp, objv[1], nodeSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[1], NodeSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
@@ -372,6 +374,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         nodePtr->statePtr = gState;
         nodePtr->graph = NULL;
         nodePtr->data = NULL;
+        nodePtr->marks = 0;
         nodePtr->degreeplus = nodePtr->degreeminus = nodePtr->degreeundir = 0;
         sprintf(nodePtr->name, "%s", "");
 
