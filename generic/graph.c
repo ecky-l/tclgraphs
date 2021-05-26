@@ -5,7 +5,17 @@
  */
 
 static const char* GraphSubCommands[] = {
-        "new", "create", "destroy", "configure", "cget", "nodes", "subgraphs", "info", NULL };
+        "new",
+        "create",
+        "destroy",
+        "configure",
+        "cget",
+        "nodes",
+        "subgraphs",
+        "info",
+        "mark",
+        NULL
+};
 enum GraphSubCommandIndex
 {
     GraphNewIx,
@@ -15,11 +25,22 @@ enum GraphSubCommandIndex
     GraphCgetIx,
     GraphNodesIx,
     GraphSubgraphsIx,
-    GraphInfoIx
+    GraphInfoIx,
+    GraphMarkIx
 };
 
 static const char* GraphInfoOptions[] = {
-        "nodes", "edges", "delta+", "deltaplus", "delta-", "deltaminus", "delta", "subgraphs", "order", NULL };
+        "nodes",
+        "edges",
+        "delta+",
+        "deltaplus",
+        "delta-",
+        "deltaminus",
+        "delta",
+        "subgraphs",
+        "order",
+        NULL
+};
 
 enum GraphInfoOptionIndex
 {
@@ -34,6 +55,11 @@ enum GraphInfoOptionIndex
     GraphInfoOrderIx
 };
 
+static const char* GraphMarks[] = { "hidden", NULL };
+enum GraphMarksIndex
+{
+    GraphMarkHiddenIx
+};
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
@@ -303,6 +329,45 @@ static int GraphCmdInfo(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
     return TCL_OK;
 }
 
+static int GraphCmdMark(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int markIndx;
+
+    if (objc < 1 || objc > 2) {
+        Tcl_WrongNumArgs(interp, 0, objv, "mark <mark> ?true|false?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], GraphMarks, "mark", 0, &markIndx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (markIndx) {
+    case GraphMarkHiddenIx: {
+        unsigned hasMark;
+
+        if (objc == 2) {
+            unsigned int newMark = 0;
+            if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            graphPtr->marks = GRAPHS_MARKS_SET_HIDDEN(graphPtr->marks, newMark);
+        }
+
+        hasMark = (graphPtr->marks & GRAPHS_MARKS_HIDDEN);
+        Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
+        break;
+    }
+    default: {
+        Tcl_Obj* result = Tcl_NewStringObj("Wrong mark: ", -1);
+        Tcl_AppendObjToObj(result, objv[0]);
+        Tcl_SetObjResult(interp, result);
+        return TCL_ERROR;
+    }
+    }
+
+    return TCL_OK;
+}
+
 static int GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
@@ -313,30 +378,24 @@ static int GraphSubCmd(Graph* graphPtr, Tcl_Obj* cmd, Tcl_Interp* interp, int ob
 
     switch (cmdIdx) {
     case GraphNewIx:
-    case GraphCreateIx: {
+    case GraphCreateIx:
         return TCL_ERROR;
-    }
-    case GraphDestroyIx: {
+    case GraphDestroyIx:
         return GraphCmdDestroy(graphPtr, interp, objc, objv);
-    }
-    case GraphConfigureIx: {
+    case GraphConfigureIx:
         return GraphCmdConfigure(graphPtr, interp, objc, objv);
-    }
-    case GraphCgetIx: {
+    case GraphCgetIx:
         return GraphCmdCget(graphPtr, interp, objc, objv);
-    }
-    case GraphNodesIx: {
+    case GraphNodesIx:
         return GraphCmdNodes(graphPtr, interp, objc, objv);
-    }
-    case GraphSubgraphsIx: {
+    case GraphSubgraphsIx:
         break;
-    }
-    case GraphInfoIx: {
+    case GraphInfoIx:
         return GraphCmdInfo(graphPtr, interp, objc, objv);
-    }
-    default: {
+    case GraphMarkIx:
+        return GraphCmdMark(graphPtr, interp, objc, objv);
+    default:
         break;
-    }
     }
 
     return TCL_ERROR;

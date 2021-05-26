@@ -166,7 +166,7 @@ static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
     int markIndx;
 
     if (objc < 1 || objc > 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "mark <mark> ?true|false?");
+        Tcl_WrongNumArgs(interp, 0, objv, "mark <mark> ?true|false?");
         return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[0], EdgeMarks, "mark", 0, &markIndx) != TCL_OK) {

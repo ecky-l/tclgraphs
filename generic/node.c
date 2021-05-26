@@ -26,6 +26,7 @@ static const char* NodeSubCommands[] =
         "cget",
         "info",
         "labels",
+        "mark",
         NULL
 };
 
@@ -37,7 +38,8 @@ enum nodeCommandIndex
     NodeConfigureIx,
     NodeCgetIx,
     NodeInfoIx,
-    NodeLabelsIx
+    NodeLabelsIx,
+    NodeMarkIx
 };
 
 static const char* NodeInfoOptions[] = {
@@ -72,6 +74,11 @@ enum NodeInfoIndex
     NodeInfoLabelsIx
 };
 
+static const char* NodeMarks[] = { "hidden", NULL };
+enum NodeMarksIndex
+{
+    NodeMarkHiddenIx
+};
 
 
 static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
@@ -256,6 +263,45 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
     return TCL_OK;
 }
 
+static int NodeCmdMark(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int markIndx;
+
+    if (objc < 1 || objc > 2) {
+        Tcl_WrongNumArgs(interp, 0, objv, "mark <mark> ?true|false?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], NodeMarks, "mark", 0, &markIndx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (markIndx) {
+    case NodeMarkHiddenIx: {
+        unsigned hasMark;
+
+        if (objc == 2) {
+            unsigned int newMark = 0;
+            if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            nodePtr->marks = GRAPHS_MARKS_SET_HIDDEN(nodePtr->marks, newMark);
+        }
+
+        hasMark = (nodePtr->marks & GRAPHS_MARKS_HIDDEN);
+        Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
+        break;
+    }
+    default: {
+        Tcl_Obj* result = Tcl_NewStringObj("Wrong mark: ", -1);
+        Tcl_AppendObjToObj(result, objv[0]);
+        Tcl_SetObjResult(interp, result);
+        return TCL_ERROR;
+    }
+    }
+
+    return TCL_OK;
+}
+
 static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     int cmdIdx;
@@ -266,30 +312,25 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
 
     switch (cmdIdx) {
     case NodeNewIx:
-    case NodeCreateIx: {
+    case NodeCreateIx:
         Tcl_SetObjResult(interp,
                 Tcl_NewStringObj("cannot create node from within a node! Use the [node] command!", -1));
         return TCL_ERROR;
-    }
-    case NodeDestroyIx: {
+    case NodeDestroyIx:
         return NodeCmdDestroy(nodePtr, interp, objc, objv);
-    }
-    case NodeConfigureIx: {
+    case NodeConfigureIx:
         return NodeCmdConfigure(nodePtr, interp, objc, objv);
-    }
-    case NodeCgetIx: {
+    case NodeCgetIx:
         return NodeCmdCget(nodePtr, interp, objc, objv);
-    }
-    case NodeInfoIx: {
+    case NodeInfoIx:
         return NodeCmdInfo(nodePtr, interp, objc, objv);
-    }
-    case NodeLabelsIx: {
+    case NodeLabelsIx:
         return Graphs_LabelsCommand(nodePtr->labels, interp, objc, objv);
-    }
-    default: {
+    case NodeMarkIx:
+        return NodeCmdMark(nodePtr, interp, objc, objv);
+    default:
         Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong subcommand to node object!", -1));
         return TCL_ERROR;
-    }
     }
 
 }
