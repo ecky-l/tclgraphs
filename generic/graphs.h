@@ -29,8 +29,9 @@ GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
  * Marks that can be set wit the [graph mark], [edge mark] or [node mark] commands.
  * These are useful for filtering these entities in algorithms.
  */
-#define GRAPHS_MARKS_HIDDEN 1ul
-#define GRAPHS_MARKS_SET_HIDDEN(flags, newFlag) newFlag ? (flags | GRAPHS_MARKS_HIDDEN) : (flags & ~GRAPHS_MARKS_HIDDEN); 
+typedef enum _GraphsMarkT {
+    GRAPHS_MARK_HIDDEN = 0x01
+} GraphsMarkT;
 
 typedef struct _graphState
 {
@@ -154,7 +155,6 @@ void Node_CleanupCmd(ClientData data);
 int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
 void Edge_CleanupCmd(ClientData data);
 Edge* Edge_CreateEdge(GraphState*, Node*, Node*, int, Tcl_Interp*, const char*, int, Tcl_Obj* const []);
-Edge* Edge_GetEdge(GraphState*, Node*, Node*, int, Tcl_Interp*);
 int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
 
 /*

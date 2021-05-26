@@ -4,6 +4,8 @@
 /*
  * Node API
  */
+#define GRAPHS_MARKS_SET_HIDDEN(flags, newFlag) newFlag ? (flags | GRAPHS_MARK_HIDDEN) : (flags & ~GRAPHS_MARK_HIDDEN); 
+
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
@@ -287,7 +289,7 @@ static int NodeCmdMark(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
             nodePtr->marks = GRAPHS_MARKS_SET_HIDDEN(nodePtr->marks, newMark);
         }
 
-        hasMark = (nodePtr->marks & GRAPHS_MARKS_HIDDEN);
+        hasMark = (nodePtr->marks & GRAPHS_MARK_HIDDEN);
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
         break;
     }

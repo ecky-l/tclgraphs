@@ -4,6 +4,8 @@
 /*
  * Edge API
  */
+#define GRAPHS_MARKS_SET_HIDDEN(flags, newFlag) newFlag ? (flags | GRAPHS_MARK_HIDDEN) : (flags & ~GRAPHS_MARK_HIDDEN); 
+
 
 static const char* EdgeSubCmommands[] = {
     "new",
@@ -28,7 +30,7 @@ enum EdgeSubCommandIndex
     EdgeMarkIx
 };
 
-static const char* EdgeGetOptions[] = {
+static const char* EdgeCGetOptions[] = {
     "-name",
     "-from",
     "-to",
@@ -38,14 +40,23 @@ static const char* EdgeGetOptions[] = {
     NULL
 };
 
-enum EdgeGetOptionsIndex
+enum EdgeCGetOptionsIndex
 {
-    GetOptionNameIx,
-    GetOptionFromIx,
-    GetOptionToIx,
-    GetOptionWeightIx,
-    GetOptionDataIx,
-    GetOptionDirectedIx
+    EdgeCGetOptionNameIx,
+    EdgeCGetOptionFromIx,
+    EdgeCGetOptionToIx,
+    EdgeCGetOptionWeightIx,
+    EdgeCGetOptionDataIx,
+    EdgeCGetOptionDirectedIx
+};
+
+static const char* EdgeGetOptions[] = {
+    "-marks",
+    NULL
+};
+enum EdgeGetOptionIndex
+{
+    EdgeGetOptionMarkIx
 };
 
 static const char* EdgeConfigureOptions[] = { "-name", "-weight", "-data", NULL };
@@ -70,28 +81,28 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         Tcl_WrongNumArgs(interp, 0, objv, "option arg");
         return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[0], EdgeGetOptions, "option", 0, &optIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[0], EdgeCGetOptions, "option", 0, &optIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 
     switch (optIdx) {
-    case GetOptionNameIx: {
+    case EdgeCGetOptionNameIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->name, -1));
         return TCL_OK;
     }
-    case GetOptionFromIx: {
+    case EdgeCGetOptionFromIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->fromNode->cmdName, -1));
         return TCL_OK;
     }
-    case GetOptionToIx: {
+    case EdgeCGetOptionToIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->toNode->cmdName, -1));
         return TCL_OK;
     }
-    case GetOptionWeightIx: {
+    case EdgeCGetOptionWeightIx: {
         Tcl_SetObjResult(interp, Tcl_NewDoubleObj(edgePtr->weight));
         return TCL_OK;
     }
-    case GetOptionDataIx: {
+    case EdgeCGetOptionDataIx: {
         if (edgePtr->data == NULL) {
             Tcl_SetObjResult(interp, Tcl_NewListObj(0, NULL));
         }
@@ -100,7 +111,7 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         }
         return TCL_OK;
     }
-    case GetOptionDirectedIx: {
+    case EdgeCGetOptionDirectedIx: {
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(edgePtr->directionType == EDGE_DIRECTED));
         return TCL_OK;
     }
@@ -187,7 +198,7 @@ static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
             edgePtr->marks = GRAPHS_MARKS_SET_HIDDEN(edgePtr->marks, newMark);
         }
 
-        hasMark = (edgePtr->marks & GRAPHS_MARKS_HIDDEN);
+        hasMark = (edgePtr->marks & GRAPHS_MARK_HIDDEN);
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
         break;
     }
@@ -291,6 +302,26 @@ static void EdgeDestroyCmd(ClientData clientData)
     Tcl_DeleteHashEntry(entry);
 
     Tcl_Free((char*) edgePtr);
+}
+
+static int ParseMarks(const char* marksSpec, unsigned int* marksMaskOut) {
+    unsigned int lclMarksMask = 0;
+    for (int i = 0; i < strlen(marksSpec); i++) {
+        char c = marksSpec[i];
+        if (c == 'c' || c == 'h') {
+            //lclMarksMask |= GRAPHS_MARK_MASK_HIDDEN;
+            lclMarksMask |= GRAPHS_MARK_HIDDEN;
+        }
+        else if (c == 'C' || c == 'H') {
+            //lclMarksMask |= GRAPHS_MARK_MASK_UNHIDDEN;
+            lclMarksMask |= ~GRAPHS_MARK_HIDDEN;
+        }
+        else {
+            return TCL_ERROR;
+        }
+    }
+    *marksMaskOut = lclMarksMask;
+    return TCL_OK;
 }
 
 /*
@@ -399,16 +430,31 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
     switch (cmdIdx)
     {
-    case EdgeGetIx:
-        if (edgePtr == NULL) {
-            edgePtr = Edge_GetEdge(gState, fromNodePtr, toNodePtr, unDirected, interp);
+    case EdgeGetIx: {
+        unsigned int edgeMarksMask = 0;
+        if (objc == 6 || objc > 7) {
+            Tcl_WrongNumArgs(interp, 5, objv, "?-marks [cChH]?");
+            return TCL_ERROR;
         }
+        else if (objc == 7) {
+            if (Tcl_GetIndexFromObj(interp, objv[5], EdgeGetOptions, "-marks", 0, &cmdIdx) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            if (ParseMarks(Tcl_GetString(objv[6]), &edgeMarksMask) != TCL_OK) {
+                Tcl_SetObjResult(interp, Tcl_NewStringObj(
+                    "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden). Default is C.",
+                    -1));
+                return TCL_ERROR;
+            }
+        }
+        edgePtr = Graphs_EdgeGetEdge(gState, fromNodePtr, toNodePtr, unDirected, edgeMarksMask);
         if (edgePtr == NULL) {
             Tcl_SetObjResult(interp, Tcl_NewStringObj("", -1));
             return TCL_OK;
         }
         Tcl_SetObjResult(interp, Tcl_NewStringObj(edgePtr->cmdName, -1));
         return TCL_OK;
+    }
     case EdgeNewIx:
     case EdgeCreateIx:
         edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
@@ -513,7 +559,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 }
 
 Edge*
-Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp)
+Graphs_EdgeGetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, unsigned int marksMask)
 {
     Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, toNodePtr);
     if (entry == NULL) {
@@ -533,7 +579,19 @@ Edge_GetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirec
         }
     }
 
-    return edgePtr1;
+    unsigned returnIf = 0;
+    if (marksMask == 0 && edgePtr1->marks == 0) {
+        /* return the default: non marked edges */
+        return edgePtr1;
+    }
+
+    if ((marksMask & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN) {
+        returnIf |= ((edgePtr1->marks & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN);
+    }
+    if ((marksMask & ~GRAPHS_MARK_HIDDEN) == ~GRAPHS_MARK_HIDDEN) {
+        returnIf |= ((edgePtr1->marks & ~GRAPHS_MARK_HIDDEN) == edgePtr1->marks);
+    }
+    return returnIf ? edgePtr1 : NULL;
 }
 
 void Edge_CleanupCmd(ClientData data)

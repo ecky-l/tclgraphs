@@ -17,6 +17,10 @@ GRAPHSAPI Graph*	Graphs_GraphGetByCommand(GraphState*statePtr,
 /* 2 */
 GRAPHSAPI Node*		Graphs_NodeGetByCommand(GraphState*statePtr,
 				const char*graphCmd);
+/* 3 */
+GRAPHSAPI Edge*		Graphs_EdgeGetEdge(GraphState*statePtr,
+				Node*fromNodePtr, Node*toNodePtr,
+				int unDirected, unsigned int marksMask);
 
 typedef struct GraphsStubs {
     int magic;
@@ -25,6 +29,7 @@ typedef struct GraphsStubs {
     GraphState* (*graphs_GetState) (Tcl_Interp*interp); /* 0 */
     Graph* (*graphs_GraphGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 1 */
     Node* (*graphs_NodeGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 2 */
+    Edge* (*graphs_EdgeGetEdge) (GraphState*statePtr, Node*fromNodePtr, Node*toNodePtr, int unDirected, unsigned int marksMask); /* 3 */
 } GraphsStubs;
 
 extern const GraphsStubs *graphsStubsPtr;
@@ -45,6 +50,8 @@ extern const GraphsStubs *graphsStubsPtr;
 	(graphsStubsPtr->graphs_GraphGetByCommand) /* 1 */
 #define Graphs_NodeGetByCommand \
 	(graphsStubsPtr->graphs_NodeGetByCommand) /* 2 */
+#define Graphs_EdgeGetEdge \
+	(graphsStubsPtr->graphs_EdgeGetEdge) /* 3 */
 
 #endif /* defined(USE_GRAPHS_STUBS) */
 

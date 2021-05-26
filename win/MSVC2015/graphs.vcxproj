@@ -118,8 +118,7 @@
       <AdditionalDependencies>tclstub86.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>cp $(TargetPath) $(SolutionDir)..\..\lib$(ProjectName)0.9$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

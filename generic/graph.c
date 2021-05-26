@@ -3,6 +3,8 @@
 /*
  * Graph API
  */
+#define GRAPHS_MARKS_SET_HIDDEN(flags, newFlag) newFlag ? (flags | GRAPHS_MARK_HIDDEN) : (flags & ~GRAPHS_MARK_HIDDEN); 
+
 
 static const char* GraphSubCommands[] = {
         "new",
@@ -353,7 +355,7 @@ static int GraphCmdMark(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
             graphPtr->marks = GRAPHS_MARKS_SET_HIDDEN(graphPtr->marks, newMark);
         }
 
-        hasMark = (graphPtr->marks & GRAPHS_MARKS_HIDDEN);
+        hasMark = (graphPtr->marks & GRAPHS_MARK_HIDDEN);
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
         break;
     }
