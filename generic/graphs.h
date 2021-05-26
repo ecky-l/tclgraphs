@@ -29,10 +29,8 @@ GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
  * Marks that can be set wit the [graph mark], [edge mark] or [node mark] commands.
  * These are useful for filtering these entities in algorithms.
  */
-typedef enum _GraphsMarksT
-{
-    GRAPHS_MARKS_HIDDEN = 1
-} GraphsMarksT;
+#define GRAPHS_MARKS_HIDDEN 1ul
+#define GRAPHS_MARKS_SET_HIDDEN(flags, newFlag) newFlag ? (flags | GRAPHS_MARKS_HIDDEN) : (flags & ~GRAPHS_MARKS_HIDDEN); 
 
 typedef struct _graphState
 {
@@ -58,7 +56,7 @@ typedef struct _graph
     Tcl_Obj* data;
 
     /* OR-combined flag of marks that can be set to the graph */
-    int marks;
+    unsigned int marks;
 } Graph;
 
 typedef struct _node
@@ -88,7 +86,7 @@ typedef struct _node
     int degreeundir;
 
     /* OR-combined flag of marks that can be set to the graph */
-    int marks;
+    unsigned int marks;
 } Node;
 
 typedef enum _EdgeDirectionType
@@ -125,7 +123,7 @@ typedef struct _edge
     EdgeDirectionT directionType;
 
     /* OR-combined flag of marks that can be set to the graph */
-    int marks;
+    unsigned int marks;
 } Edge;
 
 /*

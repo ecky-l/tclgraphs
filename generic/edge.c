@@ -5,7 +5,17 @@
  * Edge API
  */
 
-static const char* EdgeSubCmommands[] = { "new", "create", "get", "configure", "cget", "destroy", "labels", NULL };
+static const char* EdgeSubCmommands[] = {
+    "new",
+    "create",
+    "get",
+    "configure",
+    "cget",
+    "destroy",
+    "labels",
+    "mark",
+    NULL
+};
 enum EdgeSubCommandIndex
 {
     EdgeNewIx,
@@ -14,10 +24,20 @@ enum EdgeSubCommandIndex
     EdgeConfigureIx,
     EdgeCgetIx,
     EdgeDestroyIx,
-    EdgeLabelsIx
+    EdgeLabelsIx,
+    EdgeMarkIx
 };
 
-static const char* EdgeGetOptions[] = { "-name", "-from", "-to", "-weight", "-data", "-directed", NULL };
+static const char* EdgeGetOptions[] = {
+    "-name",
+    "-from",
+    "-to",
+    "-weight",
+    "-data",
+    "-directed",
+    NULL
+};
+
 enum EdgeGetOptionsIndex
 {
     GetOptionNameIx,
@@ -36,12 +56,17 @@ enum EdgeConfigureOptionsIndex
     ConfigureOptionDataIx
 };
 
+static const char* EdgeMarks[] = { "hidden", NULL };
+enum EdgeMarksIndex
+{
+    EdgeMarkHiddenIx
+};
+
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-
     if (objc != 1) {
-        Tcl_WrongNumArgs(interp, 1, objv, "option arg");
+        Tcl_WrongNumArgs(interp, 0, objv, "option arg");
         return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[0], EdgeGetOptions, "option", 0, &optIdx) != TCL_OK) {
@@ -136,21 +161,58 @@ int EdgeCmdLabels(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const ob
     return TCL_OK;
 }
 
+static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    int markIndx;
+
+    if (objc < 1 || objc > 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "mark <mark> ?true|false?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[0], EdgeMarks, "mark", 0, &markIndx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (markIndx) {
+    case EdgeMarkHiddenIx: {
+        unsigned hasMark;
+
+        if (objc == 2) {
+            unsigned int newMark = 0;
+            if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
+                return TCL_ERROR;
+            }
+            edgePtr->marks = GRAPHS_MARKS_SET_HIDDEN(edgePtr->marks, newMark);
+        }
+
+        hasMark = (edgePtr->marks & GRAPHS_MARKS_HIDDEN);
+        Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
+        break;
+    }
+    default: {
+        Tcl_Obj* result = Tcl_NewStringObj("Wrong mark: ", -1);
+        Tcl_AppendObjToObj(result, objv[0]);
+        Tcl_SetObjResult(interp, result);
+        return TCL_ERROR;
+    }
+    }
+
+    return TCL_OK;
+}
+
 static int EdgeCmd(Edge* edgePtr, enum EdgeSubCommandIndex cmdIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     switch (cmdIdx) {
-    case EdgeConfigureIx: {
+    case EdgeConfigureIx:
         return EdgeCmdConfigure(edgePtr, interp, objc, objv);
-    }
-    case EdgeCgetIx: {
+    case EdgeCgetIx:
         return EdgeCmdCget(edgePtr, interp, objc, objv);
-    }
-    case EdgeDestroyIx: {
+    case EdgeDestroyIx:
         return EdgeCmdDestroy(edgePtr, interp, objc, objv);
-    }
-    case EdgeLabelsIx: {
+    case EdgeLabelsIx:
         return Graphs_LabelsCommand(edgePtr->labels, interp, objc, objv);
-    }
+    case EdgeMarkIx:
+        return EdgeCmdMark(edgePtr, interp, objc, objv);
     case EdgeNewIx:
     case EdgeCreateIx:
     case EdgeGetIx:
@@ -170,7 +232,7 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
 
     Edge* edgePtr = (Edge*) clientData;
 
-    if (objc < 2) {
+    if (objc < 1) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
