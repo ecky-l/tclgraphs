@@ -56,10 +56,11 @@ enum EdgeConfigureOptionsIndex
     ConfigureOptionDataIx
 };
 
-static const char* EdgeMarks[] = { "hidden", NULL };
+static const char* EdgeMarks[] = { "hidden", "cut", NULL };
 enum EdgeMarksIndex
 {
-    EdgeMarkHiddenIx
+    EdgeMarkHiddenIx,
+    EdgeMarkCutIx
 };
 
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
@@ -174,7 +175,8 @@ static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
     }
 
     switch (markIndx) {
-    case EdgeMarkHiddenIx: {
+    case EdgeMarkHiddenIx: 
+    case EdgeMarkCutIx: {
         unsigned hasMark;
 
         if (objc == 2) {
