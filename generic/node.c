@@ -282,7 +282,7 @@ static int NodeCmdMark(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
         unsigned hasMark;
 
         if (objc == 2) {
-            unsigned int newMark = 0;
+            int newMark = 0;
             if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
                 return TCL_ERROR;
             }

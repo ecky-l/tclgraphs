@@ -1,4 +1,5 @@
 #include "graphs.h"
+#include <string.h>
 
 /*
  * Graph API
@@ -268,10 +269,10 @@ static int GraphCmdDestroy(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Ob
     return TCL_OK;
 }
 
-static int GraphParseMarks(const char* marksSpec, int* marksMaskOut)
+static int GraphParseMarks(const char* marksSpec, unsigned* marksMaskOut)
 {
     unsigned int lclMarksMask = 0;
-    for (int i = 0; i < strlen(marksSpec); i++) {
+    for (unsigned i = 0; i < strlen(marksSpec); i++) {
         char c = marksSpec[i];
         if (c == 'c' || c == 'h') {
             lclMarksMask |= GRAPHS_MARK_HIDDEN;
@@ -412,7 +413,7 @@ static int GraphCmdMark(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
         unsigned hasMark;
 
         if (objc == 2) {
-            unsigned int newMark = 0;
+            int newMark = 0;
             if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
                 return TCL_ERROR;
             }
