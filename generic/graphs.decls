@@ -14,3 +14,7 @@ declare 2 generic {
 declare 3 generic {
 	Edge* Graphs_EdgeGetEdge(GraphState* statePtr, Node* fromNodePtr, Node* toNodePtr, int unDirected, unsigned int marksMask)
 }
+declare 4 generic {
+	int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
+}
+

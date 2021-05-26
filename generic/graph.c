@@ -63,6 +63,15 @@ enum GraphMarksIndex
     GraphMarkHiddenIx
 };
 
+static const char* GraphInfoEdgesOptions[] = {
+    "-marks",
+    NULL
+};
+enum GraphInfoEdgesOptionIndex
+{
+    GraphInfoEdgesOptionMarksIx
+};
+
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
 
 
@@ -259,8 +268,63 @@ static int GraphCmdDestroy(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Ob
     return TCL_OK;
 }
 
+static int GraphParseMarks(const char* marksSpec, int* marksMaskOut)
+{
+    unsigned int lclMarksMask = 0;
+    for (int i = 0; i < strlen(marksSpec); i++) {
+        char c = marksSpec[i];
+        if (c == 'c' || c == 'h') {
+            lclMarksMask |= GRAPHS_MARK_HIDDEN;
+        }
+        else if (c == 'C' || c == 'H') {
+            lclMarksMask |= ~GRAPHS_MARK_HIDDEN;
+        }
+        else {
+            return TCL_ERROR;
+        }
+    }
+    *marksMaskOut = lclMarksMask;
+    return TCL_OK;
+}
+
 static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
+    int cmdIdx;
+    unsigned edgeMarksMask = 0;
+    Tcl_HashSearch search;
+    Tcl_HashEntry* entry = NULL;
+    Tcl_Obj* result = Tcl_NewObj();
+
+
+    if (objc == 1 || objc > 2) {
+        Tcl_WrongNumArgs(interp, 0, objv, "?-marks <marks>?");
+        return TCL_ERROR;
+    }
+
+    if (objc == 2) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], GraphInfoEdgesOptions, "-marks", 0, &cmdIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (GraphParseMarks(Tcl_GetString(objv[1]), &edgeMarksMask) != TCL_OK) {
+            Tcl_SetObjResult(interp, Tcl_NewStringObj(
+                "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).",
+                -1));
+            return TCL_ERROR;
+        }
+    }
+
+
+    /* collect edges */
+    entry = Tcl_FirstHashEntry(&graphPtr->edges, &search);
+    while (entry != NULL) {
+        Edge* edgePtr = (Edge*)Tcl_GetHashKey(&graphPtr->edges, entry);
+        if (Edge_HasMarks(edgePtr, edgeMarksMask)) {
+            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
+        }
+        entry = Tcl_NextHashEntry(&search);
+    }
+
+    Tcl_SetObjResult(interp, result);
     return TCL_OK;
 }
 
@@ -486,6 +550,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         }
 
         Tcl_InitHashTable(&graphPtr->nodes, TCL_ONE_WORD_KEYS);
+        Tcl_InitHashTable(&graphPtr->edges, TCL_ONE_WORD_KEYS);
         entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
         Tcl_SetHashValue(entryPtr, (ClientData )graphPtr);
         if (objc > paramOffset) {

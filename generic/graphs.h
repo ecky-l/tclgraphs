@@ -51,6 +51,7 @@ typedef struct _graph
     Tcl_Command commandTkn;
     GraphState* statePtr;
     Tcl_HashTable nodes;
+    Tcl_HashTable edges;
     int order;
 
     /* Arbitrary data that can be attached to the graph */
@@ -184,6 +185,9 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr);
  * Add a node to a graph
  */
 void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr);
+
+void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr);
+void Graphs_DeleteEdgeFromGraph(Graph* graphPtr, Edge* edgePtr);
 
 /*
  * Delete and free an edge.

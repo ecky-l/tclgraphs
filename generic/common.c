@@ -79,6 +79,28 @@ void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr)
     }
 }
 
+void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr)
+{
+    int new;
+    Tcl_HashEntry* entry;
+
+    if (graphPtr != NULL) {
+        entry = Tcl_CreateHashEntry(&graphPtr->edges, edgePtr, &new);
+        if (new) {
+            Tcl_SetHashValue(entry, edgePtr);
+        }
+    }
+}
+
+void Graphs_DeleteEdgeFromGraph(Graph* graphPtr, Edge* edgePtr)
+{
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->edges, edgePtr);
+    if (entry != NULL) {
+        Tcl_DeleteHashEntry(entry);
+    }
+}
+
+
 void Graphs_DeleteEdge(Edge* edgePtr, Tcl_Interp* interp)
 {
     Tcl_DeleteCommandFromToken(interp, edgePtr->commandTkn);

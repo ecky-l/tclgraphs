@@ -245,7 +245,7 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
 
     Edge* edgePtr = (Edge*) clientData;
 
-    if (objc < 1) {
+    if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
@@ -304,16 +304,14 @@ static void EdgeDestroyCmd(ClientData clientData)
     Tcl_Free((char*) edgePtr);
 }
 
-static int ParseMarks(const char* marksSpec, unsigned int* marksMaskOut) {
+static int EdgeParseMarks(const char* marksSpec, unsigned int* marksMaskOut) {
     unsigned int lclMarksMask = 0;
     for (int i = 0; i < strlen(marksSpec); i++) {
         char c = marksSpec[i];
         if (c == 'c' || c == 'h') {
-            //lclMarksMask |= GRAPHS_MARK_MASK_HIDDEN;
             lclMarksMask |= GRAPHS_MARK_HIDDEN;
         }
         else if (c == 'C' || c == 'H') {
-            //lclMarksMask |= GRAPHS_MARK_MASK_UNHIDDEN;
             lclMarksMask |= ~GRAPHS_MARK_HIDDEN;
         }
         else {
@@ -440,9 +438,9 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
             if (Tcl_GetIndexFromObj(interp, objv[5], EdgeGetOptions, "-marks", 0, &cmdIdx) != TCL_OK) {
                 return TCL_ERROR;
             }
-            if (ParseMarks(Tcl_GetString(objv[6]), &edgeMarksMask) != TCL_OK) {
+            if (EdgeParseMarks(Tcl_GetString(objv[6]), &edgeMarksMask) != TCL_OK) {
                 Tcl_SetObjResult(interp, Tcl_NewStringObj(
-                    "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden). Default is C.",
+                    "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).",
                     -1));
                 return TCL_ERROR;
             }
@@ -551,11 +549,30 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     }
 
     Tcl_InitHashTable(&edgePtr->labels, TCL_STRING_KEYS);
+    Graphs_AddEdgeToGraph(fromNodePtr->graph, edgePtr);
+    Graphs_AddEdgeToGraph(toNodePtr->graph, edgePtr);
 
     edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeSubCmd, edgePtr, EdgeDestroyCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);
     return edgePtr;
+}
+
+int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
+{
+    if (marksMask == 0) {
+        /* return the default: all edges */
+        return 1;
+    }
+
+    unsigned returnIf = 0;
+    if ((marksMask & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN) {
+        returnIf |= ((edgePtr->marks & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN);
+    }
+    if ((marksMask & ~GRAPHS_MARK_HIDDEN) == ~GRAPHS_MARK_HIDDEN) {
+        returnIf |= ((edgePtr->marks & ~GRAPHS_MARK_HIDDEN) == edgePtr->marks);
+    }
+    return returnIf;
 }
 
 Edge*
@@ -579,19 +596,7 @@ Graphs_EdgeGetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int u
         }
     }
 
-    unsigned returnIf = 0;
-    if (marksMask == 0 && edgePtr1->marks == 0) {
-        /* return the default: non marked edges */
-        return edgePtr1;
-    }
-
-    if ((marksMask & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN) {
-        returnIf |= ((edgePtr1->marks & GRAPHS_MARK_HIDDEN) == GRAPHS_MARK_HIDDEN);
-    }
-    if ((marksMask & ~GRAPHS_MARK_HIDDEN) == ~GRAPHS_MARK_HIDDEN) {
-        returnIf |= ((edgePtr1->marks & ~GRAPHS_MARK_HIDDEN) == edgePtr1->marks);
-    }
-    return returnIf ? edgePtr1 : NULL;
+    return Edge_HasMarks(edgePtr1, marksMask) ? edgePtr1 : NULL;
 }
 
 void Edge_CleanupCmd(ClientData data)
