@@ -58,7 +58,7 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
     }
 
     if (graphPtr != NULL) {
-        entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr, &new);
+        entry = Tcl_CreateHashEntry(&graphPtr->nodes, nodePtr->cmdName, &new);
         if (new) {
             Tcl_SetHashValue(entry, nodePtr);
         }
@@ -175,7 +175,7 @@ int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* inte
     Tcl_Obj* result = Tcl_NewObj();
 
     while (entry != NULL) {
-        Node* neighborPtr = (Node*) Tcl_GetHashKey(&fromTbl, entry);
+        Node* neighborPtr = (Node*) Tcl_GetHashValue(entry);
         if (GraphsFilterLabels(neighborPtr, optIdx, objc, objv)) {
             Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(neighborPtr->cmdName, -1));
         }

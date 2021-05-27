@@ -550,7 +550,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
             paramOffset = 3;
         }
 
-        Tcl_InitHashTable(&graphPtr->nodes, TCL_ONE_WORD_KEYS);
+        Tcl_InitHashTable(&graphPtr->nodes, TCL_STRING_KEYS);
         Tcl_InitHashTable(&graphPtr->edges, TCL_ONE_WORD_KEYS);
         entryPtr = Tcl_CreateHashEntry(&gState->graphs, graphPtr->cmdName, &new);
         Tcl_SetHashValue(entryPtr, (ClientData )graphPtr);
