@@ -16,6 +16,8 @@ static const char* EdgeSubCmommands[] = {
     "destroy",
     "labels",
     "mark",
+    "unmark",
+    "ismarked",
     NULL
 };
 enum EdgeSubCommandIndex
@@ -27,7 +29,9 @@ enum EdgeSubCommandIndex
     EdgeCgetIx,
     EdgeDestroyIx,
     EdgeLabelsIx,
-    EdgeMarkIx
+    EdgeMarkIx,
+    EdgeUnmarkIx,
+    EdgeIsmarkedIx
 };
 
 static const char* EdgeCGetOptions[] = {
@@ -173,12 +177,12 @@ int EdgeCmdLabels(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const ob
     return TCL_OK;
 }
 
-static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int cmdIdx, int objc, Tcl_Obj* const objv[])
 {
     int markIndx;
 
-    if (objc < 1 || objc > 2) {
-        Tcl_WrongNumArgs(interp, 0, objv, "mark <mark> ?true|false?");
+    if (objc != 1) {
+        Tcl_WrongNumArgs(interp, 0, objv, "<mark>");
         return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[0], EdgeMarks, "mark", 0, &markIndx) != TCL_OK) {
@@ -190,14 +194,10 @@ static int EdgeCmdMark(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
     case EdgeMarkCutIx: {
         unsigned hasMark;
 
-        if (objc == 2) {
-            int newMark = 0;
-            if (Tcl_GetBooleanFromObj(interp, objv[1], &newMark) != TCL_OK) {
-                return TCL_ERROR;
-            }
+        if (cmdIdx == EdgeMarkIx || cmdIdx == EdgeUnmarkIx) {
+            int newMark = (cmdIdx == EdgeMarkIx);
             edgePtr->marks = GRAPHS_MARKS_SET_HIDDEN(edgePtr->marks, newMark);
         }
-
         hasMark = (edgePtr->marks & GRAPHS_MARK_HIDDEN);
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(hasMark));
         break;
@@ -225,7 +225,9 @@ static int EdgeCmd(Edge* edgePtr, enum EdgeSubCommandIndex cmdIdx, Tcl_Interp* i
     case EdgeLabelsIx:
         return Graphs_LabelsCommand(edgePtr->labels, interp, objc, objv);
     case EdgeMarkIx:
-        return EdgeCmdMark(edgePtr, interp, objc, objv);
+    case EdgeUnmarkIx:
+    case EdgeIsmarkedIx:
+        return EdgeCmdMark(edgePtr, interp, cmdIdx, objc, objv);
     case EdgeNewIx:
     case EdgeCreateIx:
     case EdgeGetIx:
