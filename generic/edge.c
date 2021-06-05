@@ -385,7 +385,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         objv++;
     }
 
-    if (Tcl_GetIndexFromObj(interp, objv[3], directChars, "xxx", TCL_EXACT, &directionIdx) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[3], directChars, "direction", TCL_EXACT, &directionIdx) != TCL_OK) {
         return TCL_ERROR;
     }
 

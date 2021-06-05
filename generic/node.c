@@ -415,7 +415,9 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         nodePtr->graph = NULL;
         nodePtr->data = Tcl_NewListObj(0, NULL);
         nodePtr->marks = 0;
-        nodePtr->degreeplus = nodePtr->degreeminus = nodePtr->degreeundir = 0;
+        nodePtr->degreeplus = 0;
+        nodePtr->degreeminus = 0;
+        nodePtr->degreeundir = 0;
         sprintf(nodePtr->name, "%s", "");
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
