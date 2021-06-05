@@ -105,6 +105,7 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
             Graph* g = NULL;
             if (Tcl_StringMatch(Tcl_GetString(objv[i+1]), "")) {
                 Graphs_AddNodeToGraph(g, nodePtr);
+                return TCL_OK;
             }
             g = Graphs_GraphGetByCommand(nodePtr->statePtr, Tcl_GetString(objv[i+1]));
             if (g == NULL) {
@@ -117,6 +118,7 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
             break;
         }
         case DataIx: {
+            Tcl_DecrRefCount(nodePtr->data);
             nodePtr->data = objv[i + 1];
             Tcl_IncrRefCount(nodePtr->data);
             break;
@@ -158,12 +160,7 @@ static int NodeCmdCget(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
         return TCL_OK;
     }
     case DataIx: {
-        if (nodePtr->data == NULL) {
-            Tcl_SetObjResult(interp, Tcl_NewStringObj("", -1));
-        }
-        else {
-            Tcl_SetObjResult(interp, nodePtr->data);
-        }
+        Tcl_SetObjResult(interp, nodePtr->data);
         return TCL_OK;
     }
     default: {
@@ -416,7 +413,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         nodePtr = (Node*) Tcl_Alloc(sizeof(Node));
         nodePtr->statePtr = gState;
         nodePtr->graph = NULL;
-        nodePtr->data = NULL;
+        nodePtr->data = Tcl_NewListObj(0, NULL);
         nodePtr->marks = 0;
         nodePtr->degreeplus = nodePtr->degreeminus = nodePtr->degreeundir = 0;
         sprintf(nodePtr->name, "%s", "");

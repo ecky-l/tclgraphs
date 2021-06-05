@@ -107,12 +107,7 @@ int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv
         return TCL_OK;
     }
     case EdgeCGetOptionDataIx: {
-        if (edgePtr->data == NULL) {
-            Tcl_SetObjResult(interp, Tcl_NewListObj(0, NULL));
-        }
-        else {
-            Tcl_SetObjResult(interp, edgePtr->data);
-        }
+        Tcl_SetObjResult(interp, edgePtr->data);
         return TCL_OK;
     }
     case EdgeCGetOptionDirectedIx: {
@@ -151,6 +146,7 @@ int EdgeCmdConfigure(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const
             break;
         }
         case ConfigureOptionDataIx: {
+            Tcl_DecrRefCount(edgePtr->data);
             edgePtr->data = objv[i + 1];
             Tcl_IncrRefCount(edgePtr->data);
             break;
@@ -484,7 +480,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     edgePtr = (Edge*) Tcl_Alloc(sizeof(Edge));
     edgePtr->statePtr = gState;
-    edgePtr->data = NULL;
+    edgePtr->data = Tcl_NewListObj(0, NULL);
 
     if (Tcl_StringMatch(cmdName, "new")) {
         sprintf(edgePtr->cmdName, "::graphs::Edge%d", gState->edgeUid);
