@@ -347,7 +347,7 @@ static int GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp,
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
     Tcl_Obj * resultObj = Tcl_NewObj();
     while (entry != NULL) {
-        Node* nodePtr = Tcl_GetHashKey(&graphPtr->nodes, entry);
+        Node* nodePtr = Tcl_GetHashValue(entry);
         Graphs_GetDelta(nodePtr, graphPtr, deltaType, lblFilt, interp, &resultObj);
         entry = Tcl_NextHashEntry(&search);
     }
@@ -567,22 +567,10 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         return TCL_OK;
     }
     default: {
-        break;
-    }
-    }
-
-    if (objc < 3) {
-        Tcl_WrongNumArgs(interp, 0, objv, "option");
+        Tcl_WrongNumArgs(interp, 0, objv, "new|create ?option?");
         return TCL_ERROR;
     }
-    graphPtr = Graphs_GraphGetByCommand(gState, Tcl_GetString(objv[2]));
-    if (graphPtr == NULL) {
-        Tcl_Obj* res = Tcl_NewStringObj("No such graph: ", -1);
-        Tcl_AppendObjToObj(res, objv[2]);
-        Tcl_SetObjResult(interp, res);
-        return TCL_ERROR;
     }
-    return GraphSubCmd(graphPtr, objv[1], interp, objc - 3, objv + 3);
 }
 
 void Graph_CleanupCmd(ClientData data)

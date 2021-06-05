@@ -51,7 +51,7 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
 
     /* remove  old graph, if present */
     if (nodePtr->graph != NULL) {
-        Tcl_HashEntry* nodeEntry = Tcl_FindHashEntry(&nodePtr->graph->nodes, nodePtr);
+        Tcl_HashEntry* nodeEntry = Tcl_FindHashEntry(&nodePtr->graph->nodes, nodePtr->cmdName);
         if (nodeEntry != NULL) {
             Tcl_DeleteHashEntry(nodeEntry);
         }
@@ -293,6 +293,14 @@ int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, 
     return TCL_OK;
 }
 
+/*
+ * Appends to the objResult Ptr the commands of all nodes in the specified delta.
+ *
+ * If graphPtr == NULL, the procedure doesn't care about in which graph the delta is. This is the case, when
+ * the proc was called from NodeInfoDelta or Node_GetDelta. If graphPtr is not NULL, the proc cares about the
+ * graph, where the delta node is. The it is only appended, if the graph of the delta node is not the graph
+ * of the current node.
+ */
 static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT directionType,
         struct LabelFilter labelFilter, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
 {
@@ -301,11 +309,12 @@ static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeD
     while (entry != NULL) {
         Node* nodePtr = Tcl_GetHashKey(&nodesTbl, entry);
         if (!GraphsFilterLabels(nodePtr, labelFilter.filterType, labelFilter.objc, labelFilter.objv)) {
-            goto nextEntry;
+            entry = Tcl_NextHashEntry(&search);
+            continue;
         }
 
         if (graphPtr != NULL) {
-            Tcl_HashEntry* lookupEntry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr);
+            Tcl_HashEntry* lookupEntry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr->cmdName);
             if (lookupEntry == NULL) {
                 /* otherNode is not in this graph. Append if it meets the direction */
                 Edge* edgePtr = Tcl_GetHashValue(entry);
@@ -322,12 +331,31 @@ static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeD
             }
         }
 
-        nextEntry: entry = Tcl_NextHashEntry(&search);
+        entry = Tcl_NextHashEntry(&search);
     }
 
     return TCL_OK;
 }
 
+/*
+ * Get the delta of nodes or graphs
+ *
+ * Delta of nodes are all nodes connected via an edge. Delta+ are all outgoing nodes, delta- all incoming nodes, delta
+ * without + or - are all connected nodes. The same definition applies for a graph, but with nodes that are in the graph 
+ * and are connected to nodes that are *not* in the graph (i.e. in another graph).
+ * If the graphPtr == NULL, we don't care about whether the delta is within the graph or not. In that case, all delta 
+ * nodes are returned in the resultObj. Otherwise, if the graphPtr != NULL, only the delta from the graph specified by
+ * graphPtr is returned.
+ *
+ * \param nodePtr       The node for which to get the delta
+ * \param graphPtr      The graph of the node. Specifies if the function cares about graph delta (graphPtr != NULL) 
+ *                      or node delta only (graphPtr == NULL)
+ * \param deltaT        The delta type that is to be returned. DELTA_PLUS are the outgoing nodes, DELTA_MINUS the incoming 
+ *                      nodes and DELTA_ALL all connected nodes
+ * \param labelFilter   A label filter to apply. Only delta nodes that match the specified label filter are returned
+ * \param interp        The Tcl interp for setting error messages etc.
+ * \param resultObj     The Tcl list object for the result. Is filled with the command names of the delta.
+ */
 int Graphs_GetDelta(Node* nodePtr, Graph* graphPtr, DeltaT deltaT, struct LabelFilter labelFilter, Tcl_Interp* interp,
         Tcl_Obj** resultObj)
 {
