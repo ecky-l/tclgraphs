@@ -15,7 +15,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 set ::tcltest::testSingleFile false
 set ::tcltest::testsDirectory [file dir [info script]]
 
-tcltest::configure -verbose {body pass start line error}
+tcltest::configure -verbose {body pass line error}
 
 # We need to ensure that the testsDirectory is absolute
 if {[catch {::tcltest::normalizePath ::tcltest::testsDirectory}]} {
