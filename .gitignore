@@ -61,3 +61,5 @@ autom4te.cache
 .cproject
 .project
 .settings
+
+/build/
