@@ -17,4 +17,3 @@ declare 3 generic {
 declare 4 generic {
 	int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
 }
-
