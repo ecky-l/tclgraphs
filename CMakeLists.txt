@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(tclgraphs VERSION 0.9)
+project(tclgraphs VERSION 0.9.0)
 
 find_package(TCL)
 find_package(Tclsh)
@@ -30,7 +30,7 @@ set(GRAPHS_SOURCES generic/common.c
                    generic/graphsStubInit.c)
 set(GRAPHS_HEADERS generic/graphs.h
                    generic/graphsDecls.h)
-add_library(graphs SHARED ${GRAPHS_SOURCES} ${GRAPHS_HEADERS} generic/graphs.decls)
+add_library(graphs SHARED ${GRAPHS_SOURCES} ${GRAPHS_HEADERS} generic/graphs.decls pkgIndex.tcl.in)
 add_custom_command(
 	TARGET graphs
 	PRE_BUILD
@@ -42,7 +42,7 @@ target_link_libraries(graphs ${TCL_STUB_LIBRARY})
 set_target_properties(graphs PROPERTIES PREFIX "")
 
 #
-# graphsstub library for other extensions
+# graphsstub library for other Tcl extensions
 #
 add_library(graphsstub STATIC generic/graphsStubLib.c)
 target_compile_definitions(graphs PRIVATE ${TCLGRAPHS_DEFINES} -DBUILD_graphsstub=1)
@@ -67,3 +67,42 @@ add_test(
     COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> edge
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+#
+# install section for packaging
+#
+install(
+    TARGETS graphs
+    RUNTIME DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+    LIBRARY DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+)
+install(
+    FILES ${GRAPHS_HEADERS}
+    DESTINATION "graphs${CMAKE_PROJECT_VERSION}/include"
+)
+configure_file(pkgIndex.tcl.in pkgIndex.tcl)
+install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
+    DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+)
+install(
+    TARGETS graphsstub
+    ARCHIVE DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+)
+
+#
+# packaging section
+#
+IF (WIN32)
+    set(CPACK_GENERATOR "ZIP")
+ELSE()
+    set(CPACK_GENERATOR "TGZ")
+ENDIF()
+
+set(CPACK_PACKAGE_NAME "graphs")
+set(CPACK_PACKAGE_VENDOR "EL")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_PACKAGE_VERSION_MAJOR 0)
+set(CPACK_PACKAGE_VERSION_MINOR 9)
+set(CPACK_PACKAGE_VERSION_PATCH 0)
+include(CPack)
