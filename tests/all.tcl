@@ -12,6 +12,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
 }
 
+tcltest::matchFiles *[lindex $argv 1].test
 set ::tcltest::testSingleFile false
 set ::tcltest::testsDirectory [file dir [info script]]
 
@@ -59,8 +60,14 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
     }
 }
 
+proc tcltest::cleanupTestsHook {} {
+    variable numTests
+    set ::exitCode [expr {$numTests(Failed) > 0}]
+}
+
 # cleanup
 puts $chan "\nTests ended at [eval $timeCmd]"
 ::tcltest::cleanupTests 1
-return
+
+exit $exitCode
 

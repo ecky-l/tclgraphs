@@ -249,6 +249,7 @@ test graph-delta-1.7.4 "info deltaminus 2" -setup $createTwoGraphs -body {
 
 test graph-slave-interp-1.8.1 "create and destroy graph + nodes in slave interp" -setup {} -body {
     interp create slave
+    interp eval slave [list set argv $argv]
     interp eval slave {source [file join tests loadpackage.tcl]}
     interp eval slave {source [file join tests createtwographs.tcl]}
     interp delete slave

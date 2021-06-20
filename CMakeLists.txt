@@ -40,3 +40,20 @@ set_target_properties(graphs PROPERTIES PREFIX "")
 add_library(graphsstub STATIC generic/graphsStubLib.c)
 target_compile_definitions(graphs PRIVATE ${TCLGRAPHS_DEFINES} -DBUILD_graphsstub=1)
 set_target_properties(graphsstub PROPERTIES PREFIX "")
+
+enable_testing()
+add_test(
+    NAME "graph-testsuite"
+    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> graph
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+add_test(
+    NAME "node-testsuite"
+    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> node
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+add_test(
+    NAME "edge-testsuite"
+    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> edge
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)

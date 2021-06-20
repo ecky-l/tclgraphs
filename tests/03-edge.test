@@ -98,6 +98,7 @@ tcltest::test edge-destroy-3.2.3 "destroy edge 2" -setup $createTwoNodes -body {
 
 tcltest::test edge-destroy-3.2.4 "destroy in slave interp works" -setup {} -body {
     interp create slave
+    interp eval slave [list set argv $argv]
     interp eval slave {source [file join tests loadpackage.tcl]}
     interp eval slave {source [file join tests createtwographs.tcl]}
     interp eval slave {edge new n1 -> n2}
@@ -108,6 +109,7 @@ tcltest::test edge-destroy-3.2.4 "destroy in slave interp works" -setup {} -body
 
 tcltest::test edge-destroy-3.2.5 "destroy in slave interp works with two edges" -setup {} -body {
     interp create slave
+    interp eval slave [list set argv $argv]
     interp eval slave {source [file join tests loadpackage.tcl]}
     interp eval slave {source [file join tests createtwographs.tcl]}
     interp eval slave {edge new n1 -> n2}
