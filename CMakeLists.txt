@@ -46,7 +46,7 @@ set_target_properties(graphs PROPERTIES PREFIX "")
 #
 add_library(graphsstub STATIC generic/graphsStubLib.c)
 target_compile_definitions(graphs PRIVATE ${TCLGRAPHS_DEFINES} -DBUILD_graphsstub=1)
-set_target_properties(graphsstub PROPERTIES PREFIX "")
+set_target_properties(graphsstub PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 #
 # The tests
@@ -87,7 +87,7 @@ install(
 )
 install(
     TARGETS graphsstub
-    ARCHIVE DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+    ARCHIVE DESTINATION "graphs${CMAKE_PROJECT_VERSION}/lib"
 )
 
 #
