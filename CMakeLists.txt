@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 # set the project name
 project(tclgraphs VERSION 0.9.0)
@@ -46,6 +46,9 @@ set_target_properties(graphs PROPERTIES PREFIX "")
 #
 add_library(graphsstub STATIC generic/graphsStubLib.c)
 target_compile_definitions(graphs PRIVATE ${TCLGRAPHS_DEFINES} -DBUILD_graphsstub=1)
+if(UNIX)
+    target_compile_options(graphs PRIVATE -O2 -fomit-frame-pointer -DNDEBUG -Wall -pipe)
+endif(UNIX)
 set_target_properties(graphsstub PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 #
@@ -71,6 +74,9 @@ add_test(
 #
 # install section for packaging
 #
+set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/tcl/lib")
+file(TO_CMAKE_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX)
+message(STATUS "install prefix: ${CMAKE_INSTALL_PREFIX}")
 install(
     TARGETS graphs
     RUNTIME DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
@@ -88,6 +94,10 @@ install(
 install(
     TARGETS graphsstub
     ARCHIVE DESTINATION "graphs${CMAKE_PROJECT_VERSION}/lib"
+)
+install(
+	FILES cmake/FindTclGraphs.cmake
+    DESTINATION "graphs${CMAKE_PROJECT_VERSION}/cmake"
 )
 
 #
