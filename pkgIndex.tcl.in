@@ -2,4 +2,4 @@
 # Tcl package index file
 #
 package ifneeded graphs @CMAKE_PROJECT_VERSION@ \
-    [list load [file join $dir graphs[info sharedlibext]] graphs]
+    [list load [file join $dir graphs[info sharedlibext]] Graphs]
