@@ -209,8 +209,7 @@ static int GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_
 static int GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    char* opts[] = { "-name",
-    NULL };
+    const char* opts[] = { "-name", NULL };
     enum OptsIx
     {
         NameIx

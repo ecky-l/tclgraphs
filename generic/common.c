@@ -70,7 +70,7 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
 void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr)
 {
     if (nodePtr->graph == graphPtr) {
-        Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr);
+        Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->nodes, (ClientData) nodePtr);
         if (entry != NULL) {
             Tcl_DeleteHashEntry(entry);
         }
@@ -85,7 +85,7 @@ void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr)
     Tcl_HashEntry* entry;
 
     if (graphPtr != NULL) {
-        entry = Tcl_CreateHashEntry(&graphPtr->edges, edgePtr, &new);
+        entry = Tcl_CreateHashEntry(&graphPtr->edges, (ClientData) edgePtr, &new);
         if (new) {
             Tcl_SetHashValue(entry, edgePtr);
         }
@@ -94,7 +94,7 @@ void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr)
 
 void Graphs_DeleteEdgeFromGraph(Graph* graphPtr, Edge* edgePtr)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->edges, edgePtr);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->edges, (ClientData) edgePtr);
     if (entry != NULL) {
         Tcl_DeleteHashEntry(entry);
     }
@@ -225,7 +225,7 @@ int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, 
     int new;
     Tcl_HashEntry* entry;
     int cmdIdx;
-    static char* subcmds[] = {
+    const char* subcmds[] = {
             "add",
             "+",
             "delete",
@@ -307,7 +307,7 @@ static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeD
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&nodesTbl, &search);
     while (entry != NULL) {
-        Node* nodePtr = Tcl_GetHashKey(&nodesTbl, entry);
+        Node* nodePtr = (Node*) Tcl_GetHashKey(&nodesTbl, entry);
         if (!GraphsFilterLabels(nodePtr, labelFilter.filterType, labelFilter.objc, labelFilter.objv)) {
             entry = Tcl_NextHashEntry(&search);
             continue;

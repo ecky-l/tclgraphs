@@ -259,10 +259,10 @@ static void EdgeDestroyCmd(ClientData clientData)
     Edge* edgePtr = (Edge*) clientData;
 
     if (edgePtr->fromNode != NULL && edgePtr->toNode != NULL) {
-        Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, edgePtr->toNode);
+        Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, (ClientData) edgePtr->toNode);
         if (entry1 != NULL) {
             Tcl_DeleteHashEntry(entry1);
-            Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, edgePtr->fromNode);
+            Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, (ClientData) edgePtr->fromNode);
             if (entry2 != NULL) {
                 Tcl_DeleteHashEntry(entry2);
             }
@@ -273,10 +273,10 @@ static void EdgeDestroyCmd(ClientData clientData)
          * Delete this link without any further intervention.
          */
         if (edgePtr->directionType == EDGE_UNDIRECTED) {
-            entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, edgePtr->fromNode);
+            entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, (ClientData) edgePtr->fromNode);
             if (entry1 != NULL) {
                 Tcl_DeleteHashEntry(entry1);
-                Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, edgePtr->toNode);
+                Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, (ClientData) edgePtr->toNode);
                 if (entry2 != NULL) {
                     Tcl_DeleteHashEntry(entry2);
                 }
@@ -358,7 +358,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     int cmdIdx, directionIdx;
     int unDirected = 0;
 
-    static char* directChars[] = { "->", "<-", "<->", NULL };
+    const char* directChars[] = { "->", "<-", "<->", NULL };
     enum directIdx
     {
         OutIx,
@@ -512,7 +512,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
 
     /* create neighbor and check if exists */
     {
-        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->outgoing, toNodePtr, &new);
+        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->outgoing, (ClientData) toNodePtr, &new);
         if (!new) {
             Tcl_Obj* result = Tcl_NewObj();
             Tcl_AppendStringsToObj(result, toNodePtr->cmdName, " is already neighbor of ", fromNodePtr->cmdName, NULL);
@@ -523,7 +523,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         Tcl_SetHashValue(entry1, edgePtr);
 
         if (unDirected) {
-            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->outgoing, fromNodePtr, &new);
+            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->outgoing, (ClientData) fromNodePtr, &new);
             if (!new) {
                 Tcl_Obj* result = Tcl_NewObj();
                 Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ", toNodePtr->cmdName, NULL);
@@ -538,7 +538,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
             toNodePtr->degreeundir++;
         }
         else {
-            entry1 = Tcl_CreateHashEntry(&toNodePtr->incoming, fromNodePtr, &new);
+            entry1 = Tcl_CreateHashEntry(&toNodePtr->incoming, (ClientData) fromNodePtr, &new);
             /* should not be there, since it is always associated with a neighbor */
             Tcl_SetHashValue(entry1, edgePtr);
             fromNodePtr->degreeplus++;
@@ -576,14 +576,14 @@ int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
 Edge*
 Graphs_EdgeGetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, unsigned int marksMask)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, toNodePtr);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, (ClientData) toNodePtr);
     if (entry == NULL) {
         return NULL;
     }
     Edge *edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
 
     if (unDirected) {
-        entry = Tcl_FindHashEntry(&toNodePtr->outgoing, fromNodePtr);
+        entry = Tcl_FindHashEntry(&toNodePtr->outgoing, (ClientData) fromNodePtr);
         if (entry == NULL) {
             return NULL;
         }
