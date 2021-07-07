@@ -96,8 +96,13 @@ install(
     ARCHIVE DESTINATION "graphs${CMAKE_PROJECT_VERSION}/lib"
 )
 install(
-	FILES cmake/FindTclGraphs.cmake
+    FILES cmake/FindTclGraphs.cmake
     DESTINATION "graphs${CMAKE_PROJECT_VERSION}/cmake"
+)
+install(
+    DIRECTORY library
+    DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
+    FILES_MATCHING PATTERN "*.tcl"
 )
 
 #
