@@ -1,7 +1,9 @@
 #
 # creating dot files from graphs objects
 #
-namespace eval graphs {}
+namespace eval graphs {
+    namespace export graph-to-dot edge-to-dot graph-from-dot
+}
 
 proc ::graphs::graph-to-dot {graph args} {
     if {[dict exists $args -name]} {
