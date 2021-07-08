@@ -70,6 +70,12 @@ add_test(
     COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> edge
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+add_test(
+    NAME "util-testsuite"
+    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> util
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 
 #
 # install section for packaging

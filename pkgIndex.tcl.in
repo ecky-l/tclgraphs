@@ -3,6 +3,7 @@
 #
 proc _load-graphs {dir} {
     load [file join $dir graphs[info sharedlibext]] Graphs
+    source [file join $dir library util.tcl]
     source [file join $dir library dot.tcl]
 }
 

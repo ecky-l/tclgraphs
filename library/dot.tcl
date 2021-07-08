@@ -65,8 +65,8 @@ proc ::graphs::graph-from-dot {graph dot} {
             dict set attrs $key [string trim $val \"]
         }
         set nodes [split [regsub {\->} $edgeDesc ,] ,]
-        set from [GetNodeByNameOrNew $graph [lindex $nodes 0]]
-        set to [GetNodeByNameOrNew $graph [lindex $nodes 1]]
+        set from [get-or-create-node $graph [lindex $nodes 0]]
+        set to [get-or-create-node $graph [lindex $nodes 1]]
         set e [::graphs::edge new $from -> $to]
         foreach {key} { -weight -data } {
             if {[dict exists $attrs $key]} {
@@ -76,13 +76,4 @@ proc ::graphs::graph-from-dot {graph dot} {
     }
 
     return $name
-}
-
-
-proc ::graphs::GetNodeByNameOrNew {graph name} {
-    if {[$graph info nodes -name $name] != {}} {
-        $graph info nodes -name $name
-    } else {
-        ::graphs::node new -name $name -graph $graph
-    }
 }
