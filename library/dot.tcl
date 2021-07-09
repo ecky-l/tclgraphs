@@ -5,7 +5,7 @@ namespace eval graphs {
     namespace export graph-to-dot edge-to-dot graph-from-dot
 }
 
-proc ::graphs::graph-to-dot {graph args} {
+proc ::graphs::digraph-to-dot {graph args} {
     if {[dict exists $args -name]} {
         append result "digraph [dict get $args -name] \{"
     } else {
@@ -18,12 +18,12 @@ proc ::graphs::graph-to-dot {graph args} {
                 set markArgs { color=red penwidth=2.0 }
             }
         }
-        append result [edge-to-dot $edge {*}$markArgs] \;
+        append result [diedge-to-dot $edge {*}$markArgs] \;
     }
     append result "\}"
 }
 
-proc ::graphs::edge-to-dot {edge args} {
+proc ::graphs::diedge-to-dot {edge args} {
     set from [$edge cget -from]
     set to [$edge cget -to]
     set weight [$edge cget -weight]
@@ -32,14 +32,14 @@ proc ::graphs::edge-to-dot {edge args} {
         throw {GRAPHS EDGE_TO_DOT} "from and to nodes must have names"
     }
     append result [$from cget -name]->[$to cget -name]
-    append result \[ label = $weight , weight = $weight , data= \" $data \"
+    append result \[ label = \" [$edge cget -name] \" , weight = $weight , data= \" $data \"
     if {$args != {}} {
         append result , [join $args ,]
     }
     append result \]
 }
 
-proc ::graphs::graph-from-dot {graph dot} {
+proc ::graphs::digraph-from-dot {graph dot} {
 
     set start [expr {[string first "\{" $dot] + 1}]
     set end [expr {[string last "\}" $dot] - 1}]
@@ -72,6 +72,9 @@ proc ::graphs::graph-from-dot {graph dot} {
             if {[dict exists $attrs $key]} {
                 $e configure $key [dict get $attrs $key]
             }
+        }
+        if {[dict exists $attrs -label]} {
+            $e configure -name [dict get $attrs -label]
         }
     }
 
