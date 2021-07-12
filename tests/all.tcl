@@ -12,7 +12,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
 }
 
-tcltest::matchFiles *[lindex $argv 1].test
+tcltest::matchFiles *[dict get $argv -tests].test
 set ::tcltest::testSingleFile false
 set ::tcltest::testsDirectory [file dir [info script]]
 

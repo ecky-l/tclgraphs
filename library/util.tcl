@@ -1,4 +1,5 @@
 ## util.tcl (created by Tloona here)
+package require graphs @CMAKE_PROJECT_VERSION@
 
 namespace eval ::graphs {
     namespace export get-or-create-node
@@ -15,3 +16,5 @@ proc ::graphs::get-or-create-node {graph name} {
         ::graphs::node new -name $name -graph $graph
     }
 }
+
+package provide graphs::util @CMAKE_PROJECT_VERSION@

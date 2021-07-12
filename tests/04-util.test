@@ -1,0 +1,41 @@
+## 04-util.test (created by Tloona here)
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+    tcltest::configure -verbose {body pass start line error}
+}
+source [file join [file dirname [info script]] loadpackage.tcl]
+package require graphs::util
+
+#### fixtures
+set createGraph {
+    graph create g1
+    foreach n {n1 n2 n3 n4} {
+        node create $n -name $n -graph g1
+    }
+}
+set destroyGraph {
+    g1 destroy -nodes
+}
+#### /fixtures
+
+tcltest::test get-nodes "existing nodes are not created again" -setup $createGraph -body {
+    foreach {n} {n1 n2 n3 n4} {
+        ::graphs::get-or-create-node g1 $n
+    }
+    llength [g1 info nodes]
+} -cleanup $destroyGraph -result {4}
+
+tcltest::test create-nodes "not existing nodes are created" -setup $createGraph -body {
+    foreach {n} {n5 n6 n7 n8} {
+        ::graphs::get-or-create-node g1 $n
+    }
+    llength [g1 info nodes]
+} -cleanup $destroyGraph -result {8}
+
+tcltest::test create-get-nodes "mixing get and create nodes" -setup $createGraph -body {
+    foreach {n} {n1 n5 n2 n6 n3 n7 n4 n8} {
+        ::graphs::get-or-create-node g1 $n
+    }
+    llength [g1 info nodes]
+} -cleanup $destroyGraph -result {8}

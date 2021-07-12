@@ -1,8 +1,11 @@
 #
 # creating dot files from graphs objects
 #
+package require graphs @CMAKE_PROJECT_VERSION@
+package require graphs::util @CMAKE_PROJECT_VERSION@
+
 namespace eval graphs {
-    namespace export graph-to-dot edge-to-dot graph-from-dot
+    namespace export digraph-to-dot diedge-to-dot digraph-from-dot
 }
 
 proc ::graphs::digraph-to-dot {graph args} {
@@ -80,3 +83,5 @@ proc ::graphs::digraph-from-dot {graph dot} {
 
     return $name
 }
+
+package provide graphs::dot @CMAKE_PROJECT_VERSION@

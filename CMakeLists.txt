@@ -57,29 +57,42 @@ set_target_properties(graphsstub PROPERTIES POSITION_INDEPENDENT_CODE ON)
 enable_testing()
 add_test(
     NAME "graph-testsuite"
-    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> graph
+    COMMAND ${TCL_TCLSH} tests/all.tcl -load $<TARGET_FILE:graphs> -dir ${CMAKE_CURRENT_BINARY_DIR} -tests graph
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_test(
     NAME "node-testsuite"
-    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> node
+    COMMAND ${TCL_TCLSH} tests/all.tcl -load $<TARGET_FILE:graphs> -dir ${CMAKE_CURRENT_BINARY_DIR} -tests node
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_test(
     NAME "edge-testsuite"
-    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> edge
+    COMMAND ${TCL_TCLSH} tests/all.tcl -load $<TARGET_FILE:graphs> -dir ${CMAKE_CURRENT_BINARY_DIR} -tests edge
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_test(
     NAME "util-testsuite"
-    COMMAND ${TCL_TCLSH} tests/all.tcl $<TARGET_FILE:graphs> util
+    COMMAND ${TCL_TCLSH} tests/all.tcl -load $<TARGET_FILE:graphs> -dir ${CMAKE_CURRENT_BINARY_DIR} -tests util
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 
 #
+# process library files, substitute version
+#
+configure_file(pkgIndex.tcl.in pkgIndex.tcl)
+set(LIBRARY_FILES "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl")
+file(GLOB libraryFiles "library/*.tcl")
+foreach(file ${libraryFiles})
+    cmake_path(GET file FILENAME outFile)
+    list(APPEND LIBRARY_FILES "${CMAKE_CURRENT_BINARY_DIR}/${outFile}")
+    configure_file(${file} "${outFile}")
+endforeach()
+
+#
 # install section for packaging
 #
+
 set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/tcl/lib")
 file(TO_CMAKE_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX)
 message(STATUS "install prefix: ${CMAKE_INSTALL_PREFIX}")
@@ -92,9 +105,9 @@ install(
     FILES ${GRAPHS_HEADERS}
     DESTINATION "graphs${CMAKE_PROJECT_VERSION}/include"
 )
-configure_file(pkgIndex.tcl.in pkgIndex.tcl)
 install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
+    #FILES "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
+    FILES ${LIBRARY_FILES}
     DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
 )
 install(
@@ -104,11 +117,6 @@ install(
 install(
     FILES cmake/FindTclGraphs.cmake
     DESTINATION "graphs${CMAKE_PROJECT_VERSION}/cmake"
-)
-install(
-    DIRECTORY library
-    DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
-    FILES_MATCHING PATTERN "*.tcl"
 )
 
 #
