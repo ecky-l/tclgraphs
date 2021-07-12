@@ -176,10 +176,11 @@ static int GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj*
 static int GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int i, optIdx;
-    static const char* opts[] = { "-name", NULL };
+    const char* opts[] = { "-name", "-data", NULL};
     enum OptsIx
     {
-        NameIx
+        NameIx,
+        DataIx
     };
 
     if (objc < 2 || objc > 4) {
@@ -196,6 +197,12 @@ static int GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_
             sprintf(graphPtr->name, "%s", Tcl_GetString(objv[i + 1]));
             break;
         }
+        case DataIx: {
+            Tcl_DecrRefCount(graphPtr->data);
+            graphPtr->data = objv[i + 1];
+            Tcl_IncrRefCount(graphPtr->data);
+            break;
+        }
         default: {
             Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong options in graph configure", -1));
             return TCL_ERROR;
@@ -209,10 +216,11 @@ static int GraphCmdConfigure(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_
 static int GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
-    const char* opts[] = { "-name", NULL };
+    const char* opts[] = { "-name", "-data", NULL};
     enum OptsIx
     {
-        NameIx
+        NameIx,
+        DataIx
     };
 
     if (objc != 1) {
@@ -226,6 +234,10 @@ static int GraphCmdCget(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* 
     switch (optIdx) {
     case NameIx: {
         Tcl_SetObjResult(interp, Tcl_NewStringObj(graphPtr->name, -1));
+        return TCL_OK;
+    }
+    case DataIx: {
+        Tcl_SetObjResult(interp, graphPtr->data);
         return TCL_OK;
     }
     default: {
@@ -528,7 +540,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
         sprintf(graphPtr->name, "%s", "");
         graphPtr->order = 0;
         graphPtr->marks = 0;
-        graphPtr->data = NULL;
+        graphPtr->data = Tcl_NewListObj(0, NULL);
 
         if (Tcl_StringMatch(Tcl_GetString(objv[1]), "new")) {
             sprintf(graphPtr->cmdName, "::graphs::Graph%d", gState->graphUid);

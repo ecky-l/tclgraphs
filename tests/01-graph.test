@@ -282,6 +282,11 @@ test graph-order-1.9.2 "info order 3: 0 after node add/subtract" -setup $createT
     lappend result [g info order]
 } -cleanup $destroyThreeNodes -result {0 3 0}
 
+test graph-config-data-2.1 "Graph data option" -setup {graph create g} -body {
+    g configure -data [list theAnswer 42]
+    g cget -data
+} -cleanup {g destroy} -result {theAnswer 42}
+
 # cleanup
 ::tcltest::cleanupTests
 return
