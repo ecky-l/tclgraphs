@@ -66,11 +66,13 @@ enum GraphMarksIndex
 
 static const char* GraphInfoEdgesOptions[] = {
     "-marks",
+    "-name",
     NULL
 };
 enum GraphInfoEdgesOptionIndex
 {
-    GraphInfoEdgesOptionMarksIx
+    GraphInfoEdgesOptionMarksIx,
+    GraphInfoEdgesOptionNameIx
 };
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
@@ -301,27 +303,40 @@ static int GraphParseMarks(const char* marksSpec, unsigned* marksMaskOut)
 
 static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
-    int cmdIdx;
     unsigned edgeMarksMask = 0;
+    char* edgeName = NULL;
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = NULL;
     Tcl_Obj* result = Tcl_NewObj();
 
 
-    if (objc == 1 || objc > 2) {
-        Tcl_WrongNumArgs(interp, 0, objv, "?-marks <marks>?");
+    if (objc == 1 || objc == 3 || objc > 4) {
+        Tcl_WrongNumArgs(interp, 0, objv, "?-marks <marks>? ?-name <name>?");
         return TCL_ERROR;
     }
 
-    if (objc == 2) {
-        if (Tcl_GetIndexFromObj(interp, objv[0], GraphInfoEdgesOptions, "-marks", 0, &cmdIdx) != TCL_OK) {
-            return TCL_ERROR;
-        }
-        if (GraphParseMarks(Tcl_GetString(objv[1]), &edgeMarksMask) != TCL_OK) {
-            Tcl_SetObjResult(interp, Tcl_NewStringObj(
-                "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).",
-                -1));
-            return TCL_ERROR;
+    if (objc == 2 || objc == 4) {
+        int i;
+        for (i = 0; i < objc; i += 2) {
+            int cmdIdx;
+            if (Tcl_GetIndexFromObj(interp, objv[i], GraphInfoEdgesOptions, "option", 0, &cmdIdx) != TCL_OK) {
+                return TCL_ERROR;
+            }
+
+            switch (cmdIdx) {
+            case GraphInfoEdgesOptionMarksIx:
+                if (GraphParseMarks(Tcl_GetString(objv[i+1]), &edgeMarksMask) != TCL_OK) {
+                    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+                        "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).",-1));
+                    return TCL_ERROR;
+                }
+                break;
+            case GraphInfoEdgesOptionNameIx:
+                edgeName = Tcl_GetString(objv[i+1]);
+                break;
+            default:
+                break;
+            }
         }
     }
 
@@ -331,7 +346,9 @@ static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj
     while (entry != NULL) {
         Edge* edgePtr = (Edge*)Tcl_GetHashKey(&graphPtr->edges, entry);
         if (Edge_HasMarks(edgePtr, edgeMarksMask)) {
-            Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
+            if (edgeName == NULL || strcmp(edgePtr->name, edgeName) == 0) {
+                Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
+            }
         }
         entry = Tcl_NextHashEntry(&search);
     }

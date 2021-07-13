@@ -44,6 +44,19 @@ set destroyTwoGraphs {
     g1 destroy -nodes
     g2 destroy -nodes
 }
+
+set createGraphWithEdges {
+    graph create g
+    foreach n {n1 n2 n3 n4} {node create $n -graph g}
+    edge create e1 n1 -> n2 -name e1
+    edge create e2 n2 -> n3 -name e2
+    edge create e3 n3 -> n4 -name e3
+}
+
+set destroyGraphWithEdges {
+    g destroy -nodes
+}
+
 #### /fixtures
 
 ###
@@ -245,6 +258,7 @@ test graph-delta-1.7.4 "info deltaminus 2" -setup $createTwoGraphs -body {
     g1 info deltaminus
 } -cleanup $destroyTwoGraphs -result n3
 
+
 ###
 
 test graph-slave-interp-1.8.1 "create and destroy graph + nodes in slave interp" -setup {} -body {
@@ -282,10 +296,64 @@ test graph-order-1.9.2 "info order 3: 0 after node add/subtract" -setup $createT
     lappend result [g info order]
 } -cleanup $destroyThreeNodes -result {0 3 0}
 
+###
+
 test graph-config-data-2.1 "Graph data option" -setup {graph create g} -body {
     g configure -data [list theAnswer 42]
     g cget -data
 } -cleanup {g destroy} -result {theAnswer 42}
+
+###
+
+test graph-info-edges-1 "info edges" -setup $createGraphWithEdges -body {
+    lsort [g info edges]
+} -cleanup $destroyGraphWithEdges -result {e1 e2 e3}
+
+###
+
+test graph-info-edges-2 "info edges with name" -setup $createGraphWithEdges -body {
+    g info edges -name e1
+} -cleanup $destroyGraphWithEdges -result e1
+
+###
+
+test graph-info-edges-3.1 "info edges with mark" -setup $createGraphWithEdges -body {
+    e2 mark cut
+    g info edges -mark c
+} -cleanup $destroyGraphWithEdges -result e2
+
+###
+
+test graph-info-edges-3.2 "info edges with inverse mark" -setup $createGraphWithEdges -body {
+    e2 mark cut
+    lsort [g info edges -mark C]
+} -cleanup $destroyGraphWithEdges -result {e1 e3}
+
+###
+
+test graph-info-edges-3.3 "info edges with inverse mark and name" -setup $createGraphWithEdges -body {
+    e2 mark cut
+    lsort [g info edges -mark C -name e3]
+} -cleanup $destroyGraphWithEdges -result e3
+
+###
+
+test graph-info-edges-3.3 "info edges with mark and name empty" -setup $createGraphWithEdges -body {
+    e2 mark cut
+    lsort [g info edges -mark c -name e3]
+} -cleanup $destroyGraphWithEdges -result {}
+
+###
+
+test graph-info-edges-3.4 "info edges after unmark" -setup $createGraphWithEdges -body {
+    e2 mark cut
+    set r1 [lsort [g info edges -mark C]]
+    e2 unmark cut
+    set r2 [lsort [g info edges -mark C]]
+    list $r1 $r2
+} -cleanup $destroyGraphWithEdges -result {{e1 e3} {e1 e2 e3}}
+
+###
 
 # cleanup
 ::tcltest::cleanupTests
