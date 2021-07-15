@@ -9,11 +9,17 @@ namespace eval graphs {
 }
 
 proc ::graphs::digraph-to-dot {graph args} {
+    set pretty [expr {[dict exists $args -pretty] && [dict get $args -pretty]}]
+
     if {[dict exists $args -name]} {
         append result "digraph [dict get $args -name] \{"
     } else {
         append result "digraph \{"
     }
+    if {$pretty} {
+        append result \n
+    }
+
     foreach {edge} [$graph info edges] {
         set markArgs {}
         if {[dict exists $args -mark]} {
@@ -22,6 +28,9 @@ proc ::graphs::digraph-to-dot {graph args} {
             }
         }
         append result [diedge-to-dot $edge {*}$markArgs] \;
+        if {$pretty} {
+            append result \n
+        }
     }
     append result "\}"
 }
@@ -34,8 +43,8 @@ proc ::graphs::diedge-to-dot {edge args} {
     if {[$from cget -name] == "" || [$to cget -name] == ""} {
         throw {GRAPHS EDGE_TO_DOT} "from and to nodes must have names"
     }
-    append result [$from cget -name]->[$to cget -name]
-    append result \[ label = \" [$edge cget -name] \" , weight = $weight , data= \" $data \"
+    append result \" [$from cget -name] \" -> \" [$to cget -name] \"
+    append result \[ label = \" [$edge cget -name] \" , weight = \" $weight \" , data= \" $data \"
     if {$args != {}} {
         append result , [join $args ,]
     }
