@@ -12,7 +12,7 @@ declare 2 generic {
 	Node* Graphs_NodeGetByCommand(GraphState* statePtr, const char* graphCmd)
 }
 declare 3 generic {
-	Edge* Graphs_EdgeGetEdge(GraphState* statePtr, Node* fromNodePtr, Node* toNodePtr, int unDirected, unsigned int marksMask)
+	Edge* Graphs_EdgeGetEdge(GraphState* statePtr, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
 }
 declare 4 generic {
 	int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)

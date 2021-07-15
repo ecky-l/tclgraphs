@@ -574,16 +574,16 @@ int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
 }
 
 Edge*
-Graphs_EdgeGetEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, unsigned int marksMask)
+Graphs_EdgeGetEdge(GraphState* gState, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&fromNodePtr->outgoing, (ClientData) toNodePtr);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&((Node*)fromNodePtr)->outgoing, (ClientData) toNodePtr);
     if (entry == NULL) {
         return NULL;
     }
     Edge *edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
 
     if (unDirected) {
-        entry = Tcl_FindHashEntry(&toNodePtr->outgoing, (ClientData) fromNodePtr);
+        entry = Tcl_FindHashEntry(&((Node*)toNodePtr)->outgoing, (ClientData) fromNodePtr);
         if (entry == NULL) {
             return NULL;
         }

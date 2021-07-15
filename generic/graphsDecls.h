@@ -19,7 +19,7 @@ GRAPHSAPI Node*		Graphs_NodeGetByCommand(GraphState*statePtr,
 				const char*graphCmd);
 /* 3 */
 GRAPHSAPI Edge*		Graphs_EdgeGetEdge(GraphState*statePtr,
-				Node*fromNodePtr, Node*toNodePtr,
+				CONST Node*fromNodePtr, CONST Node*toNodePtr,
 				int unDirected, unsigned int marksMask);
 /* 4 */
 GRAPHSAPI int		Edge_HasMarks(Edge*edgePtr, unsigned marksMask);
@@ -31,7 +31,7 @@ typedef struct GraphsStubs {
     GraphState* (*graphs_GetState) (Tcl_Interp*interp); /* 0 */
     Graph* (*graphs_GraphGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 1 */
     Node* (*graphs_NodeGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 2 */
-    Edge* (*graphs_EdgeGetEdge) (GraphState*statePtr, Node*fromNodePtr, Node*toNodePtr, int unDirected, unsigned int marksMask); /* 3 */
+    Edge* (*graphs_EdgeGetEdge) (GraphState*statePtr, CONST Node*fromNodePtr, CONST Node*toNodePtr, int unDirected, unsigned int marksMask); /* 3 */
     int (*edge_HasMarks) (Edge*edgePtr, unsigned marksMask); /* 4 */
 } GraphsStubs;
 
