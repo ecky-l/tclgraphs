@@ -11,7 +11,7 @@ const GraphsStubs graphsStubs = {
     Graphs_GraphGetByCommand, /* 1 */
     Graphs_NodeGetByCommand, /* 2 */
     Graphs_EdgeGetEdge, /* 3 */
-    Edge_HasMarks, /* 4 */
+    Graphs_EdgeHasMarks, /* 4 */
 };
 
 /* !END!: Do not edit above this line. */

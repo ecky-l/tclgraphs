@@ -345,7 +345,7 @@ static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj
     entry = Tcl_FirstHashEntry(&graphPtr->edges, &search);
     while (entry != NULL) {
         Edge* edgePtr = (Edge*)Tcl_GetHashKey(&graphPtr->edges, entry);
-        if (Edge_HasMarks(edgePtr, edgeMarksMask)) {
+        if (Graphs_EdgeHasMarks(edgePtr, edgeMarksMask)) {
             if (edgeName == NULL || strcmp(edgePtr->name, edgeName) == 0) {
                 Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
             }

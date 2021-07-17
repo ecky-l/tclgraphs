@@ -556,7 +556,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     return edgePtr;
 }
 
-int Edge_HasMarks(Edge* edgePtr, unsigned marksMask)
+int Graphs_EdgeHasMarks(Edge* edgePtr, unsigned marksMask)
 {
     if (marksMask == 0) {
         /* return the default: all edges */
@@ -594,7 +594,7 @@ Graphs_EdgeGetEdge(GraphState* gState, CONST Node* fromNodePtr, CONST Node* toNo
         }
     }
 
-    return Edge_HasMarks(edgePtr1, marksMask) ? edgePtr1 : NULL;
+    return Graphs_EdgeHasMarks(edgePtr1, marksMask) ? edgePtr1 : NULL;
 }
 
 void Edge_CleanupCmd(ClientData data)
