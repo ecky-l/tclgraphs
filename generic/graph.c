@@ -137,7 +137,7 @@ static int GraphNodesDeleteNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, 
 static int GraphCmdNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
-    static const char* subCmds[] = { "add", "+", "delete", "-", "get",
+    const char* subCmds[] = { "add", "+", "delete", "-", "get",
     NULL };
     enum subCmdIdx
     {
