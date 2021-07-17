@@ -77,8 +77,8 @@ proc ::graphs::digraph-from-dot {graph dot} {
             dict set attrs $key [string trim $val \"]
         }
         set nodes [split [regsub {\->} $edgeDesc ,] ,]
-        set from [get-or-create-node $graph [lindex $nodes 0]]
-        set to [get-or-create-node $graph [lindex $nodes 1]]
+        set from [get-or-create-node $graph [string trim [lindex $nodes 0] \"]]
+        set to [get-or-create-node $graph [string trim [lindex $nodes 1] \"]]
         set e [::graphs::edge new $from -> $to]
         foreach {key} { -weight -data } {
             if {[dict exists $attrs $key]} {
