@@ -12,27 +12,28 @@ extern "C" {
 /* 0 */
 GRAPHSAPI GraphState*	Graphs_GetState(Tcl_Interp*interp);
 /* 1 */
-GRAPHSAPI Graph*	Graphs_GraphGetByCommand(GraphState*statePtr,
+GRAPHSAPI Graph*	Graphs_GraphGetByCommand(const GraphState*statePtr,
 				const char*graphCmd);
 /* 2 */
-GRAPHSAPI Node*		Graphs_NodeGetByCommand(GraphState*statePtr,
+GRAPHSAPI Node*		Graphs_NodeGetByCommand(const GraphState*statePtr,
 				const char*graphCmd);
 /* 3 */
-GRAPHSAPI Edge*		Graphs_EdgeGetEdge(GraphState*statePtr,
-				CONST Node*fromNodePtr, CONST Node*toNodePtr,
+GRAPHSAPI Edge*		Graphs_EdgeGetEdge(const GraphState*statePtr,
+				const Node*fromNodePtr, const Node*toNodePtr,
 				int unDirected, unsigned int marksMask);
 /* 4 */
-GRAPHSAPI int		Graphs_EdgeHasMarks(Edge*edgePtr, unsigned marksMask);
+GRAPHSAPI int		Graphs_EdgeHasMarks(const Edge*edgePtr,
+				unsigned marksMask);
 
 typedef struct GraphsStubs {
     int magic;
     void *hooks;
 
     GraphState* (*graphs_GetState) (Tcl_Interp*interp); /* 0 */
-    Graph* (*graphs_GraphGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 1 */
-    Node* (*graphs_NodeGetByCommand) (GraphState*statePtr, const char*graphCmd); /* 2 */
-    Edge* (*graphs_EdgeGetEdge) (GraphState*statePtr, CONST Node*fromNodePtr, CONST Node*toNodePtr, int unDirected, unsigned int marksMask); /* 3 */
-    int (*graphs_EdgeHasMarks) (Edge*edgePtr, unsigned marksMask); /* 4 */
+    Graph* (*graphs_GraphGetByCommand) (const GraphState*statePtr, const char*graphCmd); /* 1 */
+    Node* (*graphs_NodeGetByCommand) (const GraphState*statePtr, const char*graphCmd); /* 2 */
+    Edge* (*graphs_EdgeGetEdge) (const GraphState*statePtr, const Node*fromNodePtr, const Node*toNodePtr, int unDirected, unsigned int marksMask); /* 3 */
+    int (*graphs_EdgeHasMarks) (const Edge*edgePtr, unsigned marksMask); /* 4 */
 } GraphsStubs;
 
 extern const GraphsStubs *graphsStubsPtr;

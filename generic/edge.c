@@ -556,7 +556,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     return edgePtr;
 }
 
-int Graphs_EdgeHasMarks(Edge* edgePtr, unsigned marksMask)
+int Graphs_EdgeHasMarks(const Edge* edgePtr, unsigned marksMask)
 {
     if (marksMask == 0) {
         /* return the default: all edges */
@@ -574,7 +574,7 @@ int Graphs_EdgeHasMarks(Edge* edgePtr, unsigned marksMask)
 }
 
 Edge*
-Graphs_EdgeGetEdge(GraphState* gState, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
+Graphs_EdgeGetEdge(const GraphState* gState, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
 {
     Tcl_HashEntry* entry = Tcl_FindHashEntry(&((Node*)fromNodePtr)->outgoing, (ClientData) toNodePtr);
     if (entry == NULL) {

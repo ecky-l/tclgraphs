@@ -6,14 +6,14 @@ declare 0 generic {
 	GraphState* Graphs_GetState(Tcl_Interp* interp)
 }
 declare 1 generic {
-	Graph* Graphs_GraphGetByCommand(GraphState* statePtr, const char* graphCmd)
+	Graph* Graphs_GraphGetByCommand(const GraphState* statePtr, const char* graphCmd)
 }
 declare 2 generic {
-	Node* Graphs_NodeGetByCommand(GraphState* statePtr, const char* graphCmd)
+	Node* Graphs_NodeGetByCommand(const GraphState* statePtr, const char* graphCmd)
 }
 declare 3 generic {
-	Edge* Graphs_EdgeGetEdge(GraphState* statePtr, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
+	Edge* Graphs_EdgeGetEdge(const GraphState* statePtr, const Node* fromNodePtr, const Node* toNodePtr, int unDirected, unsigned int marksMask)
 }
 declare 4 generic {
-	int Graphs_EdgeHasMarks(Edge* edgePtr, unsigned marksMask)
+	int Graphs_EdgeHasMarks(const Edge* edgePtr, unsigned marksMask)
 }

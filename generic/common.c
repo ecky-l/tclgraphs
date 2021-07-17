@@ -18,16 +18,16 @@ int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
 
 }
 
-Graph* Graphs_GraphGetByCommand(GraphState* statePtr, const char* gName)
+Graph* Graphs_GraphGetByCommand(const GraphState* statePtr, const char* gName)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&statePtr->graphs, gName);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&((GraphState*)statePtr)->graphs, gName);
     return entry == NULL ? NULL : (Graph*)Tcl_GetHashValue(entry);
 }
 
 Node*
-Graphs_NodeGetByCommand(GraphState* statePtr, const char* nName)
+Graphs_NodeGetByCommand(const GraphState* statePtr, const char* nName)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&statePtr->nodes, nName);
+    Tcl_HashEntry* entry = Tcl_FindHashEntry(&((GraphState*)statePtr)->nodes, nName);
     return (entry == NULL) ? NULL : (Node*)Tcl_GetHashValue(entry);
 }
 
