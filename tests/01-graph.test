@@ -116,7 +116,7 @@ test graph-addnode-and-destroy-1.3 "destroy graph destroys nodes with -nodes fla
     g nodes + [node new] [node new] [node new]
     lappend result [llength [g nodes get]]
     g destroy -nodes
-    lappend result [info commands ::tclgraph::Node*]
+    lappend result [info commands ::graphs::Node*]
 } -cleanup {
     unset result
 } -result {3 {}}

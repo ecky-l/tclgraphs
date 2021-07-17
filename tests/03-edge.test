@@ -187,7 +187,7 @@ tcltest::test edge-destroy-3.9.1 "create and destroy edge" -setup $createTwoNode
     edge create e n1 -> n2
     set result [list [n1 info delta+] [n2 info delta+]]
     e destroy
-    lappend result [node info n1 delta+]
+    lappend result [n1 info delta+]
 } -cleanup $destroyTwoNodes -result {n2 {} {}}
 
 ###
@@ -195,7 +195,7 @@ tcltest::test edge-destroy-3.9.1 "create and destroy edge" -setup $createTwoNode
 tcltest::test edge-destroy-3.9.2 "create edge and destroy toNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     set result [n1 info delta+]
-    node destroy n2
+    n2 destroy
     lappend result [n1 info deltaplus]
 } -cleanup $destroyTwoNodes -result {n2 {}}
 
@@ -204,7 +204,7 @@ tcltest::test edge-destroy-3.9.2 "create edge and destroy toNode" -setup $create
 tcltest::test edge-destroy-3.9.3 "create edge and destroy fromNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     set result [n1 info deltaplus]
-    node destroy n1
+    n1 destroy
     lappend result [info command e]
 } -cleanup $destroyTwoNodes -result {n2 {}}
 

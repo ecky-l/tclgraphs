@@ -65,22 +65,9 @@ test node-cmd-2.1.2 "create node via new" -setup {} -body {
 test node-cmd-2.2.1 "destroy node via node cmd" -setup {} -body {
     node create n -name "Note"
     lappend result [info commands n]
-    node destroy n
+    n destroy
     lappend result [info commands n]
 } -cleanup {unset result} -result {n {}}
-
-###
-
-test node-addtograph-2.3.1 "add node to graph via cmd" -setup {
-    graph create g
-    node create n
-} -body {
-    node configure n -graph g
-    g nodes get
-} -cleanup {
-    n destroy
-    g destroy
-} -result {n}
 
 ###
 
@@ -94,19 +81,6 @@ test node-addtograph-2.3.2 "add node to graph via node" -setup {
     n destroy
     g destroy
 } -result {n}
-
-###
-
-test node-addtograph-2.3.3 "add node to graph via node, retrieval via cmd" -setup {
-    graph create g
-    node create n
-} -body {
-    node config n -graph g
-    node info n graph
-} -cleanup {
-    n destroy
-    g destroy
-} -result g
 
 ###
 
@@ -155,26 +129,10 @@ test node-addtograph-and-destroy-2.4.3 "change graph for node" -setup $createTwo
 
 ###
 
-test node-label-2.5.1 "add label via cmd" -setup $createTwoNodes -body {
-    node labels n1 + mylab yourlab
-    node labels n1
-} -cleanup $destroyTwoNodes -result {mylab yourlab}
-
-###
-
 test node-label-2.5.2 "add label via node" -setup $createTwoNodes -body {
     n1 labels + mylab yourlab
     n1 labels
 } -cleanup $destroyTwoNodes -result {mylab yourlab}
-
-###
-
-test node-label-2.5.3 "remove label via cmd" -setup $createTwoNodes -body {
-    node labels n1 + mylab yourlab
-    set result [node labels n1]
-    node labels n1 - mylab
-    lappend result [node labels n1]
-} -cleanup $destroyTwoNodes -result {mylab yourlab yourlab}
 
 ###
 
@@ -187,11 +145,11 @@ test node-label-2.5.4 "remove label via node" -setup $createTwoNodes -body {
 
 ###
 
-test node-label-2.5.5 "remove all label via cmd" -setup $createTwoNodes -body {
-    node labels n1 + mylab yourlab
-    set result [node labels n1]
-    node labels n1 - yourlab mylab
-    lappend result [node labels n1]
+test node-label-2.5.5 "remove all label" -setup $createTwoNodes -body {
+    n1 labels + mylab yourlab
+    set result [n1 labels]
+    n1 labels - yourlab mylab
+    lappend result [n1 labels]
 } -cleanup $destroyTwoNodes -result {mylab yourlab {}}
 
 ###
@@ -296,14 +254,6 @@ test node-info-2.7.1.1 "node info delta + via node" -setup $createThreeNodes -bo
 
 ###
 
-test node-info-2.7.1.2 "node info delta + via node cmd" -setup $createThreeNodes -body {
-    edge new n1 -> n2
-    edge new n1 -> n3
-    lmap x {n2 n3} { expr { $x in [node info n1 delta+] } }
-} -cleanup $destroyThreeNodes -result {1 1}
-
-###
-
 test node-info-2.7.2.1 "node info delta - via node" -setup $createThreeNodes -body {
     edge new n1 <- n2
     edge new n1 <- n3
@@ -313,21 +263,12 @@ test node-info-2.7.2.1 "node info delta - via node" -setup $createThreeNodes -bo
 
 ###
 
-test node-info-2.7.2.2 "node info delta - via node cmd" -setup $createThreeNodes -body {
-    edge new n1 <- n2
-    edge new n1 <- n3
-    concat [node info n2 delta+] [node info n3 delta+] \
-        [lmap x {n2 n3} { expr { $x in [node info n1 delta-] } }]
-} -cleanup $destroyThreeNodes -result {n1 n1 1 1}
-
-###
-
 test node-info-2.7.3.1 "node info delta with labels via node cmd" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
     n2 labels + hello world foo bar
     n3 labels + hello
-    node info n1 delta+ -labels hello foo 
+    n1 info delta+ -labels hello foo 
 } -cleanup $destroyThreeNodes -result {n2}
 
 ###
@@ -357,7 +298,7 @@ test node-info-2.7.4.1 "node info delta with name raise error" -setup $createThr
     edge new n1 -> n3
     n2 configure -name hello
     n3 configure -name world
-    node info n1 deltaplus -name
+    n1 info deltaplus -name
 } -cleanup $destroyThreeNodes -returnCodes error -result {wrong # args: should be "-name name"}
 
 ###
@@ -365,7 +306,7 @@ test node-info-2.7.4.1 "node info delta with name raise error" -setup $createThr
 test node-info-2.8.1 "node info degree 1" -setup $createThreeNodes -body {
     edge new n1 -> n2
     edge new n1 -> n3
-    node info n1 degree+
+    n1 info degree+
 } -cleanup $destroyThreeNodes -result 2
 
 ###
