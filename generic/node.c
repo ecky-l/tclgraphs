@@ -367,7 +367,7 @@ static void NodeDestroyCmd(ClientData clientData)
 int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     const char* subCommands[] = { "new", "create", NULL };
-    const enum subCommandIdx { newIdx, createIdx };
+    enum subCommandIdx { newIdx, createIdx };
 
     GraphState* gState = (GraphState*) clientData;
     int new, cmdIdx;
