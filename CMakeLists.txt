@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(tclgraphs VERSION 0.9.0)
+project(tclgraphs VERSION 0.10.0)
 
 find_package(TCL)
 find_package(Tclsh)

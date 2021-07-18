@@ -324,25 +324,24 @@ static int Node_NodeSubCmd(ClientData clientData, Tcl_Interp *interp, int objc, 
  */
 static void NodeDestroyCmd(ClientData clientData)
 {
-    Node* nodePtr = (Node*) clientData;
-    Tcl_HashEntry* entry;
-    Tcl_HashSearch search;
+    Node* nodePtr = (Node*)clientData;
+    DeltaEntry* entry;
+    Tcl_HashEntry* hashEntry;
 
     /* delete outgoing edges (neighbors) */
-    entry = Tcl_FirstHashEntry(&nodePtr->outgoing, &search);
+    entry = nodePtr->outgoing;
     while (entry != NULL) {
-        Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
+        Edge* edgePtr = entry->edgePtr;
+        entry = entry->next;
         Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
-        entry = Tcl_FirstHashEntry(&nodePtr->outgoing, &search);
     }
 
     /* delete incoming edges */
-    entry = Tcl_FirstHashEntry(&nodePtr->incoming, &search);
+    entry = nodePtr->incoming;
     while (entry != NULL) {
-        Edge* edgePtr = (Edge*) Tcl_GetHashValue(entry);
+        Edge* edgePtr = entry->edgePtr;
+        entry = entry->next;
         Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
-        Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
-        entry = Tcl_FirstHashEntry(&nodePtr->incoming, &search);
     }
 
     /* remove myself from the graphs where I am part of */
@@ -353,23 +352,22 @@ static void NodeDestroyCmd(ClientData clientData)
     if (nodePtr->data != NULL) {
         Tcl_DecrRefCount(nodePtr->data);
     }
-
-    Tcl_DeleteHashTable(&nodePtr->outgoing);
-    Tcl_DeleteHashTable(&nodePtr->incoming);
+    
     Tcl_DeleteHashTable(&nodePtr->labels);
 
-    entry = Tcl_FindHashEntry(&nodePtr->statePtr->nodes, nodePtr->cmdName);
-    Tcl_DeleteHashEntry(entry);
+    hashEntry = Tcl_FindHashEntry(&nodePtr->statePtr->nodes, nodePtr->cmdName);
+    Tcl_DeleteHashEntry(hashEntry);
 
-    Tcl_Free((char*) nodePtr);
+    Tcl_Free((char*)nodePtr);
 }
 
-int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+
+int Node_NodeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     const char* subCommands[] = { "new", "create", NULL };
     enum subCommandIdx { newIdx, createIdx };
 
-    GraphState* gState = (GraphState*) clientData;
+    GraphState* gState = (GraphState*)clientData;
     int new, cmdIdx;
     Node* nodePtr;
     Tcl_HashEntry* entryPtr;
@@ -418,8 +416,8 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
         break;
     }
 
-    Tcl_InitHashTable(&nodePtr->outgoing, TCL_ONE_WORD_KEYS);
-    Tcl_InitHashTable(&nodePtr->incoming, TCL_ONE_WORD_KEYS);
+    nodePtr->outgoing = NULL;
+    nodePtr->incoming = NULL;
     Tcl_InitHashTable(&nodePtr->labels, TCL_STRING_KEYS);
 
     entryPtr = Tcl_CreateHashEntry(&gState->nodes, nodePtr->cmdName, &new);
@@ -436,6 +434,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(nodePtr->cmdName, -1));
     return TCL_OK;
 }
+
 
 void Node_CleanupCmd(ClientData data)
 {

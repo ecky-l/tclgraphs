@@ -25,6 +25,7 @@ extern "C" {
 
 GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
 
+typedef struct _deltaEntry DeltaEntry;
 /* 
  * Marks that can be set wit the [graph mark], [edge mark] or [node mark] commands.
  * These are useful for filtering these entities in algorithms.
@@ -69,10 +70,10 @@ typedef struct _node
     Tcl_Command commandTkn;
 
     /* Neighbor nodes reachable from this node. Map of nodes to edges */
-    Tcl_HashTable outgoing;
+    DeltaEntry* outgoing;
 
     /* Nodes with incoming edges, mapped to their edges. Mainly used for cleanup */
-    Tcl_HashTable incoming;
+    DeltaEntry* incoming;
 
     /* labels assigned to the node. Can be used for filtering */
     Tcl_HashTable labels;
@@ -145,6 +146,13 @@ struct LabelFilter
     LabelFilterT filterType;
     int objc;
     Tcl_Obj** objv;
+};
+
+struct _deltaEntry
+{
+    Node* nodePtr;
+    Edge* edgePtr;
+    struct _deltaEntry* next;
 };
 
 int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);

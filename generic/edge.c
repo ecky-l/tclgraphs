@@ -78,6 +78,41 @@ enum EdgeMarksIndex
     EdgeMarkCutIx
 };
 
+static const DeltaEntry* FindDeltaEntryByNode(const DeltaEntry* start, const Node* nodePtr)
+{
+    const DeltaEntry* entry = start;
+    while (entry != NULL) {
+        if (entry->nodePtr == nodePtr) {
+            return entry;
+        }
+        entry = entry->next;
+    }
+
+    return NULL;
+}
+
+static void FindAndDeleteDeltaEntryByNode(DeltaEntry** start, const Node* nodePtr)
+{
+    DeltaEntry* now = *start;
+    DeltaEntry* prev = NULL;
+
+    while (now != NULL) {
+        if (now->nodePtr == nodePtr) {
+            if (prev != NULL) {
+                prev->next = now->next;
+            }
+            else {
+                *start = now->next;
+            }
+            ckfree(now);
+            break;
+        }
+        prev = now;
+        now = now->next;
+    }
+}
+
+
 int EdgeCmdCget(Edge* edgePtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int optIdx;
@@ -256,31 +291,19 @@ int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj
 
 static void EdgeDestroyCmd(ClientData clientData)
 {
-    Edge* edgePtr = (Edge*) clientData;
+    Edge* edgePtr = (Edge*)clientData;
 
     if (edgePtr->fromNode != NULL && edgePtr->toNode != NULL) {
-        Tcl_HashEntry* entry1 = Tcl_FindHashEntry(&edgePtr->fromNode->outgoing, (ClientData) edgePtr->toNode);
-        if (entry1 != NULL) {
-            Tcl_DeleteHashEntry(entry1);
-            Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->toNode->incoming, (ClientData) edgePtr->fromNode);
-            if (entry2 != NULL) {
-                Tcl_DeleteHashEntry(entry2);
-            }
-        }
+        FindAndDeleteDeltaEntryByNode(&edgePtr->fromNode->outgoing, edgePtr->toNode);
+        FindAndDeleteDeltaEntryByNode(&edgePtr->toNode->incoming, edgePtr->fromNode);
 
         /*
          * Undirected edges are linked to the other side (from toNode to fromNode) as well.
          * Delete this link without any further intervention.
          */
         if (edgePtr->directionType == EDGE_UNDIRECTED) {
-            entry1 = Tcl_FindHashEntry(&edgePtr->toNode->outgoing, (ClientData) edgePtr->fromNode);
-            if (entry1 != NULL) {
-                Tcl_DeleteHashEntry(entry1);
-                Tcl_HashEntry* entry2 = Tcl_FindHashEntry(&edgePtr->fromNode->incoming, (ClientData) edgePtr->toNode);
-                if (entry2 != NULL) {
-                    Tcl_DeleteHashEntry(entry2);
-                }
-            }
+            FindAndDeleteDeltaEntryByNode(&edgePtr->toNode->outgoing, edgePtr->fromNode);
+            FindAndDeleteDeltaEntryByNode(&edgePtr->fromNode->incoming, edgePtr->toNode);
             edgePtr->fromNode->degreeundir--;
             edgePtr->toNode->degreeundir--;
         } else {
@@ -288,7 +311,7 @@ static void EdgeDestroyCmd(ClientData clientData)
             edgePtr->toNode->degreeminus--;
         }
     }
-    
+
     if (edgePtr->data != NULL) {
         Tcl_DecrRefCount(edgePtr->data);
     }
@@ -301,6 +324,7 @@ static void EdgeDestroyCmd(ClientData clientData)
 
     Tcl_Free((char*) edgePtr);
 }
+
 
 static int EdgeParseMarks(const char* marksSpec, unsigned int* marksMaskOut) {
     unsigned int lclMarksMask = 0;
@@ -470,15 +494,37 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
 
 }
 
+static int CreateAndInsertNewDeltaEntry(Node* fromNodePtr, DeltaEntry** startRef, Node* nodePtr, Edge* edgePtr, Tcl_Interp* interp)
+{
+    DeltaEntry* newEntry;
+
+    const DeltaEntry* entry = FindDeltaEntryByNode(*startRef, nodePtr);
+    if (entry != NULL) {
+        Tcl_Obj* result = Tcl_NewObj();
+        Tcl_AppendStringsToObj(result, nodePtr->cmdName, " is already neighbor of ", fromNodePtr->cmdName, NULL);
+        Tcl_SetObjResult(interp, result);
+        Tcl_Free((char*)edgePtr);
+        return TCL_ERROR;
+    }
+
+    newEntry = ckalloc(sizeof(DeltaEntry));
+    newEntry->nodePtr = nodePtr;
+    newEntry->edgePtr = edgePtr;
+    newEntry->next = *startRef;
+    *startRef = newEntry;
+    return TCL_OK;
+}
+
+
 Edge*
 Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp,
-        const char* cmdName, int objc, Tcl_Obj* const objv[])
+    const char* cmdName, int objc, Tcl_Obj* const objv[])
 {
     Tcl_HashEntry* entryPtr;
     int new;
     Edge* edgePtr;
 
-    edgePtr = (Edge*) Tcl_Alloc(sizeof(Edge));
+    edgePtr = (Edge*)Tcl_Alloc(sizeof(Edge));
     edgePtr->statePtr = gState;
     edgePtr->data = Tcl_NewListObj(0, NULL);
 
@@ -494,7 +540,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         Tcl_Obj* result = Tcl_NewObj();
         Tcl_AppendStringsToObj(result, edgePtr->cmdName, " exists already", NULL);
         Tcl_SetObjResult(interp, result);
-        Tcl_Free((char*) edgePtr);
+        Tcl_Free((char*)edgePtr);
         return NULL;
     }
 
@@ -506,41 +552,31 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     edgePtr->marks = 0;
 
     if (objc > 0 && EdgeCmdConfigure(edgePtr, interp, objc, objv) != TCL_OK) {
-        Tcl_Free((char*) edgePtr);
+        Tcl_Free((char*)edgePtr);
         return NULL;
     }
 
     /* create neighbor and check if exists */
     {
-        Tcl_HashEntry* entry1 = Tcl_CreateHashEntry(&fromNodePtr->outgoing, (ClientData) toNodePtr, &new);
-        if (!new) {
-            Tcl_Obj* result = Tcl_NewObj();
-            Tcl_AppendStringsToObj(result, toNodePtr->cmdName, " is already neighbor of ", fromNodePtr->cmdName, NULL);
-            Tcl_SetObjResult(interp, result);
-            Tcl_Free((char*) edgePtr);
+        if (CreateAndInsertNewDeltaEntry(fromNodePtr, &fromNodePtr->outgoing, toNodePtr, edgePtr, interp)) {
             return NULL;
         }
-        Tcl_SetHashValue(entry1, edgePtr);
 
         if (unDirected) {
-            Tcl_HashEntry* entry2 = Tcl_CreateHashEntry(&toNodePtr->outgoing, (ClientData) fromNodePtr, &new);
-            if (!new) {
-                Tcl_Obj* result = Tcl_NewObj();
-                Tcl_AppendStringsToObj(result, fromNodePtr->cmdName, " is already neighbor of ", toNodePtr->cmdName, NULL);
-                Tcl_SetObjResult(interp, result);
-                Tcl_DeleteHashEntry(entry1);
-                Tcl_Free((char*) edgePtr);
+            /*
+             * undirected edges are outgoing from both sides, and are flagged as EDGE_UNDIRECTED
+             */
+            if (CreateAndInsertNewDeltaEntry(toNodePtr, &toNodePtr->outgoing, fromNodePtr, edgePtr, interp)) {
                 return NULL;
             }
-            Tcl_SetHashValue(entry2, edgePtr);
             edgePtr->directionType = EDGE_UNDIRECTED;
             fromNodePtr->degreeundir++;
             toNodePtr->degreeundir++;
         }
         else {
-            entry1 = Tcl_CreateHashEntry(&toNodePtr->incoming, (ClientData) fromNodePtr, &new);
-            /* should not be there, since it is always associated with a neighbor */
-            Tcl_SetHashValue(entry1, edgePtr);
+            if (CreateAndInsertNewDeltaEntry(toNodePtr, &toNodePtr->incoming, fromNodePtr, edgePtr, interp)) {
+                return NULL;
+            }
             fromNodePtr->degreeplus++;
             toNodePtr->degreeminus++;
         }
@@ -555,6 +591,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     Tcl_SetHashValue(entryPtr, edgePtr);
     return edgePtr;
 }
+
 
 int Graphs_EdgeHasMarks(const Edge* edgePtr, unsigned marksMask)
 {
@@ -576,19 +613,19 @@ int Graphs_EdgeHasMarks(const Edge* edgePtr, unsigned marksMask)
 Edge*
 Graphs_EdgeGetEdge(const GraphState* gState, CONST Node* fromNodePtr, CONST Node* toNodePtr, int unDirected, unsigned int marksMask)
 {
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&((Node*)fromNodePtr)->outgoing, (ClientData) toNodePtr);
+    const DeltaEntry* entry = FindDeltaEntryByNode((CONST DeltaEntry*)fromNodePtr->outgoing, toNodePtr);
     if (entry == NULL) {
         return NULL;
     }
-    Edge *edgePtr1 = (Edge*) Tcl_GetHashValue(entry);
+    Edge* edgePtr1 = entry->edgePtr;
 
     if (unDirected) {
-        entry = Tcl_FindHashEntry(&((Node*)toNodePtr)->outgoing, (ClientData) fromNodePtr);
+        entry = FindDeltaEntryByNode((CONST DeltaEntry*)toNodePtr->outgoing, fromNodePtr);
         if (entry == NULL) {
             return NULL;
         }
 
-        Edge *edgePtr2 = (Edge*) Tcl_GetHashValue(entry);
+        Edge* edgePtr2 = entry->edgePtr;
         if (edgePtr1 != edgePtr2) {
             return NULL;
         }
@@ -596,6 +633,7 @@ Graphs_EdgeGetEdge(const GraphState* gState, CONST Node* fromNodePtr, CONST Node
 
     return Graphs_EdgeHasMarks(edgePtr1, marksMask) ? edgePtr1 : NULL;
 }
+
 
 void Edge_CleanupCmd(ClientData data)
 {

@@ -127,7 +127,7 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp)
  * \return 1 if the labels filter applies, 0 otherwise
  *
  */
-static int GraphsFilterLabels(Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_Obj* const objv[])
+static int GraphsFilterLabels(const Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_Obj* const objv[])
 {
     int result = 0;
 
@@ -139,7 +139,7 @@ static int GraphsFilterLabels(Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_
     case LABELS_IDX: {
         int found = 0;
         for (int i = 0; i < objc; i++) {
-            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&nodePtr->labels, Tcl_GetString(objv[i]));
+            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&((Node*)nodePtr)->labels, Tcl_GetString(objv[i]));
             if (lblEntry != NULL) {
                 found++;
             }
@@ -150,7 +150,7 @@ static int GraphsFilterLabels(Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_
     case LABELS_NOT_IDX: {
         result = 1;
         for (int i = 0; i < objc; i++) {
-            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&nodePtr->labels, Tcl_GetString(objv[i]));
+            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&((Node*)nodePtr)->labels, Tcl_GetString(objv[i]));
             if (lblEntry != NULL) {
                 result = 0;
                 break;
@@ -301,23 +301,22 @@ int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, 
  * graph, where the delta node is. The it is only appended, if the graph of the delta node is not the graph
  * of the current node.
  */
-static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeDirectionT directionType,
-        struct LabelFilter labelFilter, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
+static int GraphsAppendDeltaToObj(const DeltaEntry* nodes, Graph* graphPtr, EdgeDirectionT directionType,
+    struct LabelFilter labelFilter, Tcl_Interp* interp, Tcl_Obj** listObjPtr)
 {
-    Tcl_HashSearch search;
-    Tcl_HashEntry* entry = Tcl_FirstHashEntry(&nodesTbl, &search);
+    const DeltaEntry* entry = nodes;
     while (entry != NULL) {
-        Node* nodePtr = (Node*) Tcl_GetHashKey(&nodesTbl, entry);
+        const Node* nodePtr = entry->nodePtr;
         if (!GraphsFilterLabels(nodePtr, labelFilter.filterType, labelFilter.objc, labelFilter.objv)) {
-            entry = Tcl_NextHashEntry(&search);
+            entry = entry->next;
             continue;
         }
 
         if (graphPtr != NULL) {
             Tcl_HashEntry* lookupEntry = Tcl_FindHashEntry(&graphPtr->nodes, nodePtr->cmdName);
             if (lookupEntry == NULL) {
-                /* otherNode is not in this graph. Append if it meets the direction */
-                Edge* edgePtr = Tcl_GetHashValue(entry);
+                /* otherNode is not in this graph. Append if it meets the direction*/
+                const Edge* edgePtr = entry->edgePtr;
                 if (edgePtr->directionType == directionType) {
                     if (Tcl_ListObjAppendElement(interp, *listObjPtr, Tcl_NewStringObj(nodePtr->cmdName, -1)) != TCL_OK) {
                         return TCL_ERROR;
@@ -331,7 +330,7 @@ static int GraphsAppendDeltaToObj(Tcl_HashTable nodesTbl, Graph* graphPtr, EdgeD
             }
         }
 
-        entry = Tcl_NextHashEntry(&search);
+        entry = entry->next;
     }
 
     return TCL_OK;
