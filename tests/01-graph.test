@@ -14,7 +14,10 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
     tcltest::configure -verbose {body pass start line error}
 }
-source [file join [file dirname [info script]] loadpackage.tcl]
+
+if {[info exists argv] && $argv != {}} {
+    source [file join [file dirname [info script]] loadpackage.tcl]
+}
 
 #### fixtures
 set createThreeNodes {
@@ -59,8 +62,6 @@ set destroyGraphWithEdges {
 
 #### /fixtures
 
-###
-
 test graph-1.1 "create and destroy a graph" -setup {} -body {
     graph create g
     expr { [info command g] != {} }
@@ -68,16 +69,12 @@ test graph-1.1 "create and destroy a graph" -setup {} -body {
     rename g {}
 } -result {1}
 
-###
-
 test graph-1.2 "create graph with name" -setup {} -body {
     graph create g -name "Graf"
     g cget -name
 } -cleanup {
     rename g {}
 } -result {Graf}
-
-###
 
 test graph-addnode-1.1 "add node to graph via graph" -setup {
     graph create g
@@ -89,8 +86,6 @@ test graph-addnode-1.1 "add node to graph via graph" -setup {
     n destroy
     g destroy
 } -result {n}
-
-###
 
 test graph-addnode-1.2 "add node to graph via graph" -setup {
     graph create g
@@ -108,8 +103,6 @@ test graph-addnode-1.2 "add node to graph via graph" -setup {
 } -result {3}
 
 
-###
-
 test graph-addnode-and-destroy-1.3 "destroy graph destroys nodes with -nodes flag" -setup {
     graph create g
 } -body {
@@ -121,16 +114,12 @@ test graph-addnode-and-destroy-1.3 "destroy graph destroys nodes with -nodes fla
     unset result
 } -result {3 {}}
 
-###
-
 test graph-addnode-and-destroy-1.4.1 "destroy node from graph" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     lappend result [llength [g nodes get]]
     n1 configure -graph {}
     lappend result [info commands n1] [llength [g nodes get]]
 } -cleanup $destroyThreeNodes -result {3 n1 2}
-
-###
 
 test graph-addnode-and-destroy-1.4.2 "destroy node from graph 2" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -139,21 +128,15 @@ test graph-addnode-and-destroy-1.4.2 "destroy node from graph 2" -setup $createT
     lappend result [g info nodes] [n1 cget -graph] [n2 cget -graph] [n3 cget -graph]
 } -cleanup $destroyThreeNodes -result {3 n3 {} {} g}
 
-###
-
 test graph-getnodes-1.5.1 "add and get nodes" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     lmap x {n1 n2 n3} { expr { $x in [g nodes get] } }
 } -cleanup $destroyThreeNodes -result {1 1 1}
 
-###
-
 test graph-getnodes-1.5.2 "add and get nodes label 1" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     lmap x {n1 n2 n3} { expr { $x in [g nodes get] } }
 } -cleanup $destroyThreeNodes -result {1 1 1}
-
-###
 
 test graph-getnodes-1.5.3 "add and get nodes label 2" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -161,8 +144,6 @@ test graph-getnodes-1.5.3 "add and get nodes label 2" -setup $createThreeNodes -
     n3 labels + blubb hi
     g nodes get -label world
 } -cleanup $destroyThreeNodes -result n2
-
-###
 
 test graph-getnodes-1.5.4 "add and get nodes label 3" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -172,16 +153,12 @@ test graph-getnodes-1.5.4 "add and get nodes label 3" -setup $createThreeNodes -
     g nodes get -notlabel world
 } -cleanup $destroyThreeNodes -result n3
 
-###
-
 test graph-getnodes-1.5.5 "add and get nodes label 4" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     n2 labels + hello world foo bar
     n3 labels + blubb hi
     g nodes get -notlabel hi world
 } -cleanup $destroyThreeNodes -result n1
-
-###
 
 test graph-getnodes-1.5.6 "add and get nodes label 5" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -191,14 +168,10 @@ test graph-getnodes-1.5.6 "add and get nodes label 5" -setup $createThreeNodes -
     g nodes get -notlabel hi world
 } -cleanup $destroyThreeNodes -result {}
 
-###
-
 test graph-info-1.6.1 "info nodes 1" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     lmap x {n1 n2 n3} { expr { $x in [g info nodes] } }
 } -cleanup $destroyThreeNodes -result {1 1 1}
-
-###
 
 test graph-getnodes-1.6.2 "info nodes 2" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -208,8 +181,6 @@ test graph-getnodes-1.6.2 "info nodes 2" -setup $createThreeNodes -body {
     g info nodes -notlabel hi world
 } -cleanup $destroyThreeNodes -result {}
 
-###
-
 test graph-getnodes-1.6.3 "info nodes by name" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
     n1 configure -name hello
@@ -217,8 +188,6 @@ test graph-getnodes-1.6.3 "info nodes by name" -setup $createThreeNodes -body {
     n3 configure -name bla
     g info nodes -name hello
 } -cleanup $destroyThreeNodes -result {n1}
-
-###
 
 test graph-getnodes-1.6.4 "info nodes by name error" -setup $createThreeNodes -body {
     g nodes + n1 n2 n3
@@ -228,21 +197,16 @@ test graph-getnodes-1.6.4 "info nodes by name error" -setup $createThreeNodes -b
     g info nodes -name
 } -cleanup $destroyThreeNodes -returnCodes error -result {wrong # args: should be "-name name"}
 
-###
-
 test graph-delta-1.7.1 "info delta 1" -setup $createTwoGraphs -body {
     edge new n1 -> n3
     g1 info delta+
 } -cleanup $destroyTwoGraphs -result n3
 
-###
 
 test graph-delta-1.7.2 "info deltaminus 1" -setup $createTwoGraphs -body {
     edge new n1 <- n3
     g1 info deltaminus
 } -cleanup $destroyTwoGraphs -result n3
-
-###
 
 test graph-delta-1.7.3 "info delta 2" -setup $createTwoGraphs -body {
     edge new n1 -> n2
@@ -250,16 +214,12 @@ test graph-delta-1.7.3 "info delta 2" -setup $createTwoGraphs -body {
     g1 info deltaplus
 } -cleanup $destroyTwoGraphs -result n3
 
-###
-
 test graph-delta-1.7.4 "info deltaminus 2" -setup $createTwoGraphs -body {
     edge new n1 -> n2
     edge new n1 <- n3
     g1 info deltaminus
 } -cleanup $destroyTwoGraphs -result n3
 
-
-###
 
 test graph-slave-interp-1.8.1 "create and destroy graph + nodes in slave interp" -setup {} -body {
     interp create slave
@@ -269,8 +229,6 @@ test graph-slave-interp-1.8.1 "create and destroy graph + nodes in slave interp"
     interp delete slave
 } -cleanup {} -result {}
 
-###
-
 test graph-order-1.9.1 "info order 1" -setup $createThreeNodes -body {
     foreach {n} {n1 n2 n3} {
     	$n configure -graph g
@@ -278,13 +236,9 @@ test graph-order-1.9.1 "info order 1" -setup $createThreeNodes -body {
     g info order
 } -cleanup $destroyThreeNodes -result 3
 
-###
-
 test graph-order-1.9.2 "info order 2 0 before anything" -setup $createThreeNodes -body {
     g info order
 } -cleanup $destroyThreeNodes -result 0
-
-###
 
 test graph-order-1.9.2 "info order 3: 0 after node add/subtract" -setup $createThreeNodes -body {
     lappend result [g info order]
@@ -296,54 +250,38 @@ test graph-order-1.9.2 "info order 3: 0 after node add/subtract" -setup $createT
     lappend result [g info order]
 } -cleanup $destroyThreeNodes -result {0 3 0}
 
-###
-
 test graph-config-data-2.1 "Graph data option" -setup {graph create g} -body {
     g configure -data [list theAnswer 42]
     g cget -data
 } -cleanup {g destroy} -result {theAnswer 42}
 
-###
-
 test graph-info-edges-1 "info edges" -setup $createGraphWithEdges -body {
     lsort [g info edges]
 } -cleanup $destroyGraphWithEdges -result {e1 e2 e3}
 
-###
-
 test graph-info-edges-2 "info edges with name" -setup $createGraphWithEdges -body {
     g info edges -name e1
 } -cleanup $destroyGraphWithEdges -result e1
-
-###
 
 test graph-info-edges-3.1 "info edges with mark" -setup $createGraphWithEdges -body {
     e2 mark cut
     g info edges -mark c
 } -cleanup $destroyGraphWithEdges -result e2
 
-###
-
 test graph-info-edges-3.2 "info edges with inverse mark" -setup $createGraphWithEdges -body {
     e2 mark cut
     lsort [g info edges -mark C]
 } -cleanup $destroyGraphWithEdges -result {e1 e3}
-
-###
 
 test graph-info-edges-3.3 "info edges with inverse mark and name" -setup $createGraphWithEdges -body {
     e2 mark cut
     lsort [g info edges -mark C -name e3]
 } -cleanup $destroyGraphWithEdges -result e3
 
-###
-
 test graph-info-edges-3.3 "info edges with mark and name empty" -setup $createGraphWithEdges -body {
     e2 mark cut
     lsort [g info edges -mark c -name e3]
 } -cleanup $destroyGraphWithEdges -result {}
-
-###
 
 test graph-info-edges-3.4 "info edges after unmark" -setup $createGraphWithEdges -body {
     e2 mark cut
@@ -352,8 +290,6 @@ test graph-info-edges-3.4 "info edges after unmark" -setup $createGraphWithEdges
     set r2 [lsort [g info edges -mark C]]
     list $r1 $r2
 } -cleanup $destroyGraphWithEdges -result {{e1 e3} {e1 e2 e3}}
-
-###
 
 # cleanup
 ::tcltest::cleanupTests

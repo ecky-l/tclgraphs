@@ -5,7 +5,10 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
     tcltest::configure -verbose {body pass start line error}
 }
-source [file join [file dirname [info script]] loadpackage.tcl]
+
+if {[info exists argv] && $argv != {}} {
+    source [file join [file dirname [info script]] loadpackage.tcl]
+}
 
 #### fixtures
 set createTwoNodes {
@@ -29,8 +32,6 @@ test edge-create-3.1.1 "create edge via edge command" -setup $createTwoNodes -bo
     n2 destroy
 } -result {e}
 
-###
-
 test edge-create-3.1.2 "create undirected edge via edge command" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
 } -cleanup {
@@ -38,8 +39,6 @@ test edge-create-3.1.2 "create undirected edge via edge command" -setup $createT
     n1 destroy
     n2 destroy
 } -result {e}
-
-###
 
 test edge-create-3.1.3 "create edge w wrong direction raises" -setup $createTwoNodes -body {
     edge create e n1 - n2
@@ -49,8 +48,6 @@ test edge-create-3.1.3 "create edge w wrong direction raises" -setup $createTwoN
     n2 destroy
 } -returnCodes error -result {bad direction "-": must be ->, <-, or <->}
 
-###
-
 test edge-create-3.1.4 "create undirected edge via edge command and arguments" -setup $createTwoNodes -body {
     edge create e n1 <-> n2 -weight 2.5 -name Etch
     list [info commands e] [e cget -weight] [e cget -name]
@@ -59,8 +56,6 @@ test edge-create-3.1.4 "create undirected edge via edge command and arguments" -
     n1 destroy
     n2 destroy
 } -result {e 2.5 Etch}
-
-###
 
 test edge-destroy-3.2.1 "edge is destroyd when node 1 is destroyd" -setup {
     node create n1
@@ -73,8 +68,6 @@ test edge-destroy-3.2.1 "edge is destroyd when node 1 is destroyd" -setup {
     n2 destroy
 } -result {}
 
-###
-
 tcltest::test edge-destroy-3.2.2 "destroy edge via node" -setup $createTwoNodes -body {
     edge create e1 n1 -> n2
     edge create e2 n1 <- n2
@@ -82,8 +75,6 @@ tcltest::test edge-destroy-3.2.2 "destroy edge via node" -setup $createTwoNodes 
     n1 destroy ;# should destroy both edges
     lappend result [info commands n1] [info command e1] [info command e2] [n2 info delta+]
 } -cleanup $destroyTwoNodes -result {n2 n1 {} {} {} {}}
-
-###
 
 tcltest::test edge-destroy-3.2.3 "destroy edge 2" -setup $createTwoNodes -body {
     edge create e1 n1 -> n2
@@ -94,8 +85,6 @@ tcltest::test edge-destroy-3.2.3 "destroy edge 2" -setup $createTwoNodes -body {
     lappend result [n1 info deltaplus] [n2 info deltaplus]
 } -cleanup $destroyTwoNodes -result {n2 n1 {} {}}
 
-###
-
 tcltest::test edge-destroy-3.2.4 "destroy in slave interp works" -setup {} -body {
     interp create slave
     interp eval slave [list set argv $argv]
@@ -104,8 +93,6 @@ tcltest::test edge-destroy-3.2.4 "destroy in slave interp works" -setup {} -body
     interp eval slave {edge new n1 -> n2}
     interp delete slave
 } -cleanup {} -result {}
-
-###
 
 tcltest::test edge-destroy-3.2.5 "destroy in slave interp works with two edges" -setup {} -body {
     interp create slave
@@ -116,20 +103,15 @@ tcltest::test edge-destroy-3.2.5 "destroy in slave interp works with two edges" 
     interp eval slave {edge new n1 <- n2}
     interp delete slave
 } -cleanup {} -result {}
-###
 
 tcltest::test edge-cmd-3.3.1 "edge command create" -setup $createTwoNodes -body {
     edge create e n1 -> n2
 } -cleanup $destroyTwoNodes -result {e}
 
-###
-
 tcltest::test edge-cmd-3.3.2 "edge command new" -setup $createTwoNodes -body {
     set e [edge new n1 -> n2]
     llength [info commands $e]
 } -cleanup $destroyTwoNodes -result 1
-
-###
 
 tcltest::test edge-cmd-3.4.1 "edge command configure through nodes" -setup $createTwoNodes -body {
     edge create e n1 -> n2
@@ -137,22 +119,15 @@ tcltest::test edge-cmd-3.4.1 "edge command configure through nodes" -setup $crea
     list [e cget -weight] [e cget -name]
 } -cleanup $destroyTwoNodes -result {2.3 hello}
 
-###
-
-
 tcltest::test edge-cmd-3.5.1 "edge command cget through nodes" -setup $createTwoNodes -body {
     edge create e n1 -> n2 -weight 2.3 -name hello
     list [e cget -weight] [e cget -name]
 } -cleanup $destroyTwoNodes -result {2.3 hello}
 
-###
-
 tcltest::test edge-cmd-3.6.1 "edge command get through nodes" -setup $createTwoNodes -body {
     edge create e n1 -> n2 -weight 2.3 -name hello
     edge get n1 -> n2
 } -cleanup $destroyTwoNodes -result e
-
-###
 
 tcltest::test edge-cmd-3.7.1 "edge command destroy through cmd" -setup $createTwoNodes -body {
     edge create e n1 -> n2 -weight 2.3 -name hello
@@ -160,28 +135,20 @@ tcltest::test edge-cmd-3.7.1 "edge command destroy through cmd" -setup $createTw
     info commands e
 } -cleanup $destroyTwoNodes -result {}
 
-###
-
 tcltest::test edge-direction-3.8.1 "create out edge" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     list [n1 info delta+] [n2 info deltaplus]
 } -cleanup $destroyTwoNodes -result {n2 {}}
-
-###
 
 tcltest::test edge-direction-3.8.2 "create in edge" -setup $createTwoNodes -body {
     edge create e n1 <- n2
     list [n1 info deltaplus] [n2 info delta+]
 } -cleanup $destroyTwoNodes -result {{} n1}
 
-###
-
 tcltest::test edge-direction-3.8.3 "create undirected edge" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
     list [n1 info deltaplus] [n2 info deltaplus]
 } -cleanup $destroyTwoNodes -result {n2 n1}
-
-###
 
 tcltest::test edge-destroy-3.9.1 "create and destroy edge" -setup $createTwoNodes -body {
     edge create e n1 -> n2
@@ -190,16 +157,12 @@ tcltest::test edge-destroy-3.9.1 "create and destroy edge" -setup $createTwoNode
     lappend result [n1 info delta+]
 } -cleanup $destroyTwoNodes -result {n2 {} {}}
 
-###
-
 tcltest::test edge-destroy-3.9.2 "create edge and destroy toNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     set result [n1 info delta+]
     n2 destroy
     lappend result [n1 info deltaplus]
 } -cleanup $destroyTwoNodes -result {n2 {}}
-
-###
 
 tcltest::test edge-destroy-3.9.3 "create edge and destroy fromNode" -setup $createTwoNodes -body {
     edge create e n1 -> n2
@@ -208,57 +171,41 @@ tcltest::test edge-destroy-3.9.3 "create edge and destroy fromNode" -setup $crea
     lappend result [info command e]
 } -cleanup $destroyTwoNodes -result {n2 {}}
 
-###
-
 tcltest::test edge-cget-3.10.1 "cget -weight" -setup $createTwoNodes -body {
     edge create e n1 -> n2 -weight 2.3
     e cget -weight
 } -cleanup $destroyTwoNodes -result 2.3
-
-###
 
 tcltest::test edge-cget-3.10.2 "cget -name" -setup $createTwoNodes -body {
     edge create e n1 -> n2 -name Etch
     e cget -name
 } -cleanup $destroyTwoNodes -result Etch
 
-###
-
 tcltest::test edge-cget-3.10.3 "cget -from" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     e cget -from
 } -cleanup $destroyTwoNodes -result n1
-
-###
 
 tcltest::test edge-cget-3.10.4 "cget -to" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     e cget -to
 } -cleanup $destroyTwoNodes -result n2
 
-###
-
 tcltest::test edge-cget-3.10.5 "cget -directed flag for directed" -setup $createTwoNodes -body {
     edge create e n1 -> n2
     e cget -directed
 } -cleanup $destroyTwoNodes -result 1
-
-###
 
 tcltest::test edge-cget-3.10.6 "cget -directed flag for undirected" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
     e cget -directed
 } -cleanup $destroyTwoNodes -result 0
 
-###
-
 tcltest::test edge-labels-3.11.1 "add labels" -setup $createTwoNodes -body {
     edge create e n1 <-> n2
     e labels + hello world bla
     lmap x {hello world bla} { expr { $x in [e labels] } }
 } -cleanup $destroyTwoNodes -result {1 1 1}
-
-###
 
 tcltest::test edge-labels-3.11.2 "add and remove labels" -setup $createTwoNodes -body {
     edge create e n1 -> n2
@@ -267,8 +214,6 @@ tcltest::test edge-labels-3.11.2 "add and remove labels" -setup $createTwoNodes 
     e labels - world
     concat $result [lmap x {hello world bla} { expr { $x in [e labels] } }]
 } -cleanup $destroyTwoNodes -result {1 1 1 1 0 1}
-
-###
 
 tcltest::test edge-labels-3.11.3 "remove all labels" -setup $createTwoNodes -body {
     edge create e n1 -> n2
