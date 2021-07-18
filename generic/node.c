@@ -277,10 +277,208 @@ static int NodeCmdMark(Node* nodePtr, Tcl_Interp* interp, int objc, Tcl_Obj* con
     return TCL_OK;
 }
 
+static int delta_compare_edgename(DeltaEntry* entry1, DeltaEntry* entry2) {
+    return 0;
+}
+
+static int delta_compare_nodename(DeltaEntry* entry1, DeltaEntry* entry2) {
+    return 0;
+}
+
+static int delta_compare_weight(DeltaEntry* entry1, DeltaEntry* entry2) {
+    if (entry1->edgePtr->weight < entry2->edgePtr->weight) {
+        return -1;
+    }
+    else if (entry1->edgePtr->weight > entry2->edgePtr->weight) {
+        return 1;
+    }
+    return 0;
+}
+
+static void DeltaBubbleSortSwap(DeltaEntry* entry1, DeltaEntry* entry2)
+{
+    Node* tempNode = entry1->nodePtr;
+    Edge* tempEdge = entry1->edgePtr;
+
+    entry1->nodePtr = entry2->nodePtr;
+    entry1->edgePtr = entry2->edgePtr;
+    entry2->nodePtr = tempNode;
+    entry2->edgePtr = tempEdge;
+}
+
+static int DeltaBubbleSortDesc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
+{
+    int swapped;
+    DeltaEntry* ptr1;
+    DeltaEntry* lptr = NULL;
+
+    if (start == NULL) {
+        return TCL_OK;
+    }
+
+    do {
+        swapped = 0;
+        ptr1 = start;
+        while (ptr1->next != lptr) {
+            if (compareFcn(ptr1, ptr1->next) < 0) {
+                DeltaBubbleSortSwap(ptr1, ptr1->next);
+                swapped = 1;
+            }
+            ptr1 = ptr1->next;
+        }
+        lptr = ptr1;
+    } while (swapped);
+
+    return TCL_OK;
+}
+
+static int DeltaBubbleSortAsc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
+{
+    int swapped;
+    DeltaEntry* ptr1;
+    DeltaEntry* lptr = NULL;
+
+    if (start == NULL) {
+        return TCL_OK;
+    }
+
+    do {
+        swapped = 0;
+        ptr1 = start;
+        while (ptr1->next != lptr) {
+            if (compareFcn(ptr1, ptr1->next) > 0) {
+                DeltaBubbleSortSwap(ptr1, ptr1->next);
+                swapped = 1;
+            }
+            ptr1 = ptr1->next;
+        }
+        lptr = ptr1;
+    } while (swapped);
+
+    return TCL_OK;
+}
+
+static int NodeCmdDeltaCmdSort(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    const char* deltaSortOptions[] = {"-nodename", "-edgename", "-weight", "-desc", NULL };
+    enum deltaSortOptionsIndex { deltaSortNodeNameIx, deltaSortEdgeNameIx, deltaSortWeightIx, deltaSortDescIx };
+    int optIdx = 0;
+    int (*compareFcn)(DeltaEntry*, DeltaEntry*) = delta_compare_nodename;
+    int compareOptionSet = 0;
+    void (*bubbleSortFcn)(DeltaEntry*, int (*)(DeltaEntry*, DeltaEntry*)) = DeltaBubbleSortAsc;
+
+    for (size_t i = 0; i < objc;) {
+        if (Tcl_GetIndexFromObj(interp, objv[i], deltaSortOptions, "option", 0, &optIdx) != TCL_OK) {
+            return TCL_ERROR;
+        }
+
+        switch (optIdx)
+        {
+        case deltaSortNodeNameIx:
+            if (compareOptionSet) {
+                Tcl_SetObjResult(interp,
+                    Tcl_NewStringObj("Only one of the compare options ?-nodename? ?-edgename? or ?-weight? can be set", -1));
+                return TCL_ERROR;
+            }
+            compareFcn = delta_compare_nodename;
+            compareOptionSet = 1;
+            i++;
+            break;
+        case deltaSortEdgeNameIx:
+            if (compareOptionSet) {
+                Tcl_SetObjResult(interp,
+                    Tcl_NewStringObj("Only one of the compare options ?-nodename? ?-edgename? or ?-weight? can be set", -1));
+                return TCL_ERROR;
+            }
+            compareFcn = delta_compare_edgename;
+            compareOptionSet = 1;
+            i++;
+        case deltaSortWeightIx:
+            if (compareOptionSet) {
+                Tcl_SetObjResult(interp,
+                    Tcl_NewStringObj("Only one of the compare options ?-nodename? ?-edgename? or ?-weight? can be set", -1));
+                return TCL_ERROR;
+            }
+            compareFcn = delta_compare_weight;
+            compareOptionSet = 1;
+            i++;
+            break;
+        case deltaSortDescIx:
+            bubbleSortFcn = DeltaBubbleSortDesc;
+            i++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    switch (deltaType)
+    {
+    case DELTA_PLUS:
+        bubbleSortFcn(nodePtr->outgoing, compareFcn);
+        break;
+    case DELTA_MINUS:
+        bubbleSortFcn(nodePtr->incoming, compareFcn);
+        break;
+    case DELTA_ALL:
+    default:
+        bubbleSortFcn(nodePtr->outgoing, compareFcn);
+        bubbleSortFcn(nodePtr->incoming, compareFcn);
+        break;
+    }
+    
+    return NodeInfoDelta(nodePtr, deltaType, interp, 0, NULL);
+}
+
+static int NodeCmdDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+{
+    const char* deltaSubCommands[] = { "sort", NULL };
+    enum deltaSubCommandIndex { deltaSortIx };
+    int cmdIdx;
+
+    if (objc == 0) {
+        return NodeInfoDelta(nodePtr, deltaType, interp, objc, objv);
+    }
+
+    if (Tcl_GetIndexFromObj(interp, objv[0], deltaSubCommands, "method", 0, &cmdIdx) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    switch (cmdIdx)
+    {
+    case deltaSortIx:
+        return NodeCmdDeltaCmdSort(nodePtr, deltaType, interp, objc - 1, objv + 1);
+    default:
+        break;
+    }
+
+    return TCL_ERROR;
+}
+
 static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
-    const char* nodeSubCommands[] ={"destroy","configure","cget","info","labels","mark",NULL};
-    enum nodeCommandIndex {destroyIx,configureIx,cgetIx,infoIx,labelsIx,markIx};
+    const char* nodeSubCommands[] ={
+        "destroy",
+        "configure",
+        "cget",
+        "info",
+        "labels",
+        "mark",
+        "delta",
+        "delta+",
+        "delta-",
+        NULL};
+    enum nodeCommandIndex {
+        destroyIx,
+        configureIx,
+        cgetIx,
+        infoIx,
+        labelsIx,
+        markIx,
+        deltaIx,
+        deltaPlusIx,
+        deltaMinusIx
+    };
 
 
     int cmdIdx;
@@ -302,6 +500,12 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
         return Graphs_LabelsCommand(nodePtr->labels, interp, objc, objv);
     case markIx:
         return NodeCmdMark(nodePtr, interp, objc, objv);
+    case deltaIx:
+        return NodeCmdDelta(nodePtr, DELTA_ALL, interp, objc, objv);
+    case deltaPlusIx:
+        return NodeCmdDelta(nodePtr, DELTA_PLUS, interp, objc, objv);
+    case deltaMinusIx:
+        return NodeCmdDelta(nodePtr, DELTA_MINUS, interp, objc, objv);
     default:
         Tcl_SetObjResult(interp, Tcl_NewStringObj("Wrong subcommand to node object!", -1));
         return TCL_ERROR;

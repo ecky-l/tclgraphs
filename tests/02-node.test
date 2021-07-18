@@ -41,6 +41,17 @@ set destroyThreeNodes {
     catch { g destroy }
     unset -nocomplain result
 }
+set createFiveNodes {
+    graph create g
+    foreach {n} {n1 n2 n3 n4 n5} {
+        node create $n -graph g
+    }
+    set result {}
+}
+set destroyFiveNodes {
+    g destroy -nodes
+    unset -nocomplain result
+}
 
 #### fixtures
 
@@ -272,6 +283,38 @@ test node-info-2.8.2 "node info degree: degree is adjusted after edge destroy" -
     $e2 destroy
     lappend result [n1 info degree+]
 } -cleanup $destroyThreeNodes -result {0 2 1 0}
+
+test node-delta-3.1 "delta+ sort by weight" -setup $createFiveNodes -body {
+    foreach {n w} {n2 3.4 n3 1.4 n4 6.3 n5 2.3} {
+        edge new n1 -> $n -weight $w
+    }
+    n1 delta+ sort -weight
+    n1 info delta+
+} -cleanup $destroyFiveNodes -result {n3 n5 n2 n4}
+
+test node-delta-3.2 "delta+ sort by weight descending" -setup $createFiveNodes -body {
+    foreach {n w} {n2 3.4 n3 1.4 n4 6.3 n5 2.3} {
+        edge new n1 -> $n -weight $w
+    }
+    n1 delta+ sort -weight -desc
+    n1 info delta+
+} -cleanup $destroyFiveNodes -result {n4 n2 n5 n3}
+
+test node-delta-3.3 "delta- sort by weight" -setup $createFiveNodes -body {
+    foreach {n w} {n2 3.4 n3 1.4 n4 6.3 n5 2.3} {
+        edge new n1 <- $n -weight $w
+    }
+    n1 delta- sort -weight
+    n1 info delta-
+} -cleanup $destroyFiveNodes -result {n3 n5 n2 n4}
+
+test node-delta-3.4 "delta- sort by weight descending" -setup $createFiveNodes -body {
+    foreach {n w} {n2 3.4 n3 1.4 n4 6.3 n5 2.3} {
+        edge new n1 <- $n -weight $w
+    }
+    n1 delta- sort -weight -desc
+    n1 info delta-
+} -cleanup $destroyFiveNodes -result {n4 n2 n5 n3}
 
 # cleanup
 
