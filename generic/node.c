@@ -306,14 +306,14 @@ static void DeltaBubbleSortSwap(DeltaEntry* entry1, DeltaEntry* entry2)
     entry2->edgePtr = tempEdge;
 }
 
-static int DeltaBubbleSortDesc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
+static void DeltaBubbleSortDesc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
 {
     int swapped;
     DeltaEntry* ptr1;
     DeltaEntry* lptr = NULL;
 
     if (start == NULL) {
-        return TCL_OK;
+        return;
     }
 
     do {
@@ -328,18 +328,16 @@ static int DeltaBubbleSortDesc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* 
         }
         lptr = ptr1;
     } while (swapped);
-
-    return TCL_OK;
 }
 
-static int DeltaBubbleSortAsc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
+static void DeltaBubbleSortAsc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* entry1, DeltaEntry* entry2))
 {
     int swapped;
     DeltaEntry* ptr1;
     DeltaEntry* lptr = NULL;
 
     if (start == NULL) {
-        return TCL_OK;
+        return;
     }
 
     do {
@@ -354,8 +352,6 @@ static int DeltaBubbleSortAsc(DeltaEntry* start, int (*compareFcn)(DeltaEntry* e
         }
         lptr = ptr1;
     } while (swapped);
-
-    return TCL_OK;
 }
 
 static int NodeCmdDeltaCmdSort(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
