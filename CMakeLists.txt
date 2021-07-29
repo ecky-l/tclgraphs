@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(tclgraphs VERSION 0.10.0)
+project(tclgraphs VERSION 0.11.0)
 
 find_package(TCL)
 find_package(Tclsh)
@@ -29,7 +29,8 @@ set(GRAPHS_SOURCES generic/common.c
                    generic/node.c
                    generic/graphsStubInit.c)
 set(GRAPHS_HEADERS generic/graphs.h
-                   generic/graphsDecls.h)
+                   generic/graphsDecls.h
+                   generic/graphsInt.h)
 add_library(graphs SHARED ${GRAPHS_SOURCES} ${GRAPHS_HEADERS} generic/graphs.decls pkgIndex.tcl.in)
 add_custom_command(
 	TARGET graphs

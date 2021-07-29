@@ -263,6 +263,10 @@ test graph-info-edges-2 "info edges with name" -setup $createGraphWithEdges -bod
     g info edges -name e1
 } -cleanup $destroyGraphWithEdges -result e1
 
+test graph-info-edges-2.1 "info edges with -name wrong args" -setup $createGraphWithEdges -body {
+    g info edges -name
+} -cleanup $destroyGraphWithEdges -returnCodes error -result {wrong # args: should be "-name <name>"}
+
 test graph-info-edges-3.1 "info edges with mark" -setup $createGraphWithEdges -body {
     e2 mark cut
     g info edges -mark c
@@ -290,6 +294,34 @@ test graph-info-edges-3.4 "info edges after unmark" -setup $createGraphWithEdges
     set r2 [lsort [g info edges -mark C]]
     list $r1 $r2
 } -cleanup $destroyGraphWithEdges -result {{e1 e3} {e1 e2 e3}}
+
+test graph-info-edges-3.5 "info edges with -mark wrong args" -setup $createGraphWithEdges -body {
+    g info edges -marks
+} -cleanup $destroyGraphWithEdges -returnCodes error -result {wrong # args: should be "-marks <marks>"}
+
+test graph-info-edges-4.1 "info edges with labels" -setup $createGraphWithEdges -body {
+    e1 labels + bla balla
+    g info edges -labels bla balla
+} -cleanup $destroyGraphWithEdges -result e1
+
+test graph-info-edges-4.2 "info edges with -notlabels" -setup $createGraphWithEdges -body {
+    e1 labels + bla balla
+    lsort [g info edges -notlabels bla balla]
+} -cleanup $destroyGraphWithEdges -result {e2 e3}
+
+test graph-info-edges-4.3 "info edges with -labels and -marks" -setup $createGraphWithEdges -body {
+    e1 labels + bla balla
+    e2 mark cut
+    e2 labels + bla
+    g info edges -labels bla -marks c
+} -cleanup $destroyGraphWithEdges -result e2
+
+test graph-info-edges-4.3 "info edges with -labels to intersect" -setup $createGraphWithEdges -body {
+    e1 labels + bla balla
+    e2 labels + hello bla
+    e3 labels + balla nada gaga
+    lsort [g info edges -labels balla]
+} -cleanup $destroyGraphWithEdges -result {e1 e3}
 
 # cleanup
 ::tcltest::cleanupTests

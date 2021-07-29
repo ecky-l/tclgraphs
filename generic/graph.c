@@ -1,4 +1,4 @@
-#include "graphs.h"
+#include "graphsInt.h"
 #include <string.h>
 
 /*
@@ -62,17 +62,6 @@ static const char* GraphMarks[] = { "hidden", NULL };
 enum GraphMarksIndex
 {
     GraphMarkHiddenIx
-};
-
-static const char* GraphInfoEdgesOptions[] = {
-    "-marks",
-    "-name",
-    NULL
-};
-enum GraphInfoEdgesOptionIndex
-{
-    GraphInfoEdgesOptionMarksIx,
-    GraphInfoEdgesOptionNameIx
 };
 
 static const char* LabelFilterOptions[] = { "-name", "-labels", "-notlabels", "-all", NULL };
@@ -303,43 +292,108 @@ static int GraphParseMarks(const char* marksSpec, unsigned* marksMaskOut)
 
 static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
+    const char* infoEdgesOptions[] = {
+        "-marks",
+        "-name",
+        "-labels",
+        "-notlabels",
+        NULL
+    };
+    enum infoEdgesOptionIndex
+    {
+        GraphInfoEdgesOptionMarksIx,
+        GraphInfoEdgesOptionNameIx,
+        GraphInfoEdgesOptionLabelsIx,
+        GraphInfoEdgesOptionNotLabelsIx
+    };
+
     unsigned edgeMarksMask = 0;
     char* edgeName = NULL;
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = NULL;
     Tcl_Obj* result = Tcl_NewObj();
+    Tcl_Obj** labelsObjv = NULL;
+    int labelObjc = 0;
+    int cmdIdx;
+    int returnCode = TCL_OK;
 
+    struct LabelFilter lblFilt;
+    lblFilt.filterType = LABELS_ALL_IDX;
 
-    if (objc == 1 || objc == 3 || objc > 4) {
-        Tcl_WrongNumArgs(interp, 0, objv, "?-marks <marks>? ?-name <name>?");
-        return TCL_ERROR;
-    }
+    while (objc > 0) {
+        if (Tcl_GetIndexFromObj(interp, objv[0], infoEdgesOptions, "option", 0, &cmdIdx) != TCL_OK) {
+            returnCode = TCL_ERROR;
+            goto cleanUp;
+        }
 
-    if (objc == 2 || objc == 4) {
-        int i;
-        for (i = 0; i < objc; i += 2) {
-            int cmdIdx;
-            if (Tcl_GetIndexFromObj(interp, objv[i], GraphInfoEdgesOptions, "option", 0, &cmdIdx) != TCL_OK) {
-                return TCL_ERROR;
+        switch (cmdIdx)
+        {
+        case GraphInfoEdgesOptionMarksIx:
+            objc--;
+            objv++;
+            if (objc < 1) {
+                Tcl_WrongNumArgs(interp, objc, objv, "-marks <marks>");
+                returnCode = TCL_ERROR;
+                goto cleanUp;
+            }
+            if (GraphParseMarks(Tcl_GetString(objv[0]), &edgeMarksMask) != TCL_OK) {
+                Tcl_SetObjResult(interp, Tcl_NewStringObj(
+                    "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).", -1));
+                returnCode = TCL_ERROR;
+                goto cleanUp;
+            }
+            objc--;
+            objv++;
+            break;
+        case GraphInfoEdgesOptionNameIx:
+            objc--;
+            objv++;
+            if (objc < 1) {
+                Tcl_WrongNumArgs(interp, objc, objv, "-name <name>");
+                returnCode = TCL_ERROR;
+                goto cleanUp;
+            }
+            edgeName = Tcl_GetString(objv[0]);
+            objc--;
+            objv++;
+            break;
+        case GraphInfoEdgesOptionLabelsIx:
+        case GraphInfoEdgesOptionNotLabelsIx: {
+            char* label;
+            int i;
+
+            objc--;
+            objv++;
+            if (objc < 1) {
+                Tcl_WrongNumArgs(interp, objc, objv, "-labels <label> ?<label> ...?");
+                returnCode = TCL_ERROR;
+                goto cleanUp;
             }
 
-            switch (cmdIdx) {
-            case GraphInfoEdgesOptionMarksIx:
-                if (GraphParseMarks(Tcl_GetString(objv[i+1]), &edgeMarksMask) != TCL_OK) {
-                    Tcl_SetObjResult(interp, Tcl_NewStringObj(
-                        "Wrong marks specifier. Should be a combination of c/h (cut/hidden) C/H (not cut/hidden).",-1));
-                    return TCL_ERROR;
+            for (i = 0, label = Tcl_GetString(objv[i]); i < objc; i++) {
+                label = Tcl_GetString(objv[i]);
+                if (*label == '-') {
+                    break;
                 }
-                break;
-            case GraphInfoEdgesOptionNameIx:
-                edgeName = Tcl_GetString(objv[i+1]);
-                break;
-            default:
-                break;
+                labelObjc++;
             }
+            labelsObjv = (Tcl_Obj**)ckalloc(labelObjc * sizeof(Tcl_Obj*));
+            for (i = 0; i < labelObjc; i++) {
+                labelsObjv[i] = objv[i];
+            }
+
+            lblFilt.filterType = cmdIdx == GraphInfoEdgesOptionLabelsIx ? LABELS_IDX : LABELS_NOT_IDX;
+            lblFilt.objc = labelObjc;
+            lblFilt.objv = labelsObjv;
+
+            objc -= labelObjc;
+            objv += labelObjc;
+            break;
+        }
+        default:
+            break;
         }
     }
-
 
     /* collect edges */
     entry = Tcl_FirstHashEntry(&graphPtr->edges, &search);
@@ -347,14 +401,23 @@ static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj
         Edge* edgePtr = (Edge*)Tcl_GetHashKey(&graphPtr->edges, entry);
         if (Graphs_EdgeHasMarks(edgePtr, edgeMarksMask)) {
             if (edgeName == NULL || strcmp(edgePtr->name, edgeName) == 0) {
-                Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
+                int matches = 0;
+                GraphsInt_MatchesLabels(&edgePtr->labels, edgePtr->name, lblFilt, &matches);
+                if (matches) {
+                    Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(edgePtr->cmdName, -1));
+                }
             }
         }
         entry = Tcl_NextHashEntry(&search);
     }
 
     Tcl_SetObjResult(interp, result);
-    return TCL_OK;
+
+cleanUp:
+    if (labelsObjv != NULL) {
+        ckfree(labelsObjv);
+    }
+    return returnCode;
 }
 
 static int GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])

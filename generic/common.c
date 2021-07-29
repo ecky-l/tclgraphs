@@ -1,7 +1,7 @@
 /*
  * Common procedures for entities
  */
-#include "graphs.h"
+#include "graphsInt.h"
 
 int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
 {
@@ -114,43 +114,47 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp)
 /*
  * \brief For a given node, this procedure checks whether the labels filter applies.
  *
- * \param nodePtr The node
- * \param optIdx
- *      The label type. One of LABELS_IDX (the node has all the desired labels assigned),
- *      LABELS_NOT_IDX (the node has none of the labels assigned) or LABELS_ALL_IX (labels are
- *      not filtered)
- * \param objc
- *      Number of labels (elements in objv
- * \param objv
- *      List of string labels
- *
- * \return 1 if the labels filter applies, 0 otherwise
+ * \param labels Hashtable with the labels
+ * \param name Name to match
+ * \param labelFilt The labelfilter with type and arguments to match against
+ * \param matchPtr int pointer for the result
+ * 
+ * \return TCL_OK or TCL_ERROR if the labels filter applies, 0 otherwise
  *
  */
-static int GraphsFilterLabels(const Node* nodePtr, LabelFilterT optIdx, int objc, Tcl_Obj* const objv[])
+int GraphsInt_MatchesLabels(const Tcl_HashTable* labels, const char* name, struct LabelFilter lblFilt, int* matchPtr)
 {
     int result = 0;
 
-    switch (optIdx) {
+    switch (lblFilt.filterType) {
     case LABELS_NAME_IDX: {
-        result = Tcl_StringMatch(nodePtr->name, Tcl_GetString(objv[0]));
+        if (lblFilt.objc != 1 || name == NULL) {
+            return TCL_ERROR;
+        }
+        result = Tcl_StringMatch(name, Tcl_GetString((Tcl_Obj*)lblFilt.objv[0]));
         break;
     }
     case LABELS_IDX: {
         int found = 0;
-        for (int i = 0; i < objc; i++) {
-            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&((Node*)nodePtr)->labels, Tcl_GetString(objv[i]));
+        if (labels == NULL) {
+            return TCL_ERROR;
+        }
+        for (int i = 0; i < lblFilt.objc; i++) {
+            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry((Tcl_HashTable*)labels, Tcl_GetString((Tcl_Obj*)lblFilt.objv[i]));
             if (lblEntry != NULL) {
                 found++;
             }
         }
-        result = (found == objc);
+        result = (found == lblFilt.objc);
         break;
     }
     case LABELS_NOT_IDX: {
         result = 1;
-        for (int i = 0; i < objc; i++) {
-            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry(&((Node*)nodePtr)->labels, Tcl_GetString(objv[i]));
+        if (labels == NULL) {
+            return TCL_ERROR;
+        }
+        for (int i = 0; i < lblFilt.objc; i++) {
+            Tcl_HashEntry* lblEntry = Tcl_FindHashEntry((Tcl_HashTable*)labels, Tcl_GetString((Tcl_Obj*)lblFilt.objv[i]));
             if (lblEntry != NULL) {
                 result = 0;
                 break;
@@ -165,8 +169,10 @@ static int GraphsFilterLabels(const Node* nodePtr, LabelFilterT optIdx, int objc
     }
     }
 
-    return result;
+    *matchPtr = result;
+    return TCL_OK;
 }
+
 
 int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
@@ -176,7 +182,13 @@ int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* inte
 
     while (entry != NULL) {
         Node* neighborPtr = (Node*) Tcl_GetHashValue(entry);
-        if (GraphsFilterLabels(neighborPtr, optIdx, objc, objv)) {
+        struct LabelFilter lblFilt;
+        lblFilt.filterType = optIdx;
+        lblFilt.objc = objc;
+        lblFilt.objv = objv;
+        int matches = 0;
+        GraphsInt_MatchesLabels(&neighborPtr->labels, neighborPtr->name, lblFilt, &matches);
+        if (matches) {
             Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(neighborPtr->cmdName, -1));
         }
         entry = Tcl_NextHashEntry(&search);
@@ -307,7 +319,9 @@ static int GraphsAppendDeltaToObj(const DeltaEntry* nodes, Graph* graphPtr, Edge
     const DeltaEntry* entry = nodes;
     while (entry != NULL) {
         const Node* nodePtr = entry->nodePtr;
-        if (!GraphsFilterLabels(nodePtr, labelFilter.filterType, labelFilter.objc, labelFilter.objv)) {
+        int matches = 0;
+        GraphsInt_MatchesLabels(&nodePtr->labels, nodePtr->name, labelFilter, &matches);
+        if (!matches) {
             entry = entry->next;
             continue;
         }

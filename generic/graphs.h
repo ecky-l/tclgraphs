@@ -145,7 +145,7 @@ struct LabelFilter
 {
     LabelFilterT filterType;
     int objc;
-    Tcl_Obj** objv;
+    Tcl_Obj* const* objv;
 };
 
 struct _deltaEntry
@@ -212,7 +212,7 @@ void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
 /*
  * Get and filter nodes
  */
-int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const []);
+int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
 
 /*
  * \brief Checks the argument count for label filters.
