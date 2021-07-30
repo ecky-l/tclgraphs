@@ -139,7 +139,7 @@ int GraphsInt_MatchesLabels(const Tcl_HashTable* labels, const char* name, struc
 }
 
 
-int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int Graphs_GetNodes(Tcl_HashTable fromTbl, struct LabelFilter lblFilt, Tcl_Interp* interp)
 {
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&fromTbl, &search);
@@ -147,10 +147,6 @@ int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* inte
 
     while (entry != NULL) {
         Node* neighborPtr = (Node*) Tcl_GetHashValue(entry);
-        struct LabelFilter lblFilt;
-        lblFilt.filterType = optIdx;
-        lblFilt.objc = objc;
-        lblFilt.objv = objv;
         int matches = 0;
         GraphsInt_MatchesLabels(&neighborPtr->labels, neighborPtr->name, lblFilt, &matches);
         if (matches) {
@@ -164,7 +160,7 @@ int Graphs_GetNodes(Tcl_HashTable fromTbl, LabelFilterT optIdx, Tcl_Interp* inte
 
 }
 
-int Graphs_CheckLabelsOptions(LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int GraphsInt_CheckLabelsOptions(LabelFilterT optIdx, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     switch (optIdx) {
     case LABELS_NAME_IDX: {
@@ -197,7 +193,7 @@ int Graphs_CheckLabelsOptions(LabelFilterT optIdx, Tcl_Interp* interp, int objc,
     return TCL_OK;
 }
 
-int Graphs_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int GraphsInt_LabelsCommand(Tcl_HashTable labelsTbl, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int new;
     Tcl_HashEntry* entry;
@@ -334,7 +330,7 @@ static int GraphsAppendDeltaToObj(const DeltaEntry* nodes, Graph* graphPtr, Edge
  * \param interp        The Tcl interp for setting error messages etc.
  * \param resultObj     The Tcl list object for the result. Is filled with the command names of the delta.
  */
-int Graphs_GetDelta(Node* nodePtr, Graph* graphPtr, DeltaT deltaT, struct LabelFilter labelFilter, Tcl_Interp* interp,
+int GraphsInt_GetDelta(Node* nodePtr, Graph* graphPtr, DeltaT deltaT, struct LabelFilter labelFilter, Tcl_Interp* interp,
         Tcl_Obj** resultObj)
 {
     Tcl_Obj* resObj = *resultObj;

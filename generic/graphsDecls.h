@@ -17,28 +17,29 @@ GRAPHSAPI Graph*	Graphs_GraphGetByCommand(const GraphState*statePtr,
 /* 2 */
 GRAPHSAPI Node*		Graphs_NodeGetByCommand(const GraphState*statePtr,
 				const char*graphCmd);
-/* 3 */
-GRAPHSAPI void		Graphs_NodeAddToGraph(Graph*graphPtr, Node*nodePtr);
+/* Slot 3 is reserved */
 /* 4 */
+GRAPHSAPI void		Graphs_NodeAddToGraph(Graph*graphPtr, Node*nodePtr);
+/* 5 */
 GRAPHSAPI void		Graphs_NodeDeleteFromGraph(Graph*graphPtr,
 				Node*nodePtr);
-/* 5 */
+/* 6 */
 GRAPHSAPI void		Graphs_NodeDeleteNode(Node*nodePtr,
 				Tcl_Interp*interp);
-/* 6 */
+/* 7 */
 GRAPHSAPI Edge*		Graphs_EdgeGetEdge(const GraphState*statePtr,
 				const Node*fromNodePtr, const Node*toNodePtr,
 				int unDirected, unsigned int marksMask);
-/* 7 */
+/* 8 */
 GRAPHSAPI int		Graphs_EdgeHasMarks(const Edge*edgePtr,
 				unsigned marksMask);
-/* 8 */
+/* 9 */
 GRAPHSAPI Edge*		Graphs_EdgeCreateEdge(GraphState*statePtr,
 				Node*fromNodePtr, Node*toNodePtr,
 				int undirected, Tcl_Interp*interp,
 				const char*cmdName, int objc,
 				Tcl_Obj* const objv[]);
-/* 9 */
+/* 10 */
 GRAPHSAPI void		Graphs_EdgeDeleteEdge(Edge*nodePtr,
 				Tcl_Interp*interp);
 
@@ -49,13 +50,14 @@ typedef struct GraphsStubs {
     GraphState* (*graphs_GetState) (Tcl_Interp*interp); /* 0 */
     Graph* (*graphs_GraphGetByCommand) (const GraphState*statePtr, const char*graphCmd); /* 1 */
     Node* (*graphs_NodeGetByCommand) (const GraphState*statePtr, const char*graphCmd); /* 2 */
-    void (*graphs_NodeAddToGraph) (Graph*graphPtr, Node*nodePtr); /* 3 */
-    void (*graphs_NodeDeleteFromGraph) (Graph*graphPtr, Node*nodePtr); /* 4 */
-    void (*graphs_NodeDeleteNode) (Node*nodePtr, Tcl_Interp*interp); /* 5 */
-    Edge* (*graphs_EdgeGetEdge) (const GraphState*statePtr, const Node*fromNodePtr, const Node*toNodePtr, int unDirected, unsigned int marksMask); /* 6 */
-    int (*graphs_EdgeHasMarks) (const Edge*edgePtr, unsigned marksMask); /* 7 */
-    Edge* (*graphs_EdgeCreateEdge) (GraphState*statePtr, Node*fromNodePtr, Node*toNodePtr, int undirected, Tcl_Interp*interp, const char*cmdName, int objc, Tcl_Obj* const objv[]); /* 8 */
-    void (*graphs_EdgeDeleteEdge) (Edge*nodePtr, Tcl_Interp*interp); /* 9 */
+    void (*reserved3)(void);
+    void (*graphs_NodeAddToGraph) (Graph*graphPtr, Node*nodePtr); /* 4 */
+    void (*graphs_NodeDeleteFromGraph) (Graph*graphPtr, Node*nodePtr); /* 5 */
+    void (*graphs_NodeDeleteNode) (Node*nodePtr, Tcl_Interp*interp); /* 6 */
+    Edge* (*graphs_EdgeGetEdge) (const GraphState*statePtr, const Node*fromNodePtr, const Node*toNodePtr, int unDirected, unsigned int marksMask); /* 7 */
+    int (*graphs_EdgeHasMarks) (const Edge*edgePtr, unsigned marksMask); /* 8 */
+    Edge* (*graphs_EdgeCreateEdge) (GraphState*statePtr, Node*fromNodePtr, Node*toNodePtr, int undirected, Tcl_Interp*interp, const char*cmdName, int objc, Tcl_Obj* const objv[]); /* 9 */
+    void (*graphs_EdgeDeleteEdge) (Edge*nodePtr, Tcl_Interp*interp); /* 10 */
 } GraphsStubs;
 
 extern const GraphsStubs *graphsStubsPtr;
@@ -76,20 +78,21 @@ extern const GraphsStubs *graphsStubsPtr;
 	(graphsStubsPtr->graphs_GraphGetByCommand) /* 1 */
 #define Graphs_NodeGetByCommand \
 	(graphsStubsPtr->graphs_NodeGetByCommand) /* 2 */
+/* Slot 3 is reserved */
 #define Graphs_NodeAddToGraph \
-	(graphsStubsPtr->graphs_NodeAddToGraph) /* 3 */
+	(graphsStubsPtr->graphs_NodeAddToGraph) /* 4 */
 #define Graphs_NodeDeleteFromGraph \
-	(graphsStubsPtr->graphs_NodeDeleteFromGraph) /* 4 */
+	(graphsStubsPtr->graphs_NodeDeleteFromGraph) /* 5 */
 #define Graphs_NodeDeleteNode \
-	(graphsStubsPtr->graphs_NodeDeleteNode) /* 5 */
+	(graphsStubsPtr->graphs_NodeDeleteNode) /* 6 */
 #define Graphs_EdgeGetEdge \
-	(graphsStubsPtr->graphs_EdgeGetEdge) /* 6 */
+	(graphsStubsPtr->graphs_EdgeGetEdge) /* 7 */
 #define Graphs_EdgeHasMarks \
-	(graphsStubsPtr->graphs_EdgeHasMarks) /* 7 */
+	(graphsStubsPtr->graphs_EdgeHasMarks) /* 8 */
 #define Graphs_EdgeCreateEdge \
-	(graphsStubsPtr->graphs_EdgeCreateEdge) /* 8 */
+	(graphsStubsPtr->graphs_EdgeCreateEdge) /* 9 */
 #define Graphs_EdgeDeleteEdge \
-	(graphsStubsPtr->graphs_EdgeDeleteEdge) /* 9 */
+	(graphsStubsPtr->graphs_EdgeDeleteEdge) /* 10 */
 
 #endif /* defined(USE_GRAPHS_STUBS) */
 

@@ -156,29 +156,6 @@ struct _deltaEntry
 };
 
 
-/*
- * Get and filter nodes
- */
-int Graphs_GetNodes(Tcl_HashTable, LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
-
-/*
- * \brief Checks the argument count for label filters.
- *
- * Places an appropriate error message in the interp result, if the objc count
- * is not correct and returns TCL_ERROR. Otherwise returns TCL_OK
- */
-int Graphs_CheckLabelsOptions(LabelFilterT, Tcl_Interp*, int, Tcl_Obj* const[]);
-
-/*
- * Common procedure to add/remove or get labels for nodes and edges
- */
-int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const []);
-
-/*
- * Get delta (neighborhood) of a node or graph
- */
-int Graphs_GetDelta(Node*, Graph*, DeltaT, struct LabelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj);
-
 #include "graphsDecls.h"
 
 #ifdef __cplusplus

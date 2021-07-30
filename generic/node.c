@@ -164,7 +164,7 @@ static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, in
         if (Tcl_GetIndexFromObj(interp, objv[0], LabelFilterOptions, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
-        if (Graphs_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
+        if (GraphsInt_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
             return TCL_ERROR;
         }
     }
@@ -174,7 +174,7 @@ static int NodeInfoDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, in
     lblFilt.filterType = optIdx;
     lblFilt.objc = objc - 1;
     lblFilt.objv = (Tcl_Obj**) objv + 1;
-    if (Graphs_GetDelta(nodePtr, NULL, deltaType, lblFilt, interp, &deltaList) != TCL_OK) {
+    if (GraphsInt_GetDelta(nodePtr, NULL, deltaType, lblFilt, interp, &deltaList) != TCL_OK) {
         return TCL_ERROR;
     }
     Tcl_SetObjResult(interp, deltaList);
@@ -230,7 +230,7 @@ static int NodeCmdInfo(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj * co
             Tcl_WrongNumArgs(interp, 0, objv, "option");
             return TCL_ERROR;
         }
-        return Graphs_LabelsCommand(nodePtr->labels, interp, objc - 1, objv + 1);
+        return GraphsInt_LabelsCommand(nodePtr->labels, interp, objc - 1, objv + 1);
     }
 
     }
@@ -493,7 +493,7 @@ static int NodeSubCmd(Node* nodePtr, Tcl_Obj* cmd, Tcl_Interp *interp, int objc,
     case infoIx:
         return NodeCmdInfo(nodePtr, interp, objc, objv);
     case labelsIx:
-        return Graphs_LabelsCommand(nodePtr->labels, interp, objc, objv);
+        return GraphsInt_LabelsCommand(nodePtr->labels, interp, objc, objv);
     case markIx:
         return NodeCmdMark(nodePtr, interp, objc, objv);
     case deltaIx:

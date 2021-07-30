@@ -74,12 +74,15 @@ static int GraphNodesGetNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl
         if (Tcl_GetIndexFromObj(interp, objv[0], LabelFilterOptions, "option", 0, &optIdx) != TCL_OK) {
             return TCL_ERROR;
         }
-        if (Graphs_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
+        if (GraphsInt_CheckLabelsOptions(optIdx, interp, objc, objv) != TCL_OK) {
             return TCL_ERROR;
         }
     }
-
-    return Graphs_GetNodes(graphPtr->nodes, optIdx, interp, objc - 1, objv + 1);
+    struct LabelFilter lblFilt;
+    lblFilt.filterType = optIdx;
+    lblFilt.objc = objc - 1;
+    lblFilt.objv = objv + 1;
+    return Graphs_GetNodes(graphPtr->nodes, lblFilt, interp);
 }
 
 static int GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
@@ -439,7 +442,7 @@ static int GraphInfoDelta(Graph* graphPtr, DeltaT deltaType, Tcl_Interp* interp,
     Tcl_Obj * resultObj = Tcl_NewObj();
     while (entry != NULL) {
         Node* nodePtr = Tcl_GetHashValue(entry);
-        Graphs_GetDelta(nodePtr, graphPtr, deltaType, lblFilt, interp, &resultObj);
+        GraphsInt_GetDelta(nodePtr, graphPtr, deltaType, lblFilt, interp, &resultObj);
         entry = Tcl_NextHashEntry(&search);
     }
 

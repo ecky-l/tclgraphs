@@ -254,7 +254,7 @@ static int EdgeCmd(Edge* edgePtr, enum EdgeSubCommandIndex cmdIdx, Tcl_Interp* i
     case EdgeDestroyIx:
         return EdgeCmdDestroy(edgePtr, interp, objc, objv);
     case EdgeLabelsIx:
-        return Graphs_LabelsCommand(edgePtr->labels, interp, objc, objv);
+        return GraphsInt_LabelsCommand(edgePtr->labels, interp, objc, objv);
     case EdgeMarkIx:
     case EdgeUnmarkIx:
     case EdgeIsmarkedIx:
