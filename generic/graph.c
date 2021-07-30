@@ -82,7 +82,7 @@ static int GraphNodesGetNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl
     lblFilt.filterType = optIdx;
     lblFilt.objc = objc - 1;
     lblFilt.objv = objv + 1;
-    return Graphs_GetNodes(graphPtr->nodes, lblFilt, interp);
+    return GraphsInt_GetNodes(graphPtr->nodes, lblFilt, interp);
 }
 
 static int GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])

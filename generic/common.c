@@ -139,7 +139,7 @@ int GraphsInt_MatchesLabels(const Tcl_HashTable* labels, const char* name, struc
 }
 
 
-int Graphs_GetNodes(Tcl_HashTable fromTbl, struct LabelFilter lblFilt, Tcl_Interp* interp)
+int GraphsInt_GetNodes(Tcl_HashTable fromTbl, struct LabelFilter lblFilt, Tcl_Interp* interp)
 {
     Tcl_HashSearch search;
     Tcl_HashEntry* entry = Tcl_FirstHashEntry(&fromTbl, &search);
