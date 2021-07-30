@@ -28,9 +28,10 @@ set(GRAPHS_SOURCES generic/common.c
                    generic/graphs.c
                    generic/node.c
                    generic/graphsStubInit.c)
-set(GRAPHS_HEADERS generic/graphs.h
-                   generic/graphsDecls.h
-                   generic/graphsInt.h)
+set(GRAPHS_INSTALL_HEADERS generic/graphs.h
+                           generic/graphsDecls.h)
+set(GRAPHS_HEADERS ${GRAPHS_INSTALL_HEADERS} generic/graphsInt.h)
+
 add_library(graphs SHARED ${GRAPHS_SOURCES} ${GRAPHS_HEADERS} generic/graphs.decls pkgIndex.tcl.in)
 add_custom_command(
 	TARGET graphs
@@ -103,7 +104,7 @@ install(
     LIBRARY DESTINATION "graphs${CMAKE_PROJECT_VERSION}"
 )
 install(
-    FILES ${GRAPHS_HEADERS}
+    FILES ${GRAPHS_INSTALL_HEADERS}
     DESTINATION "graphs${CMAKE_PROJECT_VERSION}/include"
 )
 install(
