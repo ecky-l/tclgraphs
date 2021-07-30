@@ -3,7 +3,7 @@
  */
 #include "graphsInt.h"
 
-int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
+int GraphsInt_CheckCommandExists(Tcl_Interp* interp, const char* cmdName)
 {
     Tcl_CmdInfo cmdInfo;
     if (Tcl_GetCommandInfo(interp, cmdName, &cmdInfo) != 0) {
@@ -31,20 +31,7 @@ Graphs_NodeGetByCommand(const GraphState* statePtr, const char* nName)
     return (entry == NULL) ? NULL : (Node*)Tcl_GetHashValue(entry);
 }
 
-Edge*
-Graphs_ValidateEdgeCommand(GraphState* statePtr, Tcl_Interp* interp, const char* eName)
-{
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&statePtr->edges, eName);
-    if (entry == NULL) {
-        Tcl_Obj* res = Tcl_NewObj();
-        Tcl_AppendStringsToObj(res, "No such edge: ", eName, NULL);
-        Tcl_SetObjResult(interp, res);
-        return NULL;
-    }
-    return ((Edge*) Tcl_GetHashValue(entry));
-}
-
-void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
+void Graphs_NodeAddToGraph(Graph* graphPtr, Node* nodePtr)
 {
     int new;
     Tcl_HashEntry* entry;
@@ -67,7 +54,7 @@ void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr)
     nodePtr->graph = graphPtr;
 }
 
-void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr)
+void Graphs_NodeDeleteFromGraph(Graph* graphPtr, Node* nodePtr)
 {
     if (nodePtr->graph == graphPtr) {
         Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->nodes, (ClientData) nodePtr);
@@ -79,34 +66,12 @@ void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr)
     }
 }
 
-void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr)
-{
-    int new;
-    Tcl_HashEntry* entry;
-
-    if (graphPtr != NULL) {
-        entry = Tcl_CreateHashEntry(&graphPtr->edges, (ClientData) edgePtr, &new);
-        if (new) {
-            Tcl_SetHashValue(entry, edgePtr);
-        }
-    }
-}
-
-void Graphs_DeleteEdgeFromGraph(Graph* graphPtr, Edge* edgePtr)
-{
-    Tcl_HashEntry* entry = Tcl_FindHashEntry(&graphPtr->edges, (ClientData) edgePtr);
-    if (entry != NULL) {
-        Tcl_DeleteHashEntry(entry);
-    }
-}
-
-
-void Graphs_DeleteEdge(Edge* edgePtr, Tcl_Interp* interp)
+void Graphs_EdgeDeleteEdge(Edge* edgePtr, Tcl_Interp* interp)
 {
     Tcl_DeleteCommandFromToken(interp, edgePtr->commandTkn);
 }
 
-void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp)
+void Graphs_NodeDeleteNode(Node* nodePtr, Tcl_Interp* interp)
 {
     Tcl_DeleteCommandFromToken(interp, nodePtr->commandTkn);
 }

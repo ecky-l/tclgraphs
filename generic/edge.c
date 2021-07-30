@@ -1,4 +1,4 @@
-#include "graphs.h"
+#include "graphsInt.h"
 #include <string.h>
 
 /*
@@ -272,7 +272,7 @@ static int EdgeCmd(Edge* edgePtr, enum EdgeSubCommandIndex cmdIdx, Tcl_Interp* i
     }
 }
 
-int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+static int EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     int cmdIdx;
 
@@ -373,7 +373,7 @@ static int EdgeParseMarks(const char* marksSpec, unsigned int* marksMaskOut) {
  *  edge destroy e
  *  - deletes the edge with token/command e
  */
-int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+int GraphsInt_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     GraphState* gState = (GraphState*) clientData;
     Edge* edgePtr = NULL;
@@ -477,7 +477,7 @@ int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * 
     }
     case EdgeNewIx:
     case EdgeCreateIx:
-        edgePtr = Edge_CreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
+        edgePtr = Graphs_EdgeCreateEdge(gState, fromNodePtr, toNodePtr, unDirected, interp,
             Tcl_GetString(objv[1 + pOffset]), objc - (5 + pOffset), objv + 5 + pOffset);
         if (edgePtr == NULL) {
             return TCL_ERROR;
@@ -515,9 +515,21 @@ static int CreateAndInsertNewDeltaEntry(Node* fromNodePtr, DeltaEntry** startRef
     return TCL_OK;
 }
 
+static void EdgeAddToGraph(Graph* graphPtr, Edge* edgePtr)
+{
+    int new;
+    Tcl_HashEntry* entry;
+
+    if (graphPtr != NULL) {
+        entry = Tcl_CreateHashEntry(&graphPtr->edges, (ClientData)edgePtr, &new);
+        if (new) {
+            Tcl_SetHashValue(entry, edgePtr);
+        }
+    }
+}
 
 Edge*
-Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp,
+Graphs_EdgeCreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDirected, Tcl_Interp* interp,
     const char* cmdName, int objc, Tcl_Obj* const objv[])
 {
     Tcl_HashEntry* entryPtr;
@@ -536,7 +548,7 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
         sprintf(edgePtr->cmdName, "%s", cmdName);
     }
 
-    if (Graphs_CheckCommandExists(interp, edgePtr->cmdName)) {
+    if (GraphsInt_CheckCommandExists(interp, edgePtr->cmdName)) {
         Tcl_Obj* result = Tcl_NewObj();
         Tcl_AppendStringsToObj(result, edgePtr->cmdName, " exists already", NULL);
         Tcl_SetObjResult(interp, result);
@@ -583,10 +595,10 @@ Edge_CreateEdge(GraphState* gState, Node* fromNodePtr, Node* toNodePtr, int unDi
     }
 
     Tcl_InitHashTable(&edgePtr->labels, TCL_STRING_KEYS);
-    Graphs_AddEdgeToGraph(fromNodePtr->graph, edgePtr);
-    Graphs_AddEdgeToGraph(toNodePtr->graph, edgePtr);
+    EdgeAddToGraph(fromNodePtr->graph, edgePtr);
+    EdgeAddToGraph(toNodePtr->graph, edgePtr);
 
-    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, Edge_EdgeSubCmd, edgePtr, EdgeDestroyCmd);
+    edgePtr->commandTkn = Tcl_CreateObjCommand(interp, edgePtr->cmdName, EdgeSubCmd, edgePtr, EdgeDestroyCmd);
     entryPtr = Tcl_CreateHashEntry(&gState->edges, edgePtr->cmdName, &new);
     Tcl_SetHashValue(entryPtr, edgePtr);
     return edgePtr;
@@ -635,7 +647,7 @@ Graphs_EdgeGetEdge(const GraphState* gState, CONST Node* fromNodePtr, CONST Node
 }
 
 
-void Edge_CleanupCmd(ClientData data)
+void GraphsInt_EdgeCleanupCmd(ClientData data)
 {
 
 }

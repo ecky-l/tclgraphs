@@ -97,7 +97,7 @@ static int GraphNodesAddNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
         Node* nodePtr = Graphs_NodeGetByCommand(graphPtr->statePtr, nName);
-        Graphs_AddNodeToGraph(graphPtr, nodePtr);
+        Graphs_NodeAddToGraph(graphPtr, nodePtr);
     }
 
     return TCL_OK;
@@ -118,7 +118,7 @@ static int GraphNodesDeleteNodes(Graph* graphPtr, Tcl_Interp* interp, int objc, 
     for (int j = 0; j < objc; j++) {
         const char* nName = Tcl_GetString(objv[j]);
         Node* nodePtr = Graphs_NodeGetByCommand(graphPtr->statePtr, nName);
-        Graphs_DeleteNodeFromGraph(graphPtr, nodePtr);
+        Graphs_NodeDeleteFromGraph(graphPtr, nodePtr);
     }
     return TCL_OK;
 }
@@ -262,7 +262,7 @@ static int GraphCmdDestroy(Graph* graphPtr, Tcl_Interp *interp, int objc, Tcl_Ob
         entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
         while (entry != NULL) {
             Node* nodePtr = Tcl_GetHashValue(entry);
-            Graphs_DeleteNode(nodePtr, interp);
+            Graphs_NodeDeleteNode(nodePtr, interp);
             entry = Tcl_FirstHashEntry(&graphPtr->nodes, &search);
         }
     }
@@ -593,7 +593,7 @@ static void GraphDestroyCmd(ClientData clientData)
     Tcl_Free((char*) g);
 }
 
-int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
+int GraphsInt_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
 {
     GraphState* gState = (GraphState*) clientData;
     Graph* graphPtr;
@@ -633,7 +633,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
                 return TCL_ERROR;
             }
             const char* cmdName = Tcl_GetString(objv[2]);
-            if (Graphs_CheckCommandExists(interp, cmdName)) {
+            if (GraphsInt_CheckCommandExists(interp, cmdName)) {
                 Tcl_Free((char*) graphPtr);
                 return TCL_ERROR;
             }
@@ -664,7 +664,7 @@ int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj 
     }
 }
 
-void Graph_CleanupCmd(ClientData data)
+void GraphsInt_GraphCleanupCmd(ClientData data)
 {
 
 }

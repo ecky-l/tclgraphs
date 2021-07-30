@@ -1,4 +1,4 @@
-#include "graphs.h"
+#include "graphsInt.h"
 #include <string.h>
 
 /*
@@ -80,7 +80,7 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
         case GraphIx: {
             Graph* g = NULL;
             if (Tcl_StringMatch(Tcl_GetString(objv[i+1]), "")) {
-                Graphs_AddNodeToGraph(g, nodePtr);
+                Graphs_NodeAddToGraph(g, nodePtr);
                 return TCL_OK;
             }
             g = Graphs_GraphGetByCommand(nodePtr->statePtr, Tcl_GetString(objv[i+1]));
@@ -90,7 +90,7 @@ static int NodeCmdConfigure(Node* nodePtr, Tcl_Interp *interp, int objc, Tcl_Obj
                 Tcl_SetObjResult(interp, res);
                 return TCL_ERROR;
             }
-            Graphs_AddNodeToGraph(g, nodePtr);
+            Graphs_NodeAddToGraph(g, nodePtr);
             break;
         }
         case DataIx: {
@@ -533,7 +533,7 @@ static void NodeDestroyCmd(ClientData clientData)
     while (entry != NULL) {
         Edge* edgePtr = entry->edgePtr;
         entry = entry->next;
-        Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
+        Graphs_EdgeDeleteEdge(edgePtr, edgePtr->statePtr->interp);
     }
 
     /* delete incoming edges */
@@ -541,12 +541,12 @@ static void NodeDestroyCmd(ClientData clientData)
     while (entry != NULL) {
         Edge* edgePtr = entry->edgePtr;
         entry = entry->next;
-        Graphs_DeleteEdge(edgePtr, edgePtr->statePtr->interp);
+        Graphs_EdgeDeleteEdge(edgePtr, edgePtr->statePtr->interp);
     }
 
     /* remove myself from the graphs where I am part of */
     if (nodePtr->graph != NULL) {
-        Graphs_DeleteNodeFromGraph(nodePtr->graph, nodePtr);
+        Graphs_NodeDeleteFromGraph(nodePtr->graph, nodePtr);
     }
 
     if (nodePtr->data != NULL) {
@@ -562,7 +562,7 @@ static void NodeDestroyCmd(ClientData clientData)
 }
 
 
-int Node_NodeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
+int GraphsInt_NodeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
 {
     const char* subCommands[] = { "new", "create", NULL };
     enum subCommandIdx { newIdx, createIdx };
@@ -606,7 +606,7 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* c
             return TCL_ERROR;
         }
         const char* cmdName = Tcl_GetString(objv[0]);
-        if (Graphs_CheckCommandExists(interp, cmdName)) {
+        if (GraphsInt_CheckCommandExists(interp, cmdName)) {
             Tcl_Free((char*)nodePtr);
             return TCL_ERROR;
         }
@@ -636,6 +636,6 @@ int Node_NodeCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* c
 }
 
 
-void Node_CleanupCmd(ClientData data)
+void GraphsInt_NodeCleanupCmd(ClientData data)
 {
 }

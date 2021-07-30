@@ -1,4 +1,4 @@
-#include "graphs.h"
+#include "graphsInt.h"
 
 MODULE_SCOPE GraphsStubs graphsStubs;
 
@@ -53,12 +53,12 @@ int Graphs_Init(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    Tcl_CreateObjCommand(interp, "::graphs::graph", (Tcl_ObjCmdProc *) Graph_GraphCmd, (ClientData)graphState,
-            (Tcl_CmdDeleteProc *) Graph_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::graphs::node", (Tcl_ObjCmdProc *) Node_NodeCmd, (ClientData)graphState,
-            (Tcl_CmdDeleteProc *) Node_CleanupCmd);
-    Tcl_CreateObjCommand(interp, "::graphs::edge", (Tcl_ObjCmdProc *) Edge_EdgeCmd, (ClientData)graphState,
-            (Tcl_CmdDeleteProc *) Edge_CleanupCmd);
+    Tcl_CreateObjCommand(interp, "::graphs::graph", (Tcl_ObjCmdProc *) GraphsInt_GraphCmd, (ClientData)graphState,
+            (Tcl_CmdDeleteProc *) GraphsInt_GraphCleanupCmd);
+    Tcl_CreateObjCommand(interp, "::graphs::node", (Tcl_ObjCmdProc *) GraphsInt_NodeCmd, (ClientData)graphState,
+            (Tcl_CmdDeleteProc *) GraphsInt_NodeCleanupCmd);
+    Tcl_CreateObjCommand(interp, "::graphs::edge", (Tcl_ObjCmdProc *) GraphsInt_EdgeCmd, (ClientData)graphState,
+            (Tcl_CmdDeleteProc *) GraphsInt_EdgeCleanupCmd);
     Tcl_Export(interp, graphsNS, "graph", 0);
     Tcl_Export(interp, graphsNS, "node", 0);
     Tcl_Export(interp, graphsNS, "edge", 0);

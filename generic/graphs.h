@@ -155,59 +155,6 @@ struct _deltaEntry
     struct _deltaEntry* next;
 };
 
-int Graph_GraphCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
-void Graph_CleanupCmd(ClientData data);
-
-int Node_NodeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
-void Node_CleanupCmd(ClientData data);
-
-int Edge_EdgeCmd(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]);
-void Edge_CleanupCmd(ClientData data);
-Edge* Edge_CreateEdge(GraphState*, Node*, Node*, int, Tcl_Interp*, const char*, int, Tcl_Obj* const []);
-int Edge_EdgeSubCmd(ClientData clientData, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[]);
-
-/*
- * Checks whether a command already exists and sets an appropriate error message.
- */
-int Graphs_CheckCommandExists(Tcl_Interp* interp, const char* cmdName);
-
-
-/*
- * Validate a node command name
- * Return NULL if the command does not lead to a valid node and set an appropriate error result
- */
-Node* Graphs_ValidateNodeCommand(GraphState* statePtr, Tcl_Interp* interp, const char* nName);
-
-/*
- * Validate a edge command name
- * Return NULL if the command does not lead to a valid node and set an appropriate error result
- */
-Edge* Graphs_ValidateEdgeCommand(GraphState* statePtr, Tcl_Interp* interp, const char* gName);
-
-/*
- * Add a node to a graph
- */
-void Graphs_AddNodeToGraph(Graph* graphPtr, Node* nodePtr);
-
-/*
- * Add a node to a graph
- */
-void Graphs_DeleteNodeFromGraph(Graph* graphPtr, Node* nodePtr);
-
-void Graphs_AddEdgeToGraph(Graph* graphPtr, Edge* edgePtr);
-void Graphs_DeleteEdgeFromGraph(Graph* graphPtr, Edge* edgePtr);
-
-/*
- * Delete and free an edge.
- * Additionally, the edge is removed from statePtr and other node.
- */
-void Graphs_DeleteEdge(Edge* nodePtr, Tcl_Interp* interp);
-
-/*
- * Delete and free a node.
- * Additionally, all edges incident with that node are deleted and freed.
- */
-void Graphs_DeleteNode(Node* nodePtr, Tcl_Interp* interp);
 
 /*
  * Get and filter nodes
@@ -232,11 +179,6 @@ int Graphs_LabelsCommand(Tcl_HashTable, Tcl_Interp*, int, Tcl_Obj* const []);
  */
 int Graphs_GetDelta(Node*, Graph*, DeltaT, struct LabelFilter, Tcl_Interp* interp, Tcl_Obj** resultObj);
 
-#ifdef USE_TCL_STUBS
-DLLEXPORT CONST char* Graphs_InitStubs _ANSI_ARGS_((Tcl_Interp* interp, CONST char* version, int exact));
-#else
-#	define Graphs_InitStubs(interp, version, exact) Tcl_PkgRequire(interp, "graphs", version, exact)
-#endif
 #include "graphsDecls.h"
 
 #ifdef __cplusplus
