@@ -27,6 +27,7 @@ proc ::graphs::clone-edges-to-graph {edges targetGraph args} {
         set to [get-or-create-node $targetGraph [[$e cget -to] cget -name]]
         set edge [edge new $from -> $to -name [$e cget -name] \
             -weight [$e cget -weight] -data [$e cget -data]]
+        $edge labels + {*}[$e labels]
         if {[dict exists $args -post]} {
             apply [dict get $args -post] $edge
         }

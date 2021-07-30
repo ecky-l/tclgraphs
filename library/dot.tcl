@@ -44,7 +44,8 @@ proc ::graphs::diedge-to-dot {edge args} {
         throw {GRAPHS EDGE_TO_DOT} "from and to nodes must have names"
     }
     append result \" [$from cget -name] \" -> \" [$to cget -name] \"
-    append result \[ label = \" [$edge cget -name] \" , weight = \" $weight \" , data= \" $data \"
+    append result \[ label = \" [$edge cget -name] \" , weight = \" $weight \" , data = \" $data \" ,
+    append result labels = \" [$edge labels] \"
     if {$args != {}} {
         append result , [join $args ,]
     }
@@ -87,6 +88,9 @@ proc ::graphs::digraph-from-dot {graph dot} {
         }
         if {[dict exists $attrs -label]} {
             $e configure -name [dict get $attrs -label]
+        }
+        if {[dict exists $attrs -labels]} {
+            $e labels + {*}[dict get $attrs -labels]
         }
     }
 
