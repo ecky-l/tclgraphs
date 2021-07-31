@@ -104,7 +104,7 @@ static void FindAndDeleteDeltaEntryByNode(DeltaEntry** start, const Node* nodePt
             else {
                 *start = now->next;
             }
-            ckfree(now);
+            ckfree((ClientData)now);
             break;
         }
         prev = now;
@@ -507,7 +507,7 @@ static int CreateAndInsertNewDeltaEntry(Node* fromNodePtr, DeltaEntry** startRef
         return TCL_ERROR;
     }
 
-    newEntry = ckalloc(sizeof(DeltaEntry));
+    newEntry = (DeltaEntry*) ckalloc(sizeof(DeltaEntry));
     newEntry->nodePtr = nodePtr;
     newEntry->edgePtr = edgePtr;
     newEntry->next = *startRef;

@@ -418,7 +418,7 @@ static int GraphInfoEdges(Graph* graphPtr, Tcl_Interp* interp, int objc, Tcl_Obj
 
 cleanUp:
     if (labelsObjv != NULL) {
-        ckfree(labelsObjv);
+        ckfree((ClientData)labelsObjv);
     }
     return returnCode;
 }
