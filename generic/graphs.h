@@ -25,6 +25,12 @@ extern "C" {
 
 GRAPHS_EXTERN int Graphs_Init(Tcl_Interp* interp);
 
+#ifdef USE_TCL_STUBS
+DLLEXPORT CONST char* Graphs_InitStubs _ANSI_ARGS_((Tcl_Interp* interp, CONST char* version, int exact));
+#else
+#    define Graphs_InitStubs(interp, version, exact) Tcl_PkgRequire(interp, "graphs", version, exact)
+#endif
+
 typedef struct _deltaEntry DeltaEntry;
 /* 
  * Marks that can be set wit the [graph mark], [edge mark] or [node mark] commands.
@@ -154,7 +160,6 @@ struct _deltaEntry
     Edge* edgePtr;
     struct _deltaEntry* next;
 };
-
 
 #include "graphsDecls.h"
 
