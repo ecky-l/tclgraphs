@@ -423,7 +423,7 @@ static int NodeCmdDeltaCmdSort(Node* nodePtr, DeltaT deltaType, Tcl_Interp* inte
         break;
     }
     
-    return NodeInfoDelta(nodePtr, deltaType, interp, 0, NULL);
+    return TCL_OK;
 }
 
 static int NodeCmdDelta(Node* nodePtr, DeltaT deltaType, Tcl_Interp* interp, int objc, Tcl_Obj* const objv[])
