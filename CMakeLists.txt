@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(tclgraphs VERSION 0.11.2)
+project(tclgraphs VERSION 0.11.3)
 
 find_package(TCL)
 find_package(Tclsh)
@@ -133,7 +133,4 @@ ENDIF()
 set(CPACK_PACKAGE_NAME "graphs")
 set(CPACK_PACKAGE_VENDOR "EL")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-set(CPACK_PACKAGE_VERSION_MAJOR 0)
-set(CPACK_PACKAGE_VERSION_MINOR 9)
-set(CPACK_PACKAGE_VERSION_PATCH 0)
 include(CPack)
